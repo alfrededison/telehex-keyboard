@@ -13,6 +13,7 @@ object KeyCode {
     const val ABC = "#abc"
     const val BACKSPACE = "#back"
     const val SPACE = "#space"
+    const val DIAL = "#dial"
 
     fun isLetter(code: String): Boolean = code.length == 1 && code[0] in 'a'..'z'
     fun isFunction(code: String): Boolean = code.startsWith("#")

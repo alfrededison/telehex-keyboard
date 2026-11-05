@@ -14,7 +14,8 @@ class SymbolPagesTest {
         for (page in listOf(SymbolPages.page1(LayoutModel.DEFAULT), SymbolPages.page2(LayoutModel.DEFAULT))) {
             for (r in abc.indices) for (c in abc[r].indices) {
                 val code = abc[r][c]
-                if (code == null || KeyCode.isFunction(code) || code == "," || code == ".") assertEquals(code, page[r][c])
+                val expected = if (code == KeyCode.EMOJI) KeyCode.DIAL else code
+                if (code == null || KeyCode.isFunction(code) || code == "," || code == ".") assertEquals(expected, page[r][c])
             }
         }
     }

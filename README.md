@@ -37,7 +37,7 @@ Z   X   C   V   B   M   N
 | Có vùng chọn: vuốt lên / vuốt trái trên phím cách | Chép / Cắt |
 | Hai ngón vuốt trái / phải | Undo / Redo (bàn phím tự quản lý lịch sử) |
 | Hai ngón giữ | Chọn hết |
-| Giữ phím 123 | Dialpad (tự mở ở ô số điện thoại / số / ngày giờ) |
+| Phím 1234 ở lớp ký tự (hoặc giữ phím 123) | Dialpad (tự mở ở ô số điện thoại / số / ngày giờ) |
 | Giữ phím ⚙ | Bảng sửa văn bản + clipboard history |
 | Chạm ⚙ | Cài đặt |
 

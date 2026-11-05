@@ -886,6 +886,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             }
             code == KeyCode.PAGE -> { symbolPage = if (symbolPage == 2) 1 else 2; refreshKeys() }
             code == KeyCode.EMOJI -> openEmoji()
+            code == KeyCode.DIAL -> { commitSyllable(); openDial() }
             code == KeyCode.SETTINGS -> if (gesture == Gesture.LONG_PRESS) openEditPanel() else openSettings()
             code == KeyCode.ABC -> openAbc()
             code == KeyCode.BACKSPACE -> deleteBackward()

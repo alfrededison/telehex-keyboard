@@ -3,7 +3,7 @@ package com.telehex.keyboard.layout
 /**
  * Lớp ký tự 2 trang, cả hai sinh từ lớp chữ: mỗi ký tự gắn với một chữ cái nên đi theo chữ đó
  * khi đổi bố cục (Q→1, W→2 … P→0). Phím chức năng, dấu phẩy/chấm và ô phím cách giữ nguyên chỗ,
- * nên chuyển trang không làm phím 123 / ⚙ / ☺ nhảy chỗ.
+ * nên chuyển trang không làm phím 123 / ⚙ nhảy chỗ. Phím ☺ thành phím 1234 (dialpad), như Gboard.
  * Phím chuyển trang nằm ở chỗ chữ Z (mép trái hàng 4 của bố cục mặc định).
  */
 object SymbolPages {
@@ -33,6 +33,7 @@ object SymbolPages {
             row.map { code ->
                 when {
                     code == null -> null
+                    code == KeyCode.EMOJI -> KeyCode.DIAL
                     KeyCode.isFunction(code) -> code
                     code == "," || code == "." -> code
                     else -> ofLetter[code] ?: code
