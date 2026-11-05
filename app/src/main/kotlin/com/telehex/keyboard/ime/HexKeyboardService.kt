@@ -29,6 +29,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private lateinit var prefs: Prefs
     private lateinit var engine: TelexEngine
     private lateinit var root: LinearLayout
+    private lateinit var toast: ActionToast
     private lateinit var candidateBar: CandidateBar
     private lateinit var keyboardView: KeyboardView
     private var emojiPanel: EmojiPanel? = null
@@ -182,6 +183,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         if (hasSelection()) history.record(EditHistory.Op.Delete(ic.getSelectedText(0)?.toString() ?: ""))
         ic.commitText(text, 1)
         history.record(EditHistory.Op.Insert(text))
+        flash("Đã dán")
         updateBar()
     }
 
@@ -281,10 +283,22 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                 insets
             }
         }
+        toast = ActionToast(this)
+        val frame = android.widget.FrameLayout(this).apply {
+            addView(root)
+            // Ngay dưới thanh gợi ý, giữa bề ngang: không che chữ đang soạn
+            addView(toast, android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT, android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
+                android.view.Gravity.TOP or android.view.Gravity.CENTER_HORIZONTAL,
+            ).apply { topMargin = dp(60) })
+        }
         applyTheme()
         refreshKeys()
-        return root
+        return frame
     }
+
+    /** Phản hồi trực quan cho hành động không tự thấy rõ trên bàn phím (hoàn tác, dán, chép…). */
+    private fun flash(message: String) { if (::toast.isInitialized) toast.show(message) }
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
     private fun dpF(v: Int): Float = v * resources.displayMetrics.density
@@ -303,6 +317,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         }
         keyboardView.validNextLetter = if (prefs.dynamicHitZones) { ch -> mode != Mode.ABC || telexEnabled.not() || engine.copy().apply { press(ch) }.isSuspicious().not() } else null
         candidateBar.theme = t
+        toast.theme = t
         root.setBackgroundColor(t.background)
         emojiPanel = null // dựng lại theo theme khi mở lần sau
         dialpad = null
@@ -718,14 +733,17 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private fun undo() {
         val ic = currentInputConnection ?: return
         commitSyllable()
-        if (history.undo(ic)) keyboardView.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+        if (history.undo(ic)) {
+            keyboardView.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+            flash("↶ Đã hoàn tác")
+        } else flash("Không còn gì để hoàn tác")
         updateBar()
     }
 
     private fun redo() {
         val ic = currentInputConnection ?: return
         commitSyllable()
-        history.redo(ic)
+        flash(if (history.redo(ic)) "↷ Đã làm lại" else "Không còn gì để làm lại")
         updateBar()
     }
 
@@ -736,6 +754,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             val text = ic.getSelectedText(0) ?: return
             clipboard().setPrimaryClip(android.content.ClipData.newPlainText("text", text))
         }
+        flash("Đã chép")
     }
 
     private fun cut() {
@@ -747,26 +766,26 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             ic.commitText("", 1)
         }
         history.record(EditHistory.Op.Delete(selected))
+        flash("✂ Đã cắt")
         updateBar()
     }
 
     private fun paste() {
         val ic = currentInputConnection ?: return
         commitSyllable()
-        val clip = clipboard().primaryClip ?: return
-        if (clip.itemCount == 0) return
-        val text = clip.getItemAt(0).coerceToText(this)?.toString() ?: return
-        if (text.isEmpty()) return
+        val text = clipboard().primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(this)?.toString()
+        if (text.isNullOrEmpty()) { flash("Clipboard trống"); return }
         if (hasSelection()) history.record(EditHistory.Op.Delete(ic.getSelectedText(0)?.toString() ?: ""))
         ic.commitText(text, 1)
         history.record(EditHistory.Op.Insert(text))
+        flash("Đã dán")
         updateBar()
     }
 
     private fun selectAll() {
         val ic = currentInputConnection ?: return
         commitSyllable()
-        ic.performContextMenuAction(android.R.id.selectAll)
+        if (ic.performContextMenuAction(android.R.id.selectAll)) flash("Đã chọn hết")
     }
 
     private fun clipboard() = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
