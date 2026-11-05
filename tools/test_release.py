@@ -143,6 +143,19 @@ class ReleaseTest(unittest.TestCase):
         self.assertEqual(start, self.git("rev-parse", "HEAD"))
         self.assertEqual("", self.git("status", "--porcelain"))
 
+    def test_a_moved_dev_tag_does_not_block_the_release(self):
+        other = self.other_clone()
+        self.git("tag", "dev", cwd=other)
+        self.git("push", "-q", "origin", "dev", cwd=other)
+        self.git("fetch", "-q", "--tags", "origin")  # local "dev" now points at the old commit
+        self.git("commit", "-q", "--allow-empty", "-m", "Moves on", cwd=other)
+        self.git("push", "-q", "origin", "main", cwd=other)
+        self.git("tag", "-f", "dev", cwd=other)
+        self.git("push", "-q", "-f", "origin", "dev", cwd=other)  # as dev-build does on every push
+        self.git("pull", "-q", "--no-tags", "origin", "main")
+        result = self.release()
+        self.assertEqual(0, result.returncode, result.stderr)
+
     def test_bad_changelog_header_is_caught_before_any_write(self):
         (self.repo / "CHANGELOG.md").write_text("# TeleHex changelog\n\n## 0.1.0 — unreleased\n")
         self.git("commit", "-q", "-am", "Rename header")

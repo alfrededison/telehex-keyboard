@@ -41,7 +41,9 @@ CURRENT="$VERSION_NAME"
 TAG="v$CURRENT"
 
 git remote get-url "$REMOTE" >/dev/null 2>&1 || fail "no remote '$REMOTE' (set RELEASE_REMOTE)"
-git fetch -q --tags "$REMOTE" || fail "cannot fetch $REMOTE"
+# Only the branch: tags are checked with ls-remote below. Fetching all tags would fail whenever the
+# "dev" tag, which dev-build deletes and recreates on every push, has moved since the last fetch.
+git fetch -q "$REMOTE" "$BRANCH" || fail "cannot fetch $BRANCH from $REMOTE"
 if git rev-parse -q --verify "refs/remotes/$REMOTE/$BRANCH" >/dev/null; then
   git merge-base --is-ancestor "$REMOTE/$BRANCH" HEAD ||
     fail "$BRANCH is behind or has diverged from $REMOTE/$BRANCH: pull first"
