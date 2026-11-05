@@ -204,6 +204,12 @@ class TelexEngine(config: TelexConfig = TelexConfig()) {
             if (p + 2 == chars.size && isSoftUoOnset(p)) chars[p + 1] = 'ơ' else { chars[p] = 'ư'; chars[p + 1] = 'ơ' }
             return
         }
+        // "ua" ở cuối (không sau q) + w → "ưa" (vuaw → vưa), vì "uă" chỉ có sau q (quăng).
+        val n = chars.size
+        if (n >= 2 && chars[n - 1] == 'a' && !(n >= 3 && chars[n - 3] == 'q')) {
+            if (chars[n - 2] == 'u') { chars[n - 2] = 'ư'; return }
+            if (chars[n - 2] == 'ư' && (n - 2) !in loneW) { chars[n - 2] = 'u'; add('w', upper); cancelled(); return }
+        }
         for (i in chars.indices.reversed()) {
             val ch = chars[i]
             val m = when (ch) { 'a' -> 'ă'; 'o' -> 'ơ'; 'u' -> 'ư'; else -> null }
