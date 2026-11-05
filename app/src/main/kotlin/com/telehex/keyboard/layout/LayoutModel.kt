@@ -1,0 +1,97 @@
+package com.telehex.keyboard.layout
+
+import org.json.JSONArray
+import org.json.JSONObject
+
+/** Mã phím trong lưới. Chữ thường `a`..`z`, dấu `,` `.`, hoặc mã chức năng bắt đầu bằng `#`. */
+object KeyCode {
+    const val EMOJI = "#emoji"
+    const val NUMBERS = "#123"
+    const val SETTINGS = "#set"
+    const val ENTER = "#enter"
+    const val PAGE = "#page"
+    const val ABC = "#abc"
+    const val BACKSPACE = "#back"
+    const val SPACE = "#space"
+
+    fun isLetter(code: String): Boolean = code.length == 1 && code[0] in 'a'..'z'
+    fun isFunction(code: String): Boolean = code.startsWith("#")
+}
+
+/**
+ * Lưới 5 hàng × 7 cột của lớp chữ. `null` = ô thuộc phím cách (3 ô giữa hàng cuối).
+ */
+class LayoutModel(val rows: List<List<String?>>) {
+
+    init {
+        require(rows.size == ROWS) { "Cần $ROWS hàng" }
+        require(rows.all { it.size == COLS }) { "Mỗi hàng cần $COLS cột" }
+    }
+
+    operator fun get(r: Int, c: Int): String? = rows[r][c]
+
+    /** Vị trí (hàng, cột) của một mã phím, hoặc null. */
+    fun find(code: String): Pair<Int, Int>? {
+        for (r in 0 until ROWS) for (c in 0 until COLS) if (rows[r][c] == code) return r to c
+        return null
+    }
+
+    fun withSwapped(a: Pair<Int, Int>, b: Pair<Int, Int>): LayoutModel {
+        val m = rows.map { it.toMutableList() }
+        val t = m[a.first][a.second]
+        m[a.first][a.second] = m[b.first][b.second]
+        m[b.first][b.second] = t
+        return LayoutModel(m)
+    }
+
+    /**
+     * Ràng buộc khi lưu: đủ 26 chữ, mỗi phím xuất hiện đúng một lần, có 123 và ⚙.
+     * @return thông báo lỗi, hoặc null nếu hợp lệ.
+     */
+    fun validate(): String? {
+        val codes = rows.flatten().filterNotNull()
+        val letters = codes.filter { KeyCode.isLetter(it) }
+        if (letters.toSet().size != 26) return "Cần đủ 26 chữ cái"
+        if (codes.size != codes.toSet().size) return "Mỗi phím chỉ xuất hiện một lần"
+        if (KeyCode.NUMBERS !in codes) return "Thiếu phím 123"
+        if (KeyCode.SETTINGS !in codes) return "Thiếu phím ⚙"
+        if (KeyCode.ENTER !in codes) return "Thiếu phím ↵"
+        if (rows[4][2] != null || rows[4][3] != null || rows[4][4] != null) return "Phím cách phải chiếm 3 ô giữa hàng cuối"
+        if (rows.flatten().count { it == null } != 3) return "Chỉ có 3 ô thuộc phím cách"
+        return null
+    }
+
+    fun toJson(): String {
+        val arr = JSONArray()
+        for (row in rows) {
+            val jr = JSONArray()
+            for (c in row) jr.put(c ?: JSONObject.NULL)
+            arr.put(jr)
+        }
+        return arr.toString()
+    }
+
+    companion object {
+        const val ROWS = 5
+        const val COLS = 7
+
+        val DEFAULT: LayoutModel = LayoutModel(
+            listOf(
+                listOf("w", "r", "y", KeyCode.EMOJI, KeyCode.NUMBERS, "o", "p"),
+                listOf("q", "e", "t", KeyCode.SETTINGS, "u", "i", "h"),
+                listOf("a", "s", "d", ",", "f", "g", "j"),
+                listOf("z", "c", "b", ".", "n", "m", "k"),
+                listOf("x", "v", null, null, null, "l", KeyCode.ENTER),
+            )
+        )
+
+        fun fromJson(json: String): LayoutModel? = runCatching {
+            val arr = JSONArray(json)
+            val rows = (0 until arr.length()).map { r ->
+                val jr = arr.getJSONArray(r)
+                (0 until jr.length()).map { c -> if (jr.isNull(c)) null else jr.getString(c) }
+            }
+            LayoutModel(rows)
+        }.getOrNull()
+    }
+}
