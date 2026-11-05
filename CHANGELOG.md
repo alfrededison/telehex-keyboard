@@ -3,7 +3,8 @@
 ## 0.1.1 — unreleased
 
 - Tự viết hoa chữ đầu câu (tắt được trong Cài đặt). Nhãn phím hiện hoa/thường theo chữ sắp gõ; vuốt lên đảo hoa/thường như Gboard. Chữ hoa tự thêm không bị học thành "hay viết hoa"; gõ tắt ở đầu câu cũng viết hoa.
-- Enter chèn xuống dòng thay vì gửi phím ENTER, nên Messenger không còn gửi tin khi xuống dòng.
+- ↵ chèn xuống dòng bằng văn bản (như Gboard) thay vì phát phím ENTER.
+- Tuỳ chọn "↵ gửi tin ở khung chat": ↵ gửi tin ở các khung chat khai hành động Gửi (Messenger, Zalo…); giữ ↵ để xuống dòng.
 - Vuốt trái dài trên phím cách kéo tiếp được qua các dòng.
 - `uaw` ra `ưa` (vuaw → vưa).
 - Bỏ chữ dấu (á, ả…) dưới phím, chỉ dùng màu; ký tự vuốt xuống hiện dưới chữ cái.
@@ -11,6 +12,8 @@
 - Trang ký tự 2 cũng đi theo chữ như trang 1, nên phím chức năng không nhảy chỗ khi chuyển trang ở bố cục tuỳ biến.
 - Màn sắp xếp phím đặt lưới ở đáy màn hình, đúng chỗ bàn phím thật.
 - Thông báo ngắn sau undo, redo, cắt, chép, dán, chọn hết.
+- Có vùng chọn thì vuốt trái dài trên phím cách cũng cắt (trước đây bỏ vùng chọn và xoá theo từ).
+- Lớp ký tự: phím chuyển trang 1/2 ra mép trái; phím ☺ thành phím 1234 mở dialpad (vẫn giữ được phím 123).
 - Thoát được tìm emoji mà không cần chọn emoji: chạm ô tìm (✕), ⌫ khi ô tìm trống, ↵ hoặc ☺ đều về bảng emoji; trước đây ⌫ xoá chữ trong ô nhập và ↵ gửi tin.
 
 ## 0.1.0 — 2026-11-05
