@@ -153,7 +153,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         var j = 0
         while (j < after.length && !after[j].isWhitespace()) j++
         if (before.length - i + j == 0) return
-        ic.setSelection(selStart - (before.length - i), selStart + j)
+        ic.setSelection(selStart - (before.length - i), selEnd + j)
     }
 
     /** Nhập giọng nói qua IME khác (ví dụ FUTO Voice Input chạy offline): chuyển sang IME có subtype "voice". */
@@ -241,8 +241,18 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        if (key == Prefs.KEY_RECENT_EMOJI || key == Prefs.KEY_PRESETS || key == Prefs.KEY_TOUCH_OFFSETS) return
-        if (key == Prefs.KEY_MODELS_VERSION) { personalDirty = false; predictions = PredictionStore(this); return }
+        if (key == Prefs.KEY_RECENT_EMOJI || key == Prefs.KEY_PRESETS) return
+        if (key == Prefs.KEY_TOUCH_OFFSETS) {
+            // Người dùng xoá dữ liệu độ lệch trong Cài đặt: bỏ bản trong bộ nhớ, đừng ghi đè lại
+            if (prefs.touchOffsets.isEmpty()) { touchOffsets.clear(); offsetsDirty = false; if (::keyboardView.isInitialized) keyboardView.removeCallbacks(saveOffsets) }
+            return
+        }
+        if (key == Prefs.KEY_MODELS_VERSION) {
+            personalDirty = false
+            predictions = PredictionStore(this)
+            clipboardStore = ClipboardStore(this)
+            return
+        }
         engine.config = prefs.telexConfig()
         rebuildCorrector()
         if (key == Prefs.KEY_LEARN_OFFSETS && !prefs.learnTouchOffsets) touchOffsets.clear()
@@ -499,7 +509,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             val next = predictions.predictor.next(recent.toList(), "", 3).map { casedPrediction(it) }
             val emoji = recent.lastOrNull()?.let { emojiFor(it) } ?: emptyList()
             if (next.isEmpty() && emoji.isEmpty()) showWordAtCursorSuggestions()
-            else candidateBar.showPredictions(next, emoji, onPick = { commitSyllable("$it ") }, onPickEmoji = { commitSyllable(it) }, onForget = { forget(it) })
+            else candidateBar.showPredictions(next, emoji, onPick = { commitSyllable("$it "); pushContext(it) }, onPickEmoji = { commitSyllable(it) }, onForget = { forget(it) })
         } else {
             showWordAtCursorSuggestions()
         }
@@ -726,9 +736,12 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         override fun deleteBackward() = this@HexKeyboardService.deleteBackward()
         override fun deleteSelection() = this@HexKeyboardService.deleteSelection()
         override fun commitSpace() = commitSyllable(" ")
-        override fun undoLastSpace() {
-            val ic = currentInputConnection ?: return
-            if (ic.getTextBeforeCursor(1, 0)?.toString() == " ") ic.deleteSurroundingText(1, 0)
+        override fun undoLastSpace(): Boolean {
+            val ic = currentInputConnection ?: return false
+            if (ic.getTextBeforeCursor(1, 0)?.toString() != " ") return false
+            ic.deleteSurroundingText(1, 0)
+            history.trimLastInsert(1)
+            return true
         }
         override fun moveCursor(dxChars: Int, dyLines: Int) {
             repeat(kotlin.math.abs(dxChars)) { sendDownUpKeyEvents(if (dxChars < 0) KeyEvent.KEYCODE_DPAD_LEFT else KeyEvent.KEYCODE_DPAD_RIGHT) }
@@ -749,7 +762,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     // ---- Phím ----
 
     override fun onKeyDown(key: Key) {
-        if (key.isSpace) spaceGestures.onDown(android.os.SystemClock.uptimeMillis())
+        if (key.isSpace) spaceGestures.onDown(android.os.SystemClock.uptimeMillis()) else spaceGestures.noteOtherKey()
     }
 
     override fun onKeyMove(key: Key, dx: Float, dy: Float, dt: Long) {
@@ -760,7 +773,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         if (key.isSpace) spaceGestures.cancel()
     }
 
-    override fun onMultiTouchStart() { spaceGestures.cancel() }
+    override fun onMultiTouchStart() { spaceGestures.onMultiTouch() }
 
     override fun onTwoFinger(gesture: Gesture) {
         when (gesture) {

@@ -53,6 +53,13 @@ class BinaryNgramModel(buffer: ByteBuffer) : NgramModel {
         triW2 = pos; pos += 4 * triN
         triW3 = pos; pos += 4 * triN
         triQ = pos
+        pos += triN
+        require(biN >= 0 && triN >= 0 && pos <= buf.limit()) { "File mô hình bị cắt ngắn" }
+        // Mọi id phải nằm trong vocab, nếu không predict() sẽ ném lỗi giữa lúc gõ
+        for (i in 0 until biN) require(buf.getInt(biW1 + 4 * i) in 0 until n && buf.getInt(biW2 + 4 * i) in 0 until n) { "Mô hình hỏng (bigram)" }
+        for (i in 0 until triN) require(
+            buf.getInt(triW1 + 4 * i) in 0 until n && buf.getInt(triW2 + 4 * i) in 0 until n && buf.getInt(triW3 + 4 * i) in 0 until n
+        ) { "Mô hình hỏng (trigram)" }
         size = 1_000_000L // mô hình gốc coi như "rất nhiều dữ liệu"
     }
 

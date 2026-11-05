@@ -169,7 +169,7 @@
 💤	Mặt cười	buồn ngủ	buồn ngủ|đang ngủ|hài hước|mệt|ngất rồi|ngủ	0
 👋	Người	vẫy tay	chào|chào nhé|có ai ở đó không?|đang vẫy|tay|vẫy|vẫy tay nè|xin chào	1
 🤚	Người	mu bàn tay giơ lên	giơ lên|mu bàn tay|mu bàn tay giơ lên	1
-🖐️	Người	tay xòe ngón giơ lên	dừng|ngón tay|tay|tay xòe ngón giơ lên|xòe	1
+🖐️	Người	tay xòe ngón giơ lên	dừng|ngón tay|tay|tay xòe ngón giơ lên|xòe	0
 ✋	Người	bàn tay giơ lên	bàn tay giơ lên|dừng lại|tay	1
 🖖	Người	tay thần lửa	ngón tay|spock|tay|tay thần lửa|thần lửa	1
 🫱	Người	bàn tay hướng sang bên phải	bàn tay|bàn tay hướng sang bên phải|bên phải|sang phải	1
@@ -181,7 +181,7 @@
 👌	Người	bàn tay làm dấu OK	bàn tay làm dấu OK|chắc chắn rồi|được|ok|OK nha|tay|tuyệt	1
 🤌	Người	ngón tay khum lại	cái gì|cử chỉ tay|khum lại|kiên nhẫn|mỉa mai|ngón tay|ngón tay khum lại|tay|thẩm vấn|thư giãn	1
 🤏	Người	tay chụm	ít|số lượng nhỏ|tay chụm	1
-✌️	Người	tay chiến thắng	chiến thắng|chữ v|tay|tay chiến thắng|v	1
+✌️	Người	tay chiến thắng	chiến thắng|chữ v|tay|tay chiến thắng|v	0
 🤞	Người	hai ngón tay bắt chéo	bàn tay|chéo|hai ngón tay bắt chéo|may mắn|ngón tay	1
 🫰	Người	bàn tay với ngón trỏ và ngón cái bắt chéo	bàn tay với ngón trỏ và ngón cái bắt chéo|búng tay|đắt tiền|tiền bạc|tình yêu|trái tim	1
 🤟	Người	cử chỉ yêu nhau	anh yêu em|ba ngón tay|cử chỉ yêu nhau|tay	1
@@ -192,7 +192,7 @@
 👆	Người	ngón trỏ trái chỉ lên	chỉ|lên|ngón tay|ngón trỏ trái chỉ lên|tay|tay trái	1
 🖕	Người	ngón giữa	ngón giữa|ngón tay|tay	1
 👇	Người	ngón trỏ trái chỉ xuống	mu bàn tay|ngón tay|ngón trỏ|ngón trỏ trái chỉ xuống|tay|trỏ	1
-☝️	Người	ngón trỏ chỉ lên trên	chỉ|lên|ngón tay|ngón trỏ|ngón trỏ chỉ lên trên|tay	1
+☝️	Người	ngón trỏ chỉ lên trên	chỉ|lên|ngón tay|ngón trỏ|ngón trỏ chỉ lên trên|tay	0
 🫵	Người	ngón trỏ chỉ vào người xem	bạn|ngón trỏ chỉ vào người xem|trỏ	1
 👍	Người	dấu ra hiệu đồng ý	+1|dấu ra hiệu đồng ý|lên|ngón tay cái|tay	1
 👎	Người	dấu ra hiệu từ chối	-1|dấu ra hiệu từ chối|không thích|ngón tay cái|tay|xuống	1
@@ -207,7 +207,7 @@
 🤲	Người	hai bàn tay chạm vào nhau	cầu nguyện|hai bàn tay chạm vào nhau|lời cầu nguyện	1
 🤝	Người	bắt tay	bắt tay|đồng ý|gặp mặt|rung|tay	1
 🙏	Người	chắp tay	cảm ơn|cầu nguyện|chắp tay|hỏi|làm ơn|tay	1
-✍️	Người	bàn tay đang viết	bàn tay đang viết|tay|viết	1
+✍️	Người	bàn tay đang viết	bàn tay đang viết|tay|viết	0
 💅	Người	sơn móng tay	chăm sóc|đánh bóng|làm móng tay|móng tay|mỹ phẩm|sơn móng tay	1
 🤳	Người	tự sướng	điện thoại|máy ảnh|tự sướng	1
 💪	Người	bắp tay gập lại	bắp tay|bắp tay gập lại|cơ bắp|gập lại|hài hước	1
@@ -337,9 +337,9 @@
 👮	Người	cảnh sát	bắt giữ|bị tóm|cảnh sát|cảnh sát nằm vùng|công an|dừng xe|luật|sĩ quan	1
 👮‍♂️	Người	cảnh sát nam	cảnh sát|cảnh sát nam|nam|người đàn ông|sĩ quan	1
 👮‍♀️	Người	cảnh sát nữ	bắt giữ|bị tóm|cảnh sát|cảnh sát nằm vùng|cảnh sát nữ|công an|luật pháp|nữ|nữ cảnh sát|ra tòa|sĩ quan	1
-🕵️	Người	thám tử	gián điệp|thám tử|trinh thám	1
-🕵️‍♂️	Người	thám tử nam	gián điệp|nam|thám tử|thám tử nam|trinh thám	1
-🕵️‍♀️	Người	thám tử nữ	gián điệp|nữ|thám tử|thám tử nữ|trinh thám	1
+🕵️	Người	thám tử	gián điệp|thám tử|trinh thám	0
+🕵️‍♂️	Người	thám tử nam	gián điệp|nam|thám tử|thám tử nam|trinh thám	0
+🕵️‍♀️	Người	thám tử nữ	gián điệp|nữ|thám tử|thám tử nữ|trinh thám	0
 💂	Người	bảo vệ	bảo vệ|cung điện buckingham|london|mũ bảo hiểm	1
 💂‍♂️	Người	bảo vệ nam	bảo vệ|bảo vệ nam|nam	1
 💂‍♀️	Người	bảo vệ nữ	bảo vệ|bảo vệ nữ|cung điện Buckingham|London|nữ	1
@@ -447,10 +447,10 @@
 🏃‍♂️‍➡️	Người	người đàn ông đang chạy: hướng sang phải	chạy|chạy đua|chạy đua maratông|hướng|nam|người đàn ông đang chạy|phải|sang	1
 💃	Người	người phụ nữ đang khiêu vũ	khiêu vũ|người phụ nữ đang khiêu vũ|nhảy|phụ nữ	1
 🕺	Người	người đàn ông đang khiêu vũ	khiêu vũ|người đàn ông|người đàn ông đang khiêu vũ	1
-🕴️	Người	người đàn ông mặc vest đang bay lên	bộ đồ|đàn ông|kinh doanh|người đàn ông mặc vest đang bay lên	1
-👯	Người	những người đeo tai thỏ	bản sao|bạn tâm giao|bạn thân|bộ đôi|những người đeo tai thỏ|phụ nữ đeo tai thỏ|sinh đôi|tai thỏ|tiệc tùng|vũ công	1
-👯‍♂️	Người	những người đàn ông đeo tai thỏ	đàn ông|những người đàn ông đeo tai thỏ|tai thỏ|tiệc tùng|vũ công	1
-👯‍♀️	Người	những người phụ nữ đeo tai thỏ	những người phụ nữ đeo tai thỏ|phụ nữ|tai thỏ|tiệc tùng|vũ công	1
+🕴️	Người	người đàn ông mặc vest đang bay lên	bộ đồ|đàn ông|kinh doanh|người đàn ông mặc vest đang bay lên	0
+👯	Người	những người đeo tai thỏ	bản sao|bạn tâm giao|bạn thân|bộ đôi|những người đeo tai thỏ|phụ nữ đeo tai thỏ|sinh đôi|tai thỏ|tiệc tùng|vũ công	0
+👯‍♂️	Người	những người đàn ông đeo tai thỏ	đàn ông|những người đàn ông đeo tai thỏ|tai thỏ|tiệc tùng|vũ công	0
+👯‍♀️	Người	những người phụ nữ đeo tai thỏ	những người phụ nữ đeo tai thỏ|phụ nữ|tai thỏ|tiệc tùng|vũ công	0
 🧖	Người	người ở trong phòng xông hơi	mát xa|người ở trong phòng xông hơi|người phụ nữ trong phòng xông hơi|nhà tắm hơi|phòng xông hơi|sang chảnh|spa|thư giãn	1
 🧖‍♂️	Người	người đàn ông ở trong phòng xông hơi	người đàn ông ở trong phòng xông hơi|nhà tắm hơi|phòng xông hơi	1
 🧖‍♀️	Người	người phụ nữ ở trong phòng xông hơi	người phụ nữ ở trong phòng xông hơi|nhà tắm hơi|phòng xông hơi	1
@@ -461,9 +461,9 @@
 🏇	Người	đua ngựa	cuộc đua|đua ngựa|ngựa|ngựa đua|người cưỡi ngựa đua	1
 ⛷️	Người	người trượt tuyết	người trượt tuyết|trượt tuyết|tuyết	0
 🏂	Người	người trượt ván tuyết	người trượt ván tuyết|trượt tuyết|tuyết|ván trượt tuyết	1
-🏌️	Người	người chơi gôn	bóng golf|gạt bóng|golf|gôn|người chơi golf|người chơi gôn|PGA|quả bóng|sân tập gôn	1
-🏌️‍♂️	Người	người đàn ông chơi gôn	đàn ông|gôn|người đàn ông chơi gôn	1
-🏌️‍♀️	Người	người phụ nữ chơi gôn	gôn|người phụ nữ chơi gôn|phụ nữ	1
+🏌️	Người	người chơi gôn	bóng golf|gạt bóng|golf|gôn|người chơi golf|người chơi gôn|PGA|quả bóng|sân tập gôn	0
+🏌️‍♂️	Người	người đàn ông chơi gôn	đàn ông|gôn|người đàn ông chơi gôn	0
+🏌️‍♀️	Người	người phụ nữ chơi gôn	gôn|người phụ nữ chơi gôn|phụ nữ	0
 🏄	Người	người lướt sóng	bãi biển|biển|lướt sóng|người lướt sóng|sóng|thể thao|vận động viên lướt sóng	1
 🏄‍♂️	Người	người đàn ông lướt sóng	lướt sóng|người đàn ông|người đàn ông lướt sóng	1
 🏄‍♀️	Người	người phụ nữ lướt sóng	lướt sóng|người phụ nữ lướt sóng|phụ nữ	1
@@ -473,12 +473,12 @@
 🏊	Người	người bơi	ba môn phối hợp|bơi|bơi tự do|người bơi|người đàn ông bơi lội|thể thao|vận động viên bơi lội	1
 🏊‍♂️	Người	người đàn ông đang bơi	bơi|người đàn ông|người đàn ông đang bơi	1
 🏊‍♀️	Người	người phụ nữ đang bơi	bơi|người phụ nữ đang bơi|phụ nữ|thể thao	1
-⛹️	Người	người chơi bóng	bóng rổ|cầu thủ bóng rổ|ném sọt rổ|người chơi bóng|nhồi bóng|quả bóng|vận động viên|vô địch	1
-⛹️‍♂️	Người	người đàn ông chơi bóng	bóng|đàn ông|người đàn ông chơi bóng	1
-⛹️‍♀️	Người	người phụ nữ chơi bóng	bóng|người phụ nữ chơi bóng|phụ nữ	1
-🏋️	Người	người cử tạ	cử tạ|nâng tạ|người cử tạ|người nâng|tập luyện|tập thể dục|thanh tạ|thể hình|trọng lượng|vận động viên cử tạ	1
-🏋️‍♂️	Người	người đàn ông cử tạ	người cử tạ|người đàn ông|người đàn ông cử tạ	1
-🏋️‍♀️	Người	người phụ nữ cử tạ	người cử tạ|người phụ nữ cử tạ|phụ nữ	1
+⛹️	Người	người chơi bóng	bóng rổ|cầu thủ bóng rổ|ném sọt rổ|người chơi bóng|nhồi bóng|quả bóng|vận động viên|vô địch	0
+⛹️‍♂️	Người	người đàn ông chơi bóng	bóng|đàn ông|người đàn ông chơi bóng	0
+⛹️‍♀️	Người	người phụ nữ chơi bóng	bóng|người phụ nữ chơi bóng|phụ nữ	0
+🏋️	Người	người cử tạ	cử tạ|nâng tạ|người cử tạ|người nâng|tập luyện|tập thể dục|thanh tạ|thể hình|trọng lượng|vận động viên cử tạ	0
+🏋️‍♂️	Người	người đàn ông cử tạ	người cử tạ|người đàn ông|người đàn ông cử tạ	0
+🏋️‍♀️	Người	người phụ nữ cử tạ	người cử tạ|người phụ nữ cử tạ|phụ nữ	0
 🚴	Người	người đi xe đạp	đạp xe|người đạp xe|người đi xe đạp|thể thao|vận động viên đua xe đạp|xe đạp	1
 🚴‍♂️	Người	người đàn ông đi xe đạp	đạp xe|người đàn ông|người đàn ông đi xe đạp|người đạp xe|xe đạp	1
 🚴‍♀️	Người	người phụ nữ đi xe đạp	đạp xe|người đạp xe|người phụ nữ đi xe đạp|phụ nữ|xe đạp	1
@@ -488,9 +488,9 @@
 🤸	Người	người nhào lộn	hào hứng|lăng nghiêng|người nhào lộn|nhào lộn|thể dục|thể dục dụng cụ|vui vẻ	1
 🤸‍♂️	Người	người đàn ông nhào lộn	hào hứng|lăng nghiêng|người đàn ông|người đàn ông nhào lộn|nhào lộn|thể dục|thể dục dụng cụ|vui vẻ	1
 🤸‍♀️	Người	người phụ nữ nhào lộn	hào hứng|lăng nghiêng|người phụ nữ nhào lộn|nhào lộn|phụ nữ|thể dục|thể dục dụng cụ|vui vẻ	1
-🤼	Người	người chơi vật	đấu vật|đô vật|giải đấu vật|người chơi vật|trên võ đài|vật	1
-🤼‍♂️	Người	những người đàn ông chơi vật	đàn ông|đấu vật|đô vật|nam đô vật|những người đàn ông chơi vật|trên võ đài|vật	1
-🤼‍♀️	Người	những người phụ nữ chơi vật	đấu vật|đô vật|những người phụ nữ chơi vật|nữ đô vật|phụ nữ|trên võ đài|vật	1
+🤼	Người	người chơi vật	đấu vật|đô vật|giải đấu vật|người chơi vật|trên võ đài|vật	0
+🤼‍♂️	Người	những người đàn ông chơi vật	đàn ông|đấu vật|đô vật|nam đô vật|những người đàn ông chơi vật|trên võ đài|vật	0
+🤼‍♀️	Người	những người phụ nữ chơi vật	đấu vật|đô vật|những người phụ nữ chơi vật|nữ đô vật|phụ nữ|trên võ đài|vật	0
 🤽	Người	người chơi bóng nước	bơi lội|bóng|người chơi bóng dưới nước|người chơi bóng nước|nước|thể thao dưới nước	1
 🤽‍♂️	Người	người đàn ông chơi bóng nước	bơi|đàn ông|người đàn ông chơi bóng nước|thể thao dưới nước|thủy cầu	1
 🤽‍♀️	Người	người phụ nữ chơi bóng nước	bơi|người phụ nữ chơi bóng nước|phụ nữ|thể thao dưới nước|thủy cầu	1
@@ -505,52 +505,52 @@
 🧘‍♀️	Người	người phụ nữ ngồi kiết già	người phụ nữ ngồi kiết già|thiền|yoga	1
 🛀	Người	người đang tắm bồn	bồn tắm|người đang tắm bồn|tắm	1
 🛌	Người	người trên giường	chợp mắt|khách sạn|mệt mỏi|ngủ|ngủ ngoan nhé|người trên giường|say giấc	1
-🧑‍🤝‍🧑	Người	hai người nắm tay	cặp đôi|giữ|hai người nắm tay|nắm tay|người|người nắm tay|tay	1
+🧑‍🤝‍🧑	Người	hai người nắm tay	cặp đôi|giữ|hai người nắm tay|nắm tay|người|người nắm tay|tay	0
 👭	Người	hai người phụ nữ nắm tay	bạn tốt nhất|cặp đôi|cặp đôi đồng tính nữ|hai người phụ nữ nắm tay|phụ nữ|tay	1
 👫	Người	người đàn ông và phụ nữ nắm tay	cầm|cặp đôi|đàn ông|nắm tay|người đàn ông và phụ nữ nắm tay|phụ nữ|tay	1
 👬	Người	hai người đàn ông nắm tay	cặp đôi|cặp đôi đồng tính nam|cặp song sinh|hai người đàn ông nắm tay|hai người đàn ông nắm tay nhau|hoàng đạo|người đàn ông|song tử	1
 💏	Người	nụ hôn	cặp đôi|hẹn hò|nụ hôn|yêu	1
-👩‍❤️‍💋‍👨	Người	nụ hôn: phụ nữ, đàn ông	cặp đôi|đàn ông|hẹn hò|nụ hôn|phụ nữ|yêu	1
-👨‍❤️‍💋‍👨	Người	nụ hôn: đàn ông, đàn ông	cặp đôi|đàn ông|hẹn hò|nụ hôn|yêu	1
-👩‍❤️‍💋‍👩	Người	nụ hôn: phụ nữ, phụ nữ	cặp đôi|hẹn hò|nụ hôn|phụ nữ|yêu	1
+👩‍❤️‍💋‍👨	Người	nụ hôn: phụ nữ, đàn ông	cặp đôi|đàn ông|hẹn hò|nụ hôn|phụ nữ|yêu	0
+👨‍❤️‍💋‍👨	Người	nụ hôn: đàn ông, đàn ông	cặp đôi|đàn ông|hẹn hò|nụ hôn|yêu	0
+👩‍❤️‍💋‍👩	Người	nụ hôn: phụ nữ, phụ nữ	cặp đôi|hẹn hò|nụ hôn|phụ nữ|yêu	0
 💑	Người	cặp đôi với trái tim	cặp đôi|cặp đôi với trái tim|yêu	1
-👩‍❤️‍👨	Người	cặp đôi với trái tim: phụ nữ, đàn ông	cặp đôi|cặp đôi với trái tim|đàn ông|phụ nữ|yêu	1
-👨‍❤️‍👨	Người	cặp đôi với trái tim: đàn ông, đàn ông	cặp đôi|cặp đôi với trái tim|đàn ông|yêu	1
-👩‍❤️‍👩	Người	cặp đôi với trái tim: phụ nữ, phụ nữ	cặp đôi|cặp đôi với trái tim|phụ nữ|yêu	1
-👨‍👩‍👦	Người	gia đình: đàn ông, phụ nữ, con trai	con trai|đàn ông|gia đình|phụ nữ|trẻ em	1
-👨‍👩‍👧	Người	gia đình: đàn ông, phụ nữ, con gái	con gái|đàn ông|gia đình|phụ nữ|trẻ em	1
-👨‍👩‍👧‍👦	Người	gia đình: đàn ông, phụ nữ, con gái, con trai	con gái|con trai|đàn ông|gia đình|phụ nữ|trẻ em	1
-👨‍👩‍👦‍👦	Người	gia đình: đàn ông, phụ nữ, con trai, con trai	con trai|đàn ông|gia đình|phụ nữ|trẻ em	1
-👨‍👩‍👧‍👧	Người	gia đình: đàn ông, phụ nữ, con gái, con gái	con gái|đàn ông|gia đình|phụ nữ|trẻ em	1
-👨‍👨‍👦	Người	gia đình: đàn ông, đàn ông, con trai	con trai|đàn ông|gia đình|trẻ em	1
-👨‍👨‍👧	Người	gia đình: đàn ông, đàn ông, con gái	con gái|đàn ông|gia đình|trẻ em	1
-👨‍👨‍👧‍👦	Người	gia đình: đàn ông, đàn ông, con gái, con trai	con gái|con trai|đàn ông|gia đình|trẻ em	1
-👨‍👨‍👦‍👦	Người	gia đình: đàn ông, đàn ông, con trai, con trai	con trai|đàn ông|gia đình|trẻ em	1
-👨‍👨‍👧‍👧	Người	gia đình: đàn ông, đàn ông, con gái, con gái	con gái|đàn ông|gia đình|trẻ em	1
-👩‍👩‍👦	Người	gia đình: phụ nữ, phụ nữ, con trai	con trai|gia đình|phụ nữ|trẻ em	1
-👩‍👩‍👧	Người	gia đình: phụ nữ, phụ nữ, con gái	con gái|gia đình|phụ nữ|trẻ em	1
-👩‍👩‍👧‍👦	Người	gia đình: phụ nữ, phụ nữ, con gái, con trai	con gái|con trai|gia đình|phụ nữ|trẻ em	1
-👩‍👩‍👦‍👦	Người	gia đình: phụ nữ, phụ nữ, con trai, con trai	con trai|gia đình|phụ nữ|trẻ em	1
-👩‍👩‍👧‍👧	Người	gia đình: phụ nữ, phụ nữ, con gái, con gái	con gái|gia đình|phụ nữ|trẻ em	1
-👨‍👦	Người	gia đình: đàn ông, con trai	con trai|đàn ông|gia đình|trẻ em	1
-👨‍👦‍👦	Người	gia đình: đàn ông, con trai, con trai	con trai|đàn ông|gia đình|trẻ em	1
-👨‍👧	Người	gia đình: đàn ông, con gái	con gái|đàn ông|gia đình|trẻ em	1
-👨‍👧‍👦	Người	gia đình: đàn ông, con gái, con trai	con gái|con trai|đàn ông|gia đình|trẻ em	1
-👨‍👧‍👧	Người	gia đình: đàn ông, con gái, con gái	con gái|đàn ông|gia đình|trẻ em	1
-👩‍👦	Người	gia đình: phụ nữ, con trai	con trai|gia đình|phụ nữ|trẻ em	1
-👩‍👦‍👦	Người	gia đình: phụ nữ, con trai, con trai	con trai|gia đình|phụ nữ|trẻ em	1
-👩‍👧	Người	gia đình: phụ nữ, con gái	con gái|gia đình|phụ nữ|trẻ em	1
-👩‍👧‍👦	Người	gia đình: phụ nữ, con gái, con trai	con gái|con trai|gia đình|phụ nữ|trẻ em	1
-👩‍👧‍👧	Người	gia đình: phụ nữ, con gái, con gái	con gái|gia đình|phụ nữ|trẻ em	1
+👩‍❤️‍👨	Người	cặp đôi với trái tim: phụ nữ, đàn ông	cặp đôi|cặp đôi với trái tim|đàn ông|phụ nữ|yêu	0
+👨‍❤️‍👨	Người	cặp đôi với trái tim: đàn ông, đàn ông	cặp đôi|cặp đôi với trái tim|đàn ông|yêu	0
+👩‍❤️‍👩	Người	cặp đôi với trái tim: phụ nữ, phụ nữ	cặp đôi|cặp đôi với trái tim|phụ nữ|yêu	0
+👨‍👩‍👦	Người	gia đình: đàn ông, phụ nữ, con trai	con trai|đàn ông|gia đình|phụ nữ|trẻ em	0
+👨‍👩‍👧	Người	gia đình: đàn ông, phụ nữ, con gái	con gái|đàn ông|gia đình|phụ nữ|trẻ em	0
+👨‍👩‍👧‍👦	Người	gia đình: đàn ông, phụ nữ, con gái, con trai	con gái|con trai|đàn ông|gia đình|phụ nữ|trẻ em	0
+👨‍👩‍👦‍👦	Người	gia đình: đàn ông, phụ nữ, con trai, con trai	con trai|đàn ông|gia đình|phụ nữ|trẻ em	0
+👨‍👩‍👧‍👧	Người	gia đình: đàn ông, phụ nữ, con gái, con gái	con gái|đàn ông|gia đình|phụ nữ|trẻ em	0
+👨‍👨‍👦	Người	gia đình: đàn ông, đàn ông, con trai	con trai|đàn ông|gia đình|trẻ em	0
+👨‍👨‍👧	Người	gia đình: đàn ông, đàn ông, con gái	con gái|đàn ông|gia đình|trẻ em	0
+👨‍👨‍👧‍👦	Người	gia đình: đàn ông, đàn ông, con gái, con trai	con gái|con trai|đàn ông|gia đình|trẻ em	0
+👨‍👨‍👦‍👦	Người	gia đình: đàn ông, đàn ông, con trai, con trai	con trai|đàn ông|gia đình|trẻ em	0
+👨‍👨‍👧‍👧	Người	gia đình: đàn ông, đàn ông, con gái, con gái	con gái|đàn ông|gia đình|trẻ em	0
+👩‍👩‍👦	Người	gia đình: phụ nữ, phụ nữ, con trai	con trai|gia đình|phụ nữ|trẻ em	0
+👩‍👩‍👧	Người	gia đình: phụ nữ, phụ nữ, con gái	con gái|gia đình|phụ nữ|trẻ em	0
+👩‍👩‍👧‍👦	Người	gia đình: phụ nữ, phụ nữ, con gái, con trai	con gái|con trai|gia đình|phụ nữ|trẻ em	0
+👩‍👩‍👦‍👦	Người	gia đình: phụ nữ, phụ nữ, con trai, con trai	con trai|gia đình|phụ nữ|trẻ em	0
+👩‍👩‍👧‍👧	Người	gia đình: phụ nữ, phụ nữ, con gái, con gái	con gái|gia đình|phụ nữ|trẻ em	0
+👨‍👦	Người	gia đình: đàn ông, con trai	con trai|đàn ông|gia đình|trẻ em	0
+👨‍👦‍👦	Người	gia đình: đàn ông, con trai, con trai	con trai|đàn ông|gia đình|trẻ em	0
+👨‍👧	Người	gia đình: đàn ông, con gái	con gái|đàn ông|gia đình|trẻ em	0
+👨‍👧‍👦	Người	gia đình: đàn ông, con gái, con trai	con gái|con trai|đàn ông|gia đình|trẻ em	0
+👨‍👧‍👧	Người	gia đình: đàn ông, con gái, con gái	con gái|đàn ông|gia đình|trẻ em	0
+👩‍👦	Người	gia đình: phụ nữ, con trai	con trai|gia đình|phụ nữ|trẻ em	0
+👩‍👦‍👦	Người	gia đình: phụ nữ, con trai, con trai	con trai|gia đình|phụ nữ|trẻ em	0
+👩‍👧	Người	gia đình: phụ nữ, con gái	con gái|gia đình|phụ nữ|trẻ em	0
+👩‍👧‍👦	Người	gia đình: phụ nữ, con gái, con trai	con gái|con trai|gia đình|phụ nữ|trẻ em	0
+👩‍👧‍👧	Người	gia đình: phụ nữ, con gái, con gái	con gái|gia đình|phụ nữ|trẻ em	0
 🗣️	Người	đầu người đang nói	cái đầu|đang nói|đầu người đang nói|hình bóng|khuôn mặt|nói	0
 👤	Người	bóng tượng bán thân	bóng|bóng tượng bán thân|tượng bán thân	0
 👥	Người	các bóng tượng bán thân	bóng|các bóng tượng bán thân|tượng bán thân	0
 🫂	Người	hai người ôm nhau	cảm ơn|hai người ôm nhau|ôm|tạm biệt|tình bạn|tình yêu|xin chào	0
-👪	Người	gia đình	gia đình|trẻ em	1
-🧑‍🧑‍🧒	Người	gia đình: người lớn, người lớn, trẻ em	gia đình: người lớn|gia đình: người lớn, người lớn, trẻ em|người lớn|trẻ em	1
-🧑‍🧑‍🧒‍🧒	Người	gia đình: người lớn, người lớn, trẻ em, trẻ em	gia đình: người lớn|gia đình: người lớn, người lớn, trẻ em, trẻ em|người lớn|trẻ em	1
-🧑‍🧒	Người	gia đình: người lớn, trẻ em	gia đình: người lớn|gia đình: người lớn, trẻ em|trẻ em	1
-🧑‍🧒‍🧒	Người	gia đình: người lớn, trẻ em, trẻ em	gia đình: người lớn|gia đình: người lớn, trẻ em, trẻ em|trẻ em	1
+👪	Người	gia đình	gia đình|trẻ em	0
+🧑‍🧑‍🧒	Người	gia đình: người lớn, người lớn, trẻ em	gia đình: người lớn|gia đình: người lớn, người lớn, trẻ em|người lớn|trẻ em	0
+🧑‍🧑‍🧒‍🧒	Người	gia đình: người lớn, người lớn, trẻ em, trẻ em	gia đình: người lớn|gia đình: người lớn, người lớn, trẻ em, trẻ em|người lớn|trẻ em	0
+🧑‍🧒	Người	gia đình: người lớn, trẻ em	gia đình: người lớn|gia đình: người lớn, trẻ em|trẻ em	0
+🧑‍🧒‍🧒	Người	gia đình: người lớn, trẻ em, trẻ em	gia đình: người lớn|gia đình: người lớn, trẻ em, trẻ em|trẻ em	0
 👣	Người	dấu chân	các dấu chân|chân trần|dấu chân|in dấu|quần áo	0
 🫆	Người	dấu vân tay	danh tính|dấu vân tay|pháp y|sự an toàn	0
 🐵	Động vật & thiên nhiên	mặt khỉ	động vật|khỉ|khuôn mặt|quả chuối	0

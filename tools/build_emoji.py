@@ -54,6 +54,12 @@ def main():
             else:
                 bases.add(int(rng, 16))
     names, keywords = load_annotations(ann)
+    # Chỉ coi là "nhận tông da" khi chính emoji-test.txt liệt kê biến thể <cp đầu><tông da><phần còn lại>
+    # (loại các emoji nhiều người như gia đình, vì chèn một modifier vào đó không phải chuỗi hợp lệ).
+    fully = set()
+    for line in open(test, encoding="utf-8"):
+        if not line.startswith("#") and "fully-qualified" in line:
+            fully.add(tuple(int(c, 16) for c in line.split(";")[0].split()))
     out = []
     group = None
     seen = set()
@@ -75,7 +81,7 @@ def main():
         seen.add(key)
         name = names.get(key, "")
         kws = keywords.get(key, [])
-        mod = 1 if cps[0] in bases else 0
+        mod = 1 if cps[0] in bases and (cps[0], 0x1F3FD, *cps[1:]) in fully else 0
         out.append(f"{emoji}\t{GROUP_VI[group]}\t{name}\t{'|'.join(kws)}\t{mod}")
     sys.stdout.write("\n".join(out) + "\n")
     print(f"{len(out)} emoji", file=sys.stderr)

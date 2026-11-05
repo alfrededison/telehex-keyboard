@@ -61,12 +61,16 @@ class PredictionStore(private val context: Context) {
     /** Nạp gói ngôn ngữ từ file người dùng chọn; kiểm tra định dạng trước khi thay. */
     fun importPack(uri: Uri): Result<Unit> = runCatching {
         val tmp = File(context.filesDir, "vi.ngram.tmp")
-        context.contentResolver.openInputStream(uri)!!.use { input -> tmp.outputStream().use { input.copyTo(it) } }
-        FileInputStream(tmp).use { fis ->
-            val ch = fis.channel
-            BinaryNgramModel(ch.map(FileChannel.MapMode.READ_ONLY, 0, ch.size())) // ném lỗi nếu sai định dạng
+        try {
+            context.contentResolver.openInputStream(uri)!!.use { input -> tmp.outputStream().use { input.copyTo(it) } }
+            FileInputStream(tmp).use { fis ->
+                val ch = fis.channel
+                BinaryNgramModel(ch.map(FileChannel.MapMode.READ_ONLY, 0, ch.size())) // ném lỗi nếu sai/hỏng định dạng
+            }
+            check(tmp.renameTo(packFile)) { "Không ghi được file" }
+        } finally {
+            tmp.delete()
         }
-        check(tmp.renameTo(packFile)) { "Không ghi được file" }
         predictor.base = loadBase()
         bump()
     }

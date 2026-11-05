@@ -79,6 +79,7 @@ class HexGeometry(
     /** Hai ô gần nhất kèm bình phương khoảng cách, gần trước. Rỗng nếu ngoài lưới theo chiều dọc. */
     fun nearestCells(x: Float, y: Float): List<Pair<Pair<Int, Int>, Float>> {
         if (y < top - h / 2 || y > top + gridHeight + h / 2) return emptyList()
+        if (x < pad - w / 2 || x > pad + 7.5f * w + w / 2) return emptyList() // ngoài lưới (chế độ một tay)
         val found = ArrayList<Pair<Pair<Int, Int>, Float>>(9)
         val rGuess = ((y - top - h / 2) / p).toInt().coerceIn(0, 4)
         for (r in (rGuess - 1).coerceAtLeast(0)..(rGuess + 1).coerceAtMost(4)) {

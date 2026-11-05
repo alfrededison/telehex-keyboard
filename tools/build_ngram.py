@@ -14,6 +14,7 @@ telex/.../predict/BinaryNgramModel.kt). Mục tiêu < 20 MB: chỉnh --min-count
 """
 import argparse
 import math
+import unicodedata
 import re
 import struct
 import sys
@@ -30,7 +31,7 @@ def sentences(paths):
         with open(path, encoding="utf-8", errors="ignore") as f:
             buf = []
             for line in f:
-                for tok in TOKEN.findall(line):
+                for tok in TOKEN.findall(unicodedata.normalize("NFC", line)):
                     if tok in ".!?\n":
                         if buf:
                             yield buf

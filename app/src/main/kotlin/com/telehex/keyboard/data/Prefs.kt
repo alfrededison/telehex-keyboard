@@ -66,12 +66,13 @@ class Prefs(context: Context) {
         val o = JSONObject(json)
         val e = sp.edit()
         for (k in o.keys()) {
+            val expected = KNOWN_TYPES[k] ?: continue // khoá lạ: bỏ qua
             when (val v = o.get(k)) {
-                is Boolean -> e.putBoolean(k, v)
-                is Int -> e.putInt(k, v)
-                is Long -> e.putLong(k, v)
-                is String -> e.putString(k, v)
-                is org.json.JSONArray -> e.putStringSet(k, (0 until v.length()).map { v.getString(it) }.toSet())
+                is Boolean -> if (expected == Boolean::class) e.putBoolean(k, v)
+                is Int -> if (expected == Int::class) e.putInt(k, v) else if (expected == Long::class) e.putLong(k, v.toLong())
+                is Long -> if (expected == Long::class) e.putLong(k, v) else if (expected == Int::class) e.putInt(k, v.toInt())
+                is String -> if (expected == String::class) e.putString(k, v)
+                is org.json.JSONArray -> if (expected == Set::class) e.putStringSet(k, (0 until v.length()).map { v.getString(it) }.toSet())
             }
         }
         e.apply()
@@ -231,6 +232,20 @@ class Prefs(context: Context) {
         const val KEY_DOUBLE_TAP_MS = "double_tap_ms"
 
         val DEFAULT_FALLBACK_PKGS: Set<String> = setOf("com.zing.zalo", "com.facebook.orca")
+
+        /** Khoá → kiểu được phép khi khôi phục (sai kiểu sẽ làm getter ném ClassCastException). */
+        val KNOWN_TYPES: Map<String, kotlin.reflect.KClass<*>> = mapOf(
+            KEY_NEW_TONE_STYLE to Boolean::class, KEY_L_GRAVE to Boolean::class, KEY_EN_FALLBACK to Boolean::class,
+            KEY_HAPTIC to Boolean::class, KEY_SOUND to Boolean::class, KEY_THEME to String::class,
+            KEY_EXTRA_BOTTOM to Int::class, KEY_FALLBACK_PKGS to Set::class, KEY_LAYOUT to String::class,
+            KEY_CUSTOM to String::class, KEY_RECENT_EMOJI to String::class, KEY_PRESETS to String::class,
+            KEY_SWIPE_DP to Int::class, KEY_HOLD_MS to Int::class, KEY_LONG_PRESS_MS to Int::class,
+            KEY_STEP_DP to Int::class, KEY_DOUBLE_TAP_MS to Int::class,
+            KEY_PREDICTIONS to Boolean::class, KEY_INCOGNITO to Boolean::class,
+            KEY_DYNAMIC_ZONES to Boolean::class, KEY_LEARN_OFFSETS to Boolean::class,
+            KEY_ONE_HANDED to Int::class, KEY_SKIN_TONE to Int::class, KEY_CLIPBOARD to Boolean::class,
+            KEY_SHORTCUTS to String::class,
+        )
 
         val DEFAULT_SWIPE_DOWN: Map<String, String> = mapOf(
             "q" to "1", "w" to "2", "e" to "3", "r" to "4", "t" to "5", "y" to "6", "u" to "7", "i" to "8", "o" to "9", "p" to "0",

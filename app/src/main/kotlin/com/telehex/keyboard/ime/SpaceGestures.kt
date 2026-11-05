@@ -33,7 +33,8 @@ class SpaceGestures(private val host: Host) {
         fun deleteBackward()
         fun deleteSelection()
         fun commitSpace()
-        fun undoLastSpace()
+        /** Xoá khoảng trắng của lần chạm đầu (chạm đúp). @return true nếu đã xoá. */
+        fun undoLastSpace(): Boolean
         fun moveCursor(dxChars: Int, dyLines: Int)
         fun copy()
         fun cut()
@@ -99,9 +100,10 @@ class SpaceGestures(private val host: Host) {
             State.DOUBLE_PENDING -> {
                 if (!moved) return
                 state = State.SELECT
-                host.undoLastSpace()
+                val removed = host.undoLastSpace()
                 host.detachComposing()
-                anchor = host.cursorPosition()
+                // onUpdateSelection đến trễ nên tự trừ ký tự vừa xoá
+                anchor = host.cursorPosition() - (if (removed) 1 else 0)
                 selectChars = 0
                 host.setCursorMode(true)
                 updateSelect(dx)
@@ -144,6 +146,18 @@ class SpaceGestures(private val host: Host) {
         }
         state = State.IDLE
     }
+
+    /**
+     * Có ngón thứ hai chạm xuống (gõ nhanh hai ngón cái hoặc cử chỉ hai ngón): dừng các trạng thái
+     * đang kéo, nhưng giữ PENDING để chạm phím cách vẫn ra khoảng trắng khi nhả.
+     */
+    fun onMultiTouch() {
+        cancelTimer()
+        if (state == State.CURSOR || state == State.WORD_SELECT || state == State.SELECT) cancel()
+    }
+
+    /** Phím khác vừa được gõ: lần chạm cách tiếp theo không còn là chạm đúp. */
+    fun noteOtherKey() { lastTapUpTime = 0L }
 
     private fun cancelTimer() = handler.removeCallbacks(holdRunnable)
 

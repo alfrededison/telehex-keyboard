@@ -23,10 +23,10 @@ object Backup {
         context.contentResolver.openOutputStream(uri)!!.use { out ->
             ZipOutputStream(out).use { zip ->
                 zip.putNextEntry(ZipEntry(PREFS)); zip.write(prefs.exportJson().toByteArray()); zip.closeEntry()
-                for (name in listOf(PERSONAL, CLIPBOARD)) {
-                    val f = File(context.filesDir, name)
-                    if (f.exists()) { zip.putNextEntry(ZipEntry(name)); f.inputStream().use { it.copyTo(zip) }; zip.closeEntry() }
-                }
+                val personal = File(context.filesDir, PERSONAL)
+                if (personal.exists()) { zip.putNextEntry(ZipEntry(PERSONAL)); personal.inputStream().use { it.copyTo(zip) }; zip.closeEntry() }
+                // Clipboard: chỉ mục đã ghim, không mang theo mục tạm (có thể là mật khẩu, OTP)
+                zip.putNextEntry(ZipEntry(CLIPBOARD)); zip.write(ClipboardStore(context).exportPinnedJson().toByteArray()); zip.closeEntry()
             }
         }
     }

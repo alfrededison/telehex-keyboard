@@ -46,6 +46,15 @@ class ClipboardStore(context: Context, private val ttlMs: Long = 60L * 60 * 1000
 
     fun clearUnpinned() { items.removeAll { !it.pinned }; save() }
 
+    /** Chỉ các mục đã ghim, dạng JSON như file lưu (để sao lưu; không mang theo mục tạm). */
+    fun exportPinnedJson(): String = toJson(items.filter { it.pinned }).toString()
+
+    private fun toJson(list: List<Item>): JSONArray {
+        val arr = JSONArray()
+        for (it in list) arr.put(JSONObject().put("text", it.text).put("time", it.time).put("pinned", it.pinned))
+        return arr
+    }
+
     private fun expire() {
         val now = System.currentTimeMillis()
         if (items.removeAll { !it.pinned && now - it.time > ttlMs }) save()
@@ -63,11 +72,7 @@ class ClipboardStore(context: Context, private val ttlMs: Long = 60L * 60 * 1000
     }
 
     private fun save() {
-        runCatching {
-            val arr = JSONArray()
-            for (it in items) arr.put(JSONObject().put("text", it.text).put("time", it.time).put("pinned", it.pinned))
-            file.writeText(arr.toString())
-        }
+        runCatching { file.writeText(toJson(items).toString()) }
     }
 
     companion object { const val MAX_UNPINNED = 30 }
