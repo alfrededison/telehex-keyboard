@@ -22,6 +22,14 @@ jobs:
           fetch-depth: 0
           # The gh steps use GH_TOKEN; keep the write token out of .git/config while Gradle runs.
           persist-credentials: false
+      - name: appVersion must be bumped after a release
+        run: |
+          RELEASE=1 . tools/version.sh
+          if git rev-parse -q --verify "refs/tags/v$VERSION_NAME" >/dev/null; then
+            echo "v$VERSION_NAME is already released: bump appVersion (tools/release.sh does it)," \
+                 "otherwise this dev build would be a downgrade from the release." >&2
+            exit 1
+          fi
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -32,6 +40,7 @@ jobs:
           ./gradlew --no-daemon :telex:test :app:testDebugUnitTest :app:lintDebug
           python3 tools/test_version.py
           python3 tools/test_signing.py
+          python3 tools/test_release.py
       - run: yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" > /dev/null
       - name: Build with the project signing key and verify its certificate
         env:

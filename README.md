@@ -86,8 +86,15 @@ Yêu cầu JDK 17+, Android SDK 36.
 ## Phát hành
 
 - **Phiên bản chỉ viết ở một nơi**: dòng `appVersion` trong `app/build.gradle.kts`. `tools/version.sh` tính versionCode cố định từ X.Y.Z: bản release là `X·10^7 + Y·10^5 + Z·10^3 + 999`, bản dev `X.Y.Z-dev.N` là `… + N` với N đếm commit từ lần đổi `appVersion`. Build từ tag ở đâu cũng ra cùng số (cần cho F-Droid).
-- **Bản dev**: mỗi push lên `main` thay prerelease `dev` trên GitHub bằng APK `TeleHex-X.Y.Z-dev.N.apk` + `.sha256`, ký bằng key dự án nên cài đè được lên nhau và lên bản release.
-- **Bản release**: tăng `appVersion`, cập nhật CHANGELOG.md, commit, rồi push tag `vX.Y.Z` khớp `appVersion`. Workflow chạy test, build, kiểm tra chứng chỉ, rồi tạo **release nháp** kèm APK + `.sha256`. Bạn đọc lại và bấm Publish.
+- **Bản dev**: mỗi push lên `main` thay prerelease `dev` trên GitHub bằng APK `TeleHex-X.Y.Z-dev.N.apk` + `.sha256`, ký bằng key dự án nên các bản dev cài đè được lên nhau. Bản dev chỉ cài đè được lên bản release khi `appVersion` đã được tăng sau release (versionCode của `X.Y.Z-dev.N` luôn thấp hơn của `X.Y.Z`); workflow dev dừng nếu tag `v<appVersion>` đã tồn tại để nhắc việc này.
+- **Bản release**: ghi thay đổi vào mục `## X.Y.Z — unreleased` của CHANGELOG.md, rồi chạy
+
+  ```
+  tools/release.sh            # hoặc: tools/release.sh minor | major
+  git push origin main vX.Y.Z
+  ```
+
+  Script đóng ngày cho mục CHANGELOG, commit "Release X.Y.Z", gắn tag `vX.Y.Z`, rồi tạo ngay commit "Start X.Y.(Z+1) development" tăng `appVersion` và mở mục CHANGELOG mới. Script không tự push. Push tag thì workflow chạy test, build, kiểm tra chứng chỉ, rồi tạo **release nháp** kèm APK + `.sha256` để bạn đọc lại và bấm Publish; push `main` thì bản dev mới là `X.Y.(Z+1)-dev.1`, cao hơn bản release.
 - **Ghim chứng chỉ**: `signing/release-cert.sha256` là SHA-256 của chứng chỉ ký. Bản release và bản dev bị chặn nếu APK không ký đúng key này, vì Android không cho cài đè một APK ký bằng key khác.
 - **Secrets**: `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. Keystore và mật khẩu nằm trong `.signing/` (không commit); `python3 .signing/upload-secrets.py` đẩy chúng lên GitHub Secrets bằng `gh`.
 
