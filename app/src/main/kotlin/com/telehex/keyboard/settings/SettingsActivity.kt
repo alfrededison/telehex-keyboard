@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.text.InputType
 import android.util.TypedValue
+import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -57,11 +58,12 @@ class SettingsActivity : Activity() {
         col.add(TextView(this).apply { text = "Kiểu đặt dấu" })
         col.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
-            val old = RadioButton(context).apply { text = "Cũ (hòa, thúy)"; id = 1 }
-            val new = RadioButton(context).apply { text = "Mới (hoà, thuý)"; id = 2 }
+            isSaveEnabled = false
+            val old = RadioButton(context).apply { text = "Cũ (hòa, thúy)"; id = View.generateViewId() }
+            val new = RadioButton(context).apply { text = "Mới (hoà, thuý)"; id = View.generateViewId() }
             addView(old); addView(new)
-            check(if (prefs.newToneStyle) 2 else 1)
-            setOnCheckedChangeListener { _, id -> prefs.newToneStyle = id == 2 }
+            check(if (prefs.newToneStyle) new.id else old.id)
+            setOnCheckedChangeListener { _, id -> prefs.newToneStyle = id == new.id }
         })
         col.add(switch("L cũng là dấu huyền (lal → là)", prefs.lAsGrave) { prefs.lAsGrave = it })
         col.add(switch("Tự khôi phục từ tiếng Anh (windows không thành ưindows)", prefs.englishFallback) { prefs.englishFallback = it })
@@ -80,10 +82,11 @@ class SettingsActivity : Activity() {
         col.add(TextView(this).apply { text = "Giao diện" })
         col.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
-            val ids = listOf("system" to "Theo hệ thống", "light" to "Sáng", "dark" to "Tối")
-            ids.forEachIndexed { i, (_, label) -> addView(RadioButton(context).apply { text = label; id = i + 1 }) }
-            check(ids.indexOfFirst { it.first == prefs.themeMode } + 1)
-            setOnCheckedChangeListener { _, id -> prefs.themeMode = ids[id - 1].first }
+            isSaveEnabled = false
+            val modes = listOf("system" to "Theo hệ thống", "light" to "Sáng", "dark" to "Tối")
+            val buttons = modes.map { (_, label) -> RadioButton(context).apply { text = label; id = View.generateViewId() }.also { addView(it) } }
+            check(buttons[modes.indexOfFirst { it.first == prefs.themeMode }.coerceAtLeast(0)].id)
+            setOnCheckedChangeListener { _, id -> prefs.themeMode = modes[buttons.indexOfFirst { it.id == id }].first }
         })
         val heightLabel = TextView(this).apply { text = "Khoảng trống dưới bàn phím: ${prefs.extraBottomDp} dp" }
         col.add(heightLabel)
@@ -99,6 +102,17 @@ class SettingsActivity : Activity() {
             })
         })
 
+        col.add(header("Cử chỉ"))
+        col.add(TextView(this).apply {
+            text = "Phím cách: vuốt trái = xoá (ngắn: 1 ký tự, dài: theo từ, có bôi đen xem trước); giữ rồi kéo = di con trỏ; chạm đúp rồi giữ-kéo = chọn; vuốt phải = dán; khi có vùng chọn: vuốt lên = chép, vuốt trái = cắt. Hai ngón vuốt trái/phải = undo/redo, hai ngón giữ = chọn hết."
+            textSize = 13f
+        })
+        col.add(slider("Ngưỡng vuốt", "dp", 12, 60, prefs.swipeThresholdDp) { prefs.swipeThresholdDp = it })
+        col.add(slider("Giữ phím cách trước khi kéo (con trỏ)", "ms", 150, 800, prefs.holdMs) { prefs.holdMs = it })
+        col.add(slider("Giữ lâu (long-press)", "ms", 250, 1000, prefs.longPressMs) { prefs.longPressMs = it })
+        col.add(slider("Mỗi bước xoá từ / di con trỏ", "dp", 25, 100, prefs.stepDp) { prefs.stepDp = it })
+        col.add(slider("Chạm đúp phím cách", "ms", 150, 600, prefs.doubleTapMs) { prefs.doubleTapMs = it })
+
         col.add(header("Tương thích"))
         col.add(TextView(this).apply {
             text = "Các app xử lý composing không ổn (Zalo, Messenger…) dùng chế độ dự phòng. Mỗi dòng một tên package."
@@ -107,10 +121,30 @@ class SettingsActivity : Activity() {
         col.add(EditText(this).apply {
             setText(prefs.fallbackPackages.sorted().joinToString("\n"))
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
-            setOnFocusChangeListener { v, hasFocus ->
-                if (!hasFocus) prefs.fallbackPackages = (v as EditText).text.split('\n').map { it.trim() }.filter { it.isNotEmpty() }.toSet()
-            }
+            addTextChangedListener(object : android.text.TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: android.text.Editable?) {
+                    prefs.fallbackPackages = s.toString().split('\n').map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+                }
+            })
         })
+    }
+
+    private fun slider(label: String, unit: String, min: Int, max: Int, value: Int, onChange: (Int) -> Unit): LinearLayout {
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val tv = TextView(this).apply { text = "$label: $value $unit" }
+        box.addView(tv)
+        box.addView(SeekBar(this).apply {
+            this.max = max - min
+            progress = value - min
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(sb: SeekBar?, p: Int, fromUser: Boolean) { tv.text = "$label: ${p + min} $unit" }
+                override fun onStartTrackingTouch(sb: SeekBar?) {}
+                override fun onStopTrackingTouch(sb: SeekBar?) { onChange((sb?.progress ?: 0) + min) }
+            })
+        })
+        return box
     }
 
     private fun header(text: String) = TextView(this).apply {

@@ -133,8 +133,19 @@ class TelexEngine(config: TelexConfig = TelexConfig()) {
             k == 'a' || k == 'e' || k == 'o' -> applyCircumflex(k, upper)
             k == 'd' -> applyD(upper)
             k == 'w' -> applyW(upper)
-            else -> add(k, upper)
+            else -> {
+                // "thuơ" + phụ âm cuối → "thươ" (thuowng → thương), vì "uơ" chỉ đứng cuối (thuở, huơ, khuơ).
+                val n = chars.size
+                if (n >= 2 && chars[n - 1] == 'ơ' && chars[n - 2] == 'u' && isSoftUoOnset(n - 2)) chars[n - 2] = 'ư'
+                add(k, upper)
+            }
         }
+    }
+
+    /** Phụ âm đầu h / th / kh trước vị trí [uoIndex]: "uo" + w cho "uơ" thay vì "ươ". */
+    private fun isSoftUoOnset(uoIndex: Int): Boolean {
+        val onset = chars.subList(0, uoIndex).joinToString("")
+        return onset == "h" || onset == "th" || onset == "kh"
     }
 
     private fun applyCircumflex(k: Char, upper: Boolean) {
@@ -159,7 +170,8 @@ class TelexEngine(config: TelexConfig = TelexConfig()) {
     private fun applyW(upper: Boolean) {
         val p = lastIndexOfUo()
         if (p >= 0 && !(p > 0 && chars[p - 1] == 'q')) {
-            chars[p] = 'ư'; chars[p + 1] = 'ơ'
+            // "uo" ở cuối sau h/th/kh → "uơ" (thuở, huơ); có phụ âm cuối thì thành "ươ" khi gõ tiếp.
+            if (p + 2 == chars.size && isSoftUoOnset(p)) chars[p + 1] = 'ơ' else { chars[p] = 'ư'; chars[p + 1] = 'ơ' }
             return
         }
         for (i in chars.indices.reversed()) {

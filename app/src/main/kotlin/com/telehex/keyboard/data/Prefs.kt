@@ -46,6 +46,31 @@ class Prefs(context: Context) {
         get() = sp.getInt(KEY_EXTRA_BOTTOM, 0)
         set(v) = sp.edit().putInt(KEY_EXTRA_BOTTOM, v).apply()
 
+    /** Ngưỡng cử chỉ, chỉnh theo tay từng người. */
+    var swipeThresholdDp: Int
+        get() = sp.getInt(KEY_SWIPE_DP, 24)
+        set(v) = sp.edit().putInt(KEY_SWIPE_DP, v).apply()
+
+    /** Thời gian giữ phím cách trước khi kéo để vào chế độ con trỏ (ms). */
+    var holdMs: Int
+        get() = sp.getInt(KEY_HOLD_MS, 300)
+        set(v) = sp.edit().putInt(KEY_HOLD_MS, v).apply()
+
+    /** Giữ phím lâu hơn ngưỡng này là long-press (ms), ví dụ giữ 123 để mở dialpad. */
+    var longPressMs: Int
+        get() = sp.getInt(KEY_LONG_PRESS_MS, 450)
+        set(v) = sp.edit().putInt(KEY_LONG_PRESS_MS, v).apply()
+
+    /** Khoảng cách kéo (dp) cho mỗi bước xoá từ / di con trỏ. */
+    var stepDp: Int
+        get() = sp.getInt(KEY_STEP_DP, 50)
+        set(v) = sp.edit().putInt(KEY_STEP_DP, v).apply()
+
+    /** Hai lần chạm phím cách cách nhau dưới ngưỡng này (ms) là chạm đúp. */
+    var doubleTapMs: Int
+        get() = sp.getInt(KEY_DOUBLE_TAP_MS, 300)
+        set(v) = sp.edit().putInt(KEY_DOUBLE_TAP_MS, v).apply()
+
     /** Danh sách package dùng chế độ dự phòng commit thay vì composing. */
     var fallbackPackages: Set<String>
         get() = sp.getStringSet(KEY_FALLBACK_PKGS, DEFAULT_FALLBACK_PKGS) ?: DEFAULT_FALLBACK_PKGS
@@ -105,6 +130,11 @@ class Prefs(context: Context) {
         const val KEY_CUSTOM = "custom_keys"
         const val KEY_RECENT_EMOJI = "recent_emoji"
         const val KEY_PRESETS = "layout_presets"
+        const val KEY_SWIPE_DP = "swipe_threshold_dp"
+        const val KEY_HOLD_MS = "hold_ms"
+        const val KEY_LONG_PRESS_MS = "long_press_ms"
+        const val KEY_STEP_DP = "step_dp"
+        const val KEY_DOUBLE_TAP_MS = "double_tap_ms"
 
         val DEFAULT_FALLBACK_PKGS: Set<String> = setOf("com.zing.zalo", "com.facebook.orca")
 

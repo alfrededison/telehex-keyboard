@@ -103,7 +103,7 @@ class CustomKeysActivity : Activity() {
             .setView(box)
             .setPositiveButton("Lưu") { _, _ ->
                 val v = input.text.toString()
-                if (v.isEmpty()) { Toast.makeText(this, "Để trống thì không chèn gì khi vuốt xuống", Toast.LENGTH_SHORT).show() }
+                if (v.isEmpty()) { Toast.makeText(this, "Để trống: vuốt xuống phím này sẽ không chèn gì", Toast.LENGTH_SHORT).show() }
                 prefs.customKeys = prefs.customKeys + (code to v)
                 refresh()
             }

@@ -24,8 +24,8 @@ class EmojiPanel(context: Context, private val theme: Theme) : LinearLayout(cont
     }
 
     var listener: Listener? = null
+    /** Danh sách Gần đây; chỉ áp dụng khi mở lại tab để không xê dịch dưới ngón tay. */
     var recent: List<String> = emptyList()
-        set(value) { field = value; if (currentTab == RECENT) showTab(RECENT) }
 
     private var currentTab = "face"
     private val grid = GridView(context)

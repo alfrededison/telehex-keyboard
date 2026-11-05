@@ -28,6 +28,8 @@ open class KeyboardView @JvmOverloads constructor(
         fun onKeyMove(key: Key, dx: Float, dy: Float, dt: Long)
         fun onKeyUp(key: Key, gesture: Gesture, dx: Float, dy: Float, dt: Long)
         fun onKeyCancel(key: Key)
+        fun onMultiTouchStart() {}
+        fun onTwoFinger(gesture: Gesture) {}
     }
 
     var listener: Listener? = null
@@ -94,10 +96,29 @@ open class KeyboardView @JvmOverloads constructor(
             pressed.remove(pointerId)?.let { listener?.onKeyCancel(it) }
             invalidate()
         }
+
+        override fun onMultiTouchStart() { listener?.onMultiTouchStart() }
+        override fun onTwoFinger(gesture: Gesture) { listener?.onTwoFinger(gesture) }
+    }
+
+    /** Ngưỡng vuốt (px) và long-press (ms), đặt từ Cài đặt. */
+    fun setThresholds(swipePx: Float, longPressMs: Long) {
+        gestures.threshold = swipePx
+        gestures.longPressMs = longPressMs
+    }
+
+    /** Khoảng cách từ tâm phím cách tới mép trái lưới (px); âm. */
+    fun spaceLeftEdgeDx(): Float {
+        val c = centerOf(keys.firstOrNull { it.isSpace } ?: return -Float.MAX_VALUE) ?: return -Float.MAX_VALUE
+        return padPx - c.x
     }
 
     /** Chiều cao lưới hiện tại (px), dùng cho các bảng thay thế lưới (emoji, dialpad). */
     val gridHeightPx: Int get() = (topPx + (geometry?.gridHeight ?: 0f) + bottomPx).toInt()
+
+    /** Chiều cao lưới sẽ có với bề rộng [widthPx], không cần đã đo. */
+    fun expectedHeight(widthPx: Int): Int =
+        (topPx + HexGeometry(widthPx.toFloat(), padPx, topPx, gapPx).gridHeight + bottomPx).toInt()
 
     fun dp(v: Float): Float = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, resources.displayMetrics)
     private fun sp(v: Float): Float = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, v, resources.displayMetrics)

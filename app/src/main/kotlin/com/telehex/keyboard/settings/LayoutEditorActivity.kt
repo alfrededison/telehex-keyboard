@@ -46,6 +46,7 @@ class LayoutEditorView(context: Context) : KeyboardView(context) {
                 val k = keyAt(event.x, event.y)
                 if (!movable(k)) return true
                 dragging = k; dragX = event.x; dragY = event.y
+                parent?.requestDisallowInterceptTouchEvent(true)
                 highlighted = setOf(k!!)
                 performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
             }

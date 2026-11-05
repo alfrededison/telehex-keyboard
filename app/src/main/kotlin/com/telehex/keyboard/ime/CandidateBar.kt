@@ -58,4 +58,32 @@ class CandidateBar(context: Context) : HorizontalScrollView(context) {
     }
 
     fun clear() = row.removeAllViews()
+
+    /** Một nút trên thanh chỉnh sửa: nhãn, gợi ý cử chỉ (dòng nhỏ), hành động. */
+    class EditAction(val label: String, val gestureHint: String, val enabled: Boolean = true, val action: () -> Unit)
+
+    /** Thanh chỉnh sửa thay cho gợi ý khi có vùng chọn hoặc đang ở chế độ con trỏ. */
+    fun showEditBar(actions: List<EditAction>) {
+        row.removeAllViews()
+        for (a in actions) {
+            val tv = TextView(context).apply {
+                text = if (a.gestureHint.isEmpty()) a.label else "${a.label}\n${a.gestureHint}"
+                textSize = 12f
+                setLineSpacing(0f, 0.95f)
+                gravity = Gravity.CENTER
+                val px = dp(8)
+                setPadding(px, 0, px, 0)
+                minWidth = dp(52)
+                alpha = if (a.enabled) 1f else 0.4f
+                setTextColor(theme.chipFg)
+                background = GradientDrawable().apply { cornerRadius = dp(10).toFloat(); setColor(theme.chipBg) }
+                isEnabled = a.enabled
+                setOnClickListener { a.action() }
+            }
+            val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(40))
+            lp.marginEnd = dp(6)
+            row.addView(tv, lp)
+        }
+        scrollTo(0, 0)
+    }
 }
