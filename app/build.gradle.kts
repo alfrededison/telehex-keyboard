@@ -72,4 +72,5 @@ kotlin {
 dependencies {
     implementation(project(":telex"))
     implementation(libs.androidx.core.ktx)
+    testImplementation(libs.junit)
 }
