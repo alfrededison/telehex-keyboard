@@ -12,11 +12,16 @@ import kotlin.math.sqrt
  */
 class HexGeometry(
     val viewWidth: Float,
-    val pad: Float,
+    padding: Float,
     val top: Float,
     val gap: Float,
+    /** Chế độ một tay: lưới thu về [scale] bề rộng và dồn sang trái/phải; lục giác vẫn đều. */
+    scale: Float = 1f,
+    alignRight: Boolean = false,
 ) {
-    val usable: Float = viewWidth - 2 * pad
+    /** Lề trái thực tế (gồm phần dồn khi một tay). */
+    val pad: Float = padding + (if (alignRight) viewWidth * (1 - scale) else 0f)
+    val usable: Float = viewWidth * scale - 2 * padding
     val w: Float = usable / 7.5f
     val h: Float = w * 2f / SQRT3
     val p: Float = 0.75f * h

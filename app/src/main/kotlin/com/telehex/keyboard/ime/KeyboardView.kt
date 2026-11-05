@@ -44,6 +44,12 @@ open class KeyboardView @JvmOverloads constructor(
     var dimmed: Boolean = false
         set(value) { field = value; invalidate() }
 
+    /** 0 = tắt, 1 = dồn trái, 2 = dồn phải (lưới ~80%). */
+    var oneHanded: Int = 0
+        set(value) { field = value; if (width > 0) { geometry = makeGeometry(width.toFloat()); rebuild(); invalidate() } }
+
+    private fun makeGeometry(w: Float) = HexGeometry(w, padPx, topPx, gapPx, if (oneHanded == 0) 1f else 0.8f, oneHanded == 2)
+
     var hapticEnabled: Boolean = true
     var soundEnabled: Boolean = false
     private val audio by lazy { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
@@ -115,7 +121,7 @@ open class KeyboardView @JvmOverloads constructor(
     /** Khoảng cách từ tâm phím cách tới mép trái lưới (px); âm. */
     fun spaceLeftEdgeDx(): Float {
         val c = centerOf(keys.firstOrNull { it.isSpace } ?: return -Float.MAX_VALUE) ?: return -Float.MAX_VALUE
-        return padPx - c.x
+        return (geometry?.pad ?: padPx) - c.x
     }
 
     /** Chiều cao lưới hiện tại (px), dùng cho các bảng thay thế lưới (emoji, dialpad). */
@@ -123,20 +129,20 @@ open class KeyboardView @JvmOverloads constructor(
 
     /** Chiều cao lưới sẽ có với bề rộng [widthPx], không cần đã đo. */
     fun expectedHeight(widthPx: Int): Int =
-        (topPx + HexGeometry(widthPx.toFloat(), padPx, topPx, gapPx).gridHeight + bottomPx).toInt()
+        (topPx + makeGeometry(widthPx.toFloat()).gridHeight + bottomPx).toInt()
 
     fun dp(v: Float): Float = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, resources.displayMetrics)
     private fun sp(v: Float): Float = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, v, resources.displayMetrics)
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val w = MeasureSpec.getSize(widthMeasureSpec)
-        val g = HexGeometry(w.toFloat(), padPx, topPx, gapPx)
+        val g = makeGeometry(w.toFloat())
         val h = (topPx + g.gridHeight + bottomPx).toInt()
         setMeasuredDimension(w, h)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        geometry = HexGeometry(w.toFloat(), padPx, topPx, gapPx)
+        geometry = makeGeometry(w.toFloat())
         rebuild()
     }
 

@@ -281,6 +281,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         keyboardView.hapticEnabled = prefs.haptic
         keyboardView.soundEnabled = prefs.sound
         keyboardView.setThresholds(dpF(prefs.swipeThresholdDp), prefs.longPressMs.toLong())
+        keyboardView.oneHanded = prefs.oneHanded
         keyboardView.touchOffsets = if (prefs.learnTouchOffsets) touchOffsets else null
         keyboardView.onTouchOffsetsChanged = {
             offsetsDirty = true

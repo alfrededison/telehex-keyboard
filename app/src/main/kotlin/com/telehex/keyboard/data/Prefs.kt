@@ -51,6 +51,32 @@ class Prefs(context: Context) {
         get() = sp.getLong(KEY_MODELS_VERSION, 0)
         set(v) = sp.edit().putLong(KEY_MODELS_VERSION, v).apply()
 
+    /** Chế độ một tay: 0 tắt, 1 trái, 2 phải. */
+    var oneHanded: Int
+        get() = sp.getInt(KEY_ONE_HANDED, 0)
+        set(v) = sp.edit().putInt(KEY_ONE_HANDED, v).apply()
+
+    /** Toàn bộ tuỳ chọn dạng JSON để sao lưu (không gồm dữ liệu học, lưu riêng). */
+    fun exportJson(): String = JSONObject(sp.all.filterKeys { it != KEY_TOUCH_OFFSETS }.mapValues { (_, v) ->
+        if (v is Set<*>) org.json.JSONArray(v.toList()) else v
+    }).toString()
+
+    /** Khôi phục tuỳ chọn từ JSON đã xuất; chỉ nhận các khoá đã biết với đúng kiểu. */
+    fun importJson(json: String) {
+        val o = JSONObject(json)
+        val e = sp.edit()
+        for (k in o.keys()) {
+            when (val v = o.get(k)) {
+                is Boolean -> e.putBoolean(k, v)
+                is Int -> e.putInt(k, v)
+                is Long -> e.putLong(k, v)
+                is String -> e.putString(k, v)
+                is org.json.JSONArray -> e.putStringSet(k, (0 until v.length()).map { v.getString(it) }.toSet())
+            }
+        }
+        e.apply()
+    }
+
     /** Tông da mặc định cho emoji (0 = không, 1..5 = sáng → tối). */
     var skinTone: Int
         get() = sp.getInt(KEY_SKIN_TONE, 0)
@@ -189,6 +215,7 @@ class Prefs(context: Context) {
         const val KEY_RECENT_EMOJI = "recent_emoji"
         const val KEY_PRESETS = "layout_presets"
         const val KEY_MODELS_VERSION = "models_version"
+        const val KEY_ONE_HANDED = "one_handed"
         const val KEY_SKIN_TONE = "skin_tone"
         const val KEY_CLIPBOARD = "clipboard_history"
         const val KEY_SHORTCUTS = "shortcuts"
