@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TeleHex</string>
+    <string name="ime_name">TeleHex – Telex tổ ong</string>
+    <string name="subtype_vi">Tiếng Việt (Telex)</string>
+</resources>
