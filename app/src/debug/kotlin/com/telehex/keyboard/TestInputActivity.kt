@@ -19,14 +19,14 @@ class TestInputActivity : Activity() {
         if (intent.hasExtra("onehanded")) com.telehex.keyboard.data.Prefs(this).oneHanded = intent.getIntExtra("onehanded", 0)
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 64, 32, 32) }
         val text = EditText(this).apply {
-            id = 1001
+            id = android.view.View.generateViewId()
             hint = "Thử gõ"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
             minLines = 3
             textSize = 22f
         }
-        val phone = EditText(this).apply { id = 1002; hint = "Điện thoại"; inputType = InputType.TYPE_CLASS_PHONE }
-        val password = EditText(this).apply { id = 1003; hint = "Mật khẩu"; inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD }
+        val phone = EditText(this).apply { id = android.view.View.generateViewId(); hint = "Điện thoại"; inputType = InputType.TYPE_CLASS_PHONE }
+        val password = EditText(this).apply { id = android.view.View.generateViewId(); hint = "Mật khẩu"; inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD }
         root.addView(text); root.addView(phone); root.addView(password)
         setContentView(root)
         text.requestFocus()

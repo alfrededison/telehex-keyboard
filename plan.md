@@ -4,7 +4,7 @@
 
 Bàn phím tiếng Việt gõ **Telex** trên lưới **lục giác đều 7 cột**, giữ tinh thần QWERTY nhưng phím to hơn ~45% so với QWERTY 10 cột. Thao tác phụ (xoá, chữ hoa, ký tự phụ) chuyển sang cử chỉ vuốt.
 
-Prototype tương tác (nguồn tham chiếu cho hành vi và hình học): https://claude.ai/artifact/J75nPGKMTPv1F9DcoT3Suc — file `project/Main.dc.html`, layout `qwerty-7`. Logic Telex trong prototype (các hàm `vIdx`, `toneIndex`, `spell`, `press`) là bản tham chiếu để port sang Kotlin.
+Prototype tương tác (nguồn tham chiếu cho hành vi và hình học): https://claude.ai/artifact/J75nPGKMTPv1F9DcoT3Suc — file `prototype/Main.dc.html`, layout `qwerty-7`. Logic Telex trong prototype (các hàm `vIdx`, `toneIndex`, `spell`, `press`) là bản tham chiếu để port sang Kotlin.
 
 Thiết bị thử chính: Samsung Galaxy Note 10+ (Android 12+).
 
@@ -148,9 +148,9 @@ Quy tắc (port từ prototype):
 - Xoá theo **grapheme** để emoji nhiều code point (❤️) xoá trong một lần.
 
 Việc cần làm thêm so với prototype:
-- [ ] Tự khôi phục từ tiếng Anh khi âm tiết không hợp lệ (`windows` không thành `ưindows`).
-- [ ] Bộ kiểm tra âm tiết hợp lệ (phụ âm đầu + vần + dấu; p/t/c/ch chỉ đi với sắc hoặc nặng).
-- [ ] Bộ test vàng ≥ 300 ca: từ thường gặp, `ươ`, `qu`, `gi`, `uy`, chữ hoa, gõ hoàn tác, kiểu dấu cũ/mới.
+- [x] Tự khôi phục từ tiếng Anh khi âm tiết không hợp lệ (`windows` không thành `ưindows`).
+- [x] Bộ kiểm tra âm tiết hợp lệ (phụ âm đầu + vần + dấu; p/t/c/ch chỉ đi với sắc hoặc nặng).
+- [x] Bộ test vàng ≥ 300 ca: từ thường gặp, `ươ`, `qu`, `gi`, `uy`, chữ hoa, gõ hoàn tác, kiểu dấu cũ/mới.
 
 ---
 
@@ -227,31 +227,31 @@ Ghi chú kỹ thuật:
 ## 7. Lộ trình
 
 **Phase 1: Lõi gõ được (MVP)**
-- [ ] Repo GitHub + workflow chạy test trên PR (mục 8).
-- [ ] Module `telex` + bộ test vàng (bắt đầu bằng các ca trong prototype).
-- [ ] `HexGeometry` + `KeyboardView` vẽ đúng layout 1.1, kể cả phím cách vát góc.
-- [ ] `InputMethodService`: tap, phím cách, `,` `.` `↵`, composing + chế độ dự phòng.
-- [ ] Cử chỉ: vuốt lên (hoa), vuốt trái trên phím cách (xoá).
+- [x] Repo GitHub + workflow chạy test trên PR (mục 8).
+- [x] Module `telex` + bộ test vàng (bắt đầu bằng các ca trong prototype).
+- [x] `HexGeometry` + `KeyboardView` vẽ đúng layout 1.1, kể cả phím cách vát góc.
+- [x] `InputMethodService`: tap, phím cách, `,` `.` `↵`, composing + chế độ dự phòng.
+- [x] Cử chỉ: vuốt lên (hoa), vuốt trái trên phím cách (xoá).
 
 **Phase 2: Đủ dùng hằng ngày**
-- [ ] Lớp ký tự 2 trang, phím 1/2.
-- [ ] Vuốt xuống với bảng ký tự mặc định.
-- [ ] Candidate bar đổi dấu.
-- [ ] Bảng emoji + tab Gần đây.
-- [ ] Haptic, giao diện sáng/tối.
+- [x] Lớp ký tự 2 trang, phím 1/2.
+- [x] Vuốt xuống với bảng ký tự mặc định.
+- [x] Candidate bar đổi dấu.
+- [x] Bảng emoji + tab Gần đây.
+- [x] Haptic, giao diện sáng/tối.
 
 **Phase 3: Tuỳ biến**
-- [ ] Màn hình Cài đặt + chọn ký tự vuốt xuống cho từng phím.
-- [ ] Layout editor kéo-thả, kiểm tra ràng buộc, preset, khôi phục mặc định.
-- [ ] Tự sinh trang số theo layout.
-- [ ] Toggle "L cũng là dấu huyền" và kiểu đặt dấu cũ/mới.
-- [ ] Workflow release: tag `v*` → APK đã ký trên GitHub Releases.
+- [x] Màn hình Cài đặt + chọn ký tự vuốt xuống cho từng phím.
+- [x] Layout editor kéo-thả, kiểm tra ràng buộc, preset, khôi phục mặc định.
+- [x] Tự sinh trang số theo layout.
+- [x] Toggle "L cũng là dấu huyền" và kiểu đặt dấu cũ/mới.
+- [x] Workflow release: tag `v*` → APK đã ký trên GitHub Releases.
 
 **Phase 4: Chống bấm nhầm**
-- [ ] Bộ kiểm tra âm tiết: gạch chân âm tiết không hợp lệ và đưa gợi ý sửa lên thanh gợi ý (không tự sửa, xem 9.4).
-- [ ] Vùng chạm động: nới vùng của các phím hợp lệ tiếp theo theo ngữ pháp âm tiết. Đây cũng là một dạng tự sửa ngầm, nên là **tuỳ chọn, mặc định tắt**.
-- [ ] Học độ lệch chạm của người dùng theo từng phím.
-- [ ] Gợi ý từ cơ bản (chi tiết ở 9.4), chạy hoàn toàn offline.
+- [x] Bộ kiểm tra âm tiết: gạch chân âm tiết không hợp lệ và đưa gợi ý sửa lên thanh gợi ý (không tự sửa, xem 9.4).
+- [x] Vùng chạm động: nới vùng của các phím hợp lệ tiếp theo theo ngữ pháp âm tiết. Đây cũng là một dạng tự sửa ngầm, nên là **tuỳ chọn, mặc định tắt**.
+- [x] Học độ lệch chạm của người dùng theo từng phím.
+- [x] Gợi ý từ cơ bản (chi tiết ở 9.4), chạy hoàn toàn offline.
 
 ---
 
@@ -399,31 +399,31 @@ Chi tiết từng phần:
 ### 9.9 Lộ trình v2 (sau Phase 1–4)
 
 **Phase 5: Cử chỉ chức năng và dialpad**
-- [ ] Dialpad + tự mở theo `inputType`; giữ 123 để mở dialpad.
-- [ ] Giữ-kéo phím cách di con trỏ; chạm đúp-giữ-kéo để chọn văn bản.
-- [ ] Xoá từ (flick nhanh) và xoá dòng (vuốt quá mép).
-- [ ] Ngăn xếp undo/redo + cử chỉ hai ngón.
-- [ ] Cut/copy/paste bằng flick khi có vùng chọn + thanh chỉnh sửa.
-- [ ] Màn hình chỉnh ngưỡng cử chỉ.
+- [x] Dialpad + tự mở theo `inputType`; giữ 123 để mở dialpad.
+- [x] Giữ-kéo phím cách di con trỏ; chạm đúp-giữ-kéo để chọn văn bản.
+- [x] Xoá từ (flick nhanh) và xoá dòng (vuốt quá mép).
+- [x] Ngăn xếp undo/redo + cử chỉ hai ngón.
+- [x] Cut/copy/paste bằng flick khi có vùng chọn + thanh chỉnh sửa.
+- [x] Màn hình chỉnh ngưỡng cử chỉ.
 
 **Phase 6: Gợi ý (không autocorrect)**
-- [ ] Pipeline dựng n-gram âm tiết (script Python trong `tools/`, output vào `assets/`) + bộ đo chất lượng.
-- [ ] Gợi ý âm tiết tiếp theo, dùng cả ngữ cảnh từ `getTextBeforeCursor`.
-- [ ] Gợi ý sửa lỗi (phím lân cận lục giác + lỗi Telex), gạch chân âm tiết không hợp lệ.
-- [ ] Gợi ý sửa cho từ đã gõ khi đặt con trỏ vào từ.
-- [ ] Mô hình cá nhân + chế độ ẩn danh + xuất/nhập dữ liệu học.
+- [x] Pipeline dựng n-gram âm tiết (script Python trong `tools/`, output vào `assets/`) + bộ đo chất lượng.
+- [x] Gợi ý âm tiết tiếp theo, dùng cả ngữ cảnh từ `getTextBeforeCursor`.
+- [x] Gợi ý sửa lỗi (phím lân cận lục giác + lỗi Telex), gạch chân âm tiết không hợp lệ.
+- [x] Gợi ý sửa cho từ đã gõ khi đặt con trỏ vào từ.
+- [x] Mô hình cá nhân + chế độ ẩn danh + xuất/nhập dữ liệu học.
 
 **Phase 7: Tiện ích**
-- [ ] Clipboard history (ghim, hết hạn, bỏ qua nội dung nhạy cảm).
-- [ ] Gõ tắt người dùng.
-- [ ] Gợi ý emoji + tìm emoji bằng tiếng Việt.
-- [ ] Bảng sửa văn bản.
+- [x] Clipboard history (ghim, hết hạn, bỏ qua nội dung nhạy cảm).
+- [x] Gõ tắt người dùng.
+- [x] Gợi ý emoji + tìm emoji bằng tiếng Việt.
+- [x] Bảng sửa văn bản.
 
 **Phase 8: Tuỳ chọn**
-- [ ] Một tay / bàn phím nổi.
-- [ ] Voice qua IME ngoài.
+- [x] Một tay (bàn phím nổi: chưa).
+- [x] Voice qua IME ngoài.
 - [ ] Nạp mô hình transformer do người dùng cung cấp.
-- [ ] Sao lưu / khôi phục.
+- [x] Sao lưu / khôi phục.
 - [ ] Gõ vuốt (xem 9.3).
 
 ### 9.10 License khi tham khảo mã
