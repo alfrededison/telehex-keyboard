@@ -59,6 +59,34 @@ class CandidateBar(context: Context) : HorizontalScrollView(context) {
 
     fun clear() = row.removeAllViews()
 
+    /** Chữ đang gõ (ô đầu, giữ nguyên) + các gợi ý sửa; chạm gợi ý để thay. */
+    fun showSuggestions(typed: String, fixes: List<String>, onPick: (String) -> Unit) {
+        row.removeAllViews()
+        chip(typed, selected = true) {}
+        for (f in fixes) chip(f, selected = false) { onPick(f) }
+        scrollTo(0, 0)
+    }
+
+    private fun chip(text: String, selected: Boolean, onClick: () -> Unit) {
+        val tv = TextView(context).apply {
+            this.text = text
+            textSize = 17f
+            gravity = Gravity.CENTER
+            val px = dp(12)
+            setPadding(px, 0, px, 0)
+            minWidth = dp(44)
+            setTextColor(if (selected) theme.chipActiveFg else theme.chipFg)
+            background = GradientDrawable().apply {
+                cornerRadius = dp(19).toFloat()
+                setColor(if (selected) theme.chipActiveBg else theme.chipBg)
+            }
+            setOnClickListener { onClick() }
+        }
+        val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(38))
+        lp.marginEnd = dp(6)
+        row.addView(tv, lp)
+    }
+
     /** Một nút trên thanh chỉnh sửa: nhãn, gợi ý cử chỉ (dòng nhỏ), hành động. */
     class EditAction(val label: String, val gestureHint: String, val enabled: Boolean = true, val action: () -> Unit)
 

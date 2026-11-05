@@ -70,10 +70,13 @@ open class KeyboardView @JvmOverloads constructor(
 
     private val gestures = GestureDetector(threshold = dp(24f))
 
+    private val downPoints = HashMap<Int, FloatArray>()
+
     private val gestureListener = object : GestureDetector.Listener {
         override fun onDown(pointerId: Int, key: Key?) {
             key ?: return
             pressed[pointerId] = key
+            lastDown?.let { downPoints[pointerId] = it }
             if (hapticEnabled) performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             if (soundEnabled) audio.playSoundEffect(AudioManager.FX_KEYPRESS_STANDARD, 0.5f)
             listener?.onKeyDown(key)
@@ -88,7 +91,9 @@ open class KeyboardView @JvmOverloads constructor(
         override fun onUp(pointerId: Int, key: Key?, gesture: Gesture, dx: Float, dy: Float, dt: Long) {
             pressed.remove(pointerId)
             invalidate()
+            val down = downPoints.remove(pointerId)
             key ?: return
+            if (gesture == Gesture.TAP && down != null) learnOffset(key, down[0], down[1])
             listener?.onKeyUp(key, gesture, dx, dy, dt)
         }
 
@@ -148,11 +153,49 @@ open class KeyboardView @JvmOverloads constructor(
         }
     }
 
+    /** Vùng chạm động: phím chữ hợp lệ tiếp theo được nới vùng. null = tắt. */
+    var validNextLetter: ((Char) -> Boolean)? = null
+
+    /** Học độ lệch chạm theo phím (px): mã phím → (dx, dy). null = tắt. */
+    var touchOffsets: MutableMap<String, FloatArray>? = null
+    var onTouchOffsetsChanged: (() -> Unit)? = null
+
     fun keyAt(x: Float, y: Float): Key? {
         val g = geometry ?: return null
-        val cell = g.cellAt(x, y) ?: return null
-        return cellToKey[cell]
+        var px = x; var py = y
+        val offsets = touchOffsets
+        if (offsets != null && offsets.isNotEmpty()) {
+            // Bù độ lệch chung trước, rồi tinh chỉnh theo phím gần nhất
+            var sx = 0f; var sy = 0f
+            for (o in offsets.values) { sx += o[0]; sy += o[1] }
+            px -= sx / offsets.size; py -= sy / offsets.size
+            val first = g.cellAt(px, py)?.let { cellToKey[it] }
+            offsets[first?.code]?.let { o -> px = x - o[0]; py = y - o[1] }
+        }
+        val near = g.nearestCells(px, py)
+        if (near.isEmpty()) return null
+        val best = cellToKey[near[0].first] ?: return null
+        val check = validNextLetter
+        if (check != null && near.size == 2 && near[1].second < near[0].second * 1.8f) {
+            val second = cellToKey[near[1].first]
+            if (second != null && second.isLetter && best.isLetter &&
+                !check(best.code[0]) && check(second.code[0])) return second
+        }
+        return best
     }
+
+    private fun learnOffset(key: Key, x: Float, y: Float) {
+        val offsets = touchOffsets ?: return
+        if (!key.isLetter) return
+        val c = centerOf(key) ?: return
+        val o = offsets.getOrPut(key.code) { floatArrayOf(0f, 0f) }
+        val alpha = 0.08f
+        val dx = (x - c.x).coerceIn(-w40(), w40()); val dy = (y - c.y).coerceIn(-w40(), w40())
+        o[0] += alpha * (dx - o[0]); o[1] += alpha * (dy - o[1])
+        onTouchOffsetsChanged?.invoke()
+    }
+
+    private fun w40(): Float = (geometry?.w ?: dp(50f)) * 0.4f
 
     /** Các phím được tô "đang nhấn" thêm từ ngoài (editor). */
     var highlighted: Set<Key> = emptySet()
@@ -210,9 +253,17 @@ open class KeyboardView @JvmOverloads constructor(
         drawOverlay(canvas)
     }
 
+    private var lastDown: FloatArray? = null
+
     @SuppressLint("ClickableViewAccessibility")
-    override fun onTouchEvent(event: MotionEvent): Boolean =
-        gestures.onTouch(event, ::keyAt, gestureListener)
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        val a = event.actionMasked
+        if (a == MotionEvent.ACTION_DOWN || a == MotionEvent.ACTION_POINTER_DOWN) {
+            val i = event.actionIndex
+            lastDown = floatArrayOf(event.getX(i), event.getY(i))
+        }
+        return gestures.onTouch(event, ::keyAt, gestureListener)
+    }
 
     /** Paint nhãn dùng lại cho overlay của lớp con. */
     protected fun labelPaint(): Paint = labelPaint

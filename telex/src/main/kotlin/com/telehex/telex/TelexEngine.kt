@@ -51,6 +51,24 @@ class TelexEngine(config: TelexConfig = TelexConfig()) {
         return t
     }
 
+    /** Chữ hoa theo từng phím đã gõ. */
+    fun rawCaps(): List<Boolean> = rawCaps.toList()
+
+    /**
+     * Âm tiết đáng ngờ (không thể là tiếng Việt): gạch chân và đưa gợi ý sửa.
+     * Khác [isFallback] ở chỗ vẫn đúng khi tắt tuỳ chọn khôi phục tiếng Anh.
+     */
+    fun isSuspicious(): Boolean = !rawDirty && !SyllableValidator.couldBecomeValid(baseString(), tone)
+
+    /** Bản sao độc lập của trạng thái hiện tại (để thử "nếu gõ thêm phím X"). */
+    fun copy(): TelexEngine {
+        val e = TelexEngine(config)
+        e.chars.addAll(chars); e.caps.addAll(caps)
+        e.rawKeys.addAll(rawKeys); e.rawCaps.addAll(rawCaps)
+        e.tone = tone; e.rawDirty = rawDirty
+        return e
+    }
+
     /** Đúng các phím đã gõ (kèm chữ hoa). */
     fun rawText(): String {
         val sb = StringBuilder(rawKeys.size)

@@ -17,6 +17,8 @@ import android.widget.LinearLayout
 import com.telehex.keyboard.data.Prefs
 import com.telehex.keyboard.layout.KeyCode
 import com.telehex.keyboard.settings.SettingsActivity
+import com.telehex.telex.Corrector
+import com.telehex.telex.TelexDecomposer
 import com.telehex.telex.TelexEngine
 
 class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
@@ -32,6 +34,18 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     private val history = EditHistory()
     private lateinit var spaceGestures: SpaceGestures
+    private var corrector: Corrector? = null
+    private var touchOffsets: MutableMap<String, FloatArray> = HashMap()
+    private var offsetsDirty = false
+    private val saveOffsets = Runnable {
+        if (offsetsDirty) { offsetsDirty = false; prefs.touchOffsets = touchOffsets.mapValues { floatArrayOf(it.value[0] / density(), it.value[1] / density()) } }
+    }
+
+    private fun density(): Float = resources.displayMetrics.density
+
+    private fun rebuildCorrector() {
+        corrector = Corrector(engine.config, prefs.layout.letterNeighbors())
+    }
 
     private var sink: TextSink = ComposingSink()
     private var mode = Mode.ABC
@@ -54,6 +68,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         prefs.registerListener(this)
         engine = TelexEngine(prefs.telexConfig())
         spaceGestures = SpaceGestures(spaceHost)
+        rebuildCorrector()
+        touchOffsets = prefs.touchOffsets.mapValues { floatArrayOf(it.value[0] * density(), it.value[1] * density()) }.toMutableMap()
     }
 
     override fun onDestroy() {
@@ -62,8 +78,10 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        if (key == Prefs.KEY_RECENT_EMOJI || key == Prefs.KEY_PRESETS) return
+        if (key == Prefs.KEY_RECENT_EMOJI || key == Prefs.KEY_PRESETS || key == Prefs.KEY_TOUCH_OFFSETS) return
         engine.config = prefs.telexConfig()
+        rebuildCorrector()
+        if (key == Prefs.KEY_LEARN_OFFSETS && !prefs.learnTouchOffsets) touchOffsets.clear()
         if (::keyboardView.isInitialized) applyTheme()
         refreshKeys()
     }
@@ -99,6 +117,12 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         keyboardView.hapticEnabled = prefs.haptic
         keyboardView.soundEnabled = prefs.sound
         keyboardView.setThresholds(dpF(prefs.swipeThresholdDp), prefs.longPressMs.toLong())
+        keyboardView.touchOffsets = if (prefs.learnTouchOffsets) touchOffsets else null
+        keyboardView.onTouchOffsetsChanged = {
+            offsetsDirty = true
+            keyboardView.removeCallbacks(saveOffsets); keyboardView.postDelayed(saveOffsets, 3000)
+        }
+        keyboardView.validNextLetter = if (prefs.dynamicHitZones) { ch -> mode != Mode.ABC || telexEnabled.not() || engine.copy().apply { press(ch) }.isSuspicious().not() } else null
         candidateBar.theme = t
         root.setBackgroundColor(t.background)
         emojiPanel = null // dựng lại theo theme khi mở lần sau
@@ -268,7 +292,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     private fun updateComposing() {
         val ic = currentInputConnection ?: return
-        if (engine.isEmpty) sink.clearComposing(ic) else sink.setComposing(ic, engine.text())
+        if (engine.isEmpty) sink.clearComposing(ic) else sink.setComposing(ic, engine.text(), engine.isSuspicious())
         updateBar()
     }
 
@@ -287,8 +311,50 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                     CandidateBar.EditAction("Chọn hết", "2 ngón giữ") { selectAll() },
                 )
             )
-        } else {
+        } else if (!engine.isEmpty && engine.hasVowel() && !engine.isValid()) {
+            // Âm tiết chưa hợp lệ: giữ đúng chữ đang gõ ở ô đầu, kèm gợi ý sửa (biến thể dấu lúc này vô nghĩa).
+            val typed = engine.text()
+            val fixes = corrector?.suggest(engine.rawText(), engine.rawCaps()) ?: emptyList()
+            candidateBar.showSuggestions(typed, fixes) { replaceComposing(it) }
+        } else if (!engine.isEmpty) {
             candidateBar.show(engine.candidates())
+        } else {
+            showWordAtCursorSuggestions()
+        }
+    }
+
+    /** Thay âm tiết đang gõ bằng gợi ý người dùng chạm. */
+    private fun replaceComposing(text: String) {
+        val ic = currentInputConnection ?: return
+        engine.reset()
+        sink.commit(ic, text)
+        history.record(EditHistory.Op.Insert(text))
+        updateBar()
+    }
+
+    /** Con trỏ nằm trong một từ đã gõ: hiện phương án sửa cho từ đó (kiểu Gboard). */
+    private fun showWordAtCursorSuggestions() {
+        val ic = currentInputConnection ?: run { candidateBar.clear(); return }
+        if (hasSelection() || cursorMode || mode != Mode.ABC) { candidateBar.clear(); return }
+        val before = ic.getTextBeforeCursor(24, 0)?.toString() ?: ""
+        val after = ic.getTextAfterCursor(24, 0)?.toString() ?: ""
+        var i = before.length
+        while (i > 0 && before[i - 1].isLetter()) i--
+        var j = 0
+        while (j < after.length && after[j].isLetter()) j++
+        val head = before.substring(i); val tail = after.substring(0, j)
+        val word = head + tail
+        if (word.isEmpty() || head.isEmpty()) { candidateBar.clear(); return }
+        val (keys, caps) = TelexDecomposer.keysOf(word, engine.config) ?: run { candidateBar.clear(); return }
+        val fixes = corrector?.suggest(keys, caps, 4) ?: emptyList()
+        if (fixes.isEmpty()) { candidateBar.clear(); return }
+        candidateBar.showSuggestions(word, fixes) { fix ->
+            val c = currentInputConnection ?: return@showSuggestions
+            c.beginBatchEdit()
+            c.deleteSurroundingText(head.length, tail.length)
+            c.commitText(fix, 1)
+            c.endBatchEdit()
+            history.record(EditHistory.Op.Delete(word)); history.record(EditHistory.Op.Insert(fix))
         }
     }
 

@@ -46,6 +46,32 @@ class Prefs(context: Context) {
         get() = sp.getInt(KEY_EXTRA_BOTTOM, 0)
         set(v) = sp.edit().putInt(KEY_EXTRA_BOTTOM, v).apply()
 
+    /** Vùng chạm động: nới vùng phím hợp lệ tiếp theo theo ngữ pháp âm tiết (mặc định tắt). */
+    var dynamicHitZones: Boolean
+        get() = sp.getBoolean(KEY_DYNAMIC_ZONES, false)
+        set(v) = sp.edit().putBoolean(KEY_DYNAMIC_ZONES, v).apply()
+
+    /** Học độ lệch chạm của người dùng theo từng phím. */
+    var learnTouchOffsets: Boolean
+        get() = sp.getBoolean(KEY_LEARN_OFFSETS, true)
+        set(v) = sp.edit().putBoolean(KEY_LEARN_OFFSETS, v).apply()
+
+    /** Độ lệch chạm đã học (dp): mã phím → [dx, dy]. */
+    var touchOffsets: Map<String, FloatArray>
+        get() = sp.getString(KEY_TOUCH_OFFSETS, null)?.let { json ->
+            runCatching {
+                val o = JSONObject(json)
+                o.keys().asSequence().associateWith { k ->
+                    val a = o.getJSONArray(k); floatArrayOf(a.getDouble(0).toFloat(), a.getDouble(1).toFloat())
+                }
+            }.getOrNull()
+        } ?: emptyMap()
+        set(v) {
+            val o = JSONObject()
+            for ((k, a) in v) o.put(k, org.json.JSONArray().put(a[0].toDouble()).put(a[1].toDouble()))
+            sp.edit().putString(KEY_TOUCH_OFFSETS, o.toString()).apply()
+        }
+
     /** Ngưỡng cử chỉ, chỉnh theo tay từng người. */
     var swipeThresholdDp: Int
         get() = sp.getInt(KEY_SWIPE_DP, 24)
@@ -130,6 +156,9 @@ class Prefs(context: Context) {
         const val KEY_CUSTOM = "custom_keys"
         const val KEY_RECENT_EMOJI = "recent_emoji"
         const val KEY_PRESETS = "layout_presets"
+        const val KEY_DYNAMIC_ZONES = "dynamic_hit_zones"
+        const val KEY_LEARN_OFFSETS = "learn_touch_offsets"
+        const val KEY_TOUCH_OFFSETS = "touch_offsets"
         const val KEY_SWIPE_DP = "swipe_threshold_dp"
         const val KEY_HOLD_MS = "hold_ms"
         const val KEY_LONG_PRESS_MS = "long_press_ms"

@@ -61,6 +61,25 @@ class LayoutModel(val rows: List<List<String?>>) {
         return null
     }
 
+    /** Các ô kề (tối đa 6) của ô (r, c) trên lưới lục giác lệch hàng [0.5, 0, 0.5, 0, 0.5]. */
+    fun neighborCells(r: Int, c: Int): List<Pair<Int, Int>> {
+        val shifted = r % 2 == 0 // hàng lệch ½ sang phải
+        val cand = if (shifted) listOf(r to c - 1, r to c + 1, r - 1 to c, r - 1 to c + 1, r + 1 to c, r + 1 to c + 1)
+        else listOf(r to c - 1, r to c + 1, r - 1 to c - 1, r - 1 to c, r + 1 to c - 1, r + 1 to c)
+        return cand.filter { (rr, cc) -> rr in 0 until ROWS && cc in 0 until COLS }
+    }
+
+    /** Chữ cái → các chữ cái kề trên lưới (bỏ phím chức năng và ô phím cách). */
+    fun letterNeighbors(): Map<Char, List<Char>> {
+        val out = HashMap<Char, List<Char>>()
+        for (r in 0 until ROWS) for (c in 0 until COLS) {
+            val code = rows[r][c] ?: continue
+            if (!KeyCode.isLetter(code)) continue
+            out[code[0]] = neighborCells(r, c).mapNotNull { (rr, cc) -> rows[rr][cc]?.takeIf { KeyCode.isLetter(it) }?.get(0) }
+        }
+        return out
+    }
+
     fun toJson(): String {
         val arr = JSONArray()
         for (row in rows) {

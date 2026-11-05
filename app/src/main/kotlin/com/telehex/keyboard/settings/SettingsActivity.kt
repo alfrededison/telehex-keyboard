@@ -102,6 +102,14 @@ class SettingsActivity : Activity() {
             })
         })
 
+        col.add(header("Chống bấm nhầm"))
+        col.add(switch("Học độ lệch chạm theo từng phím", prefs.learnTouchOffsets) { prefs.learnTouchOffsets = it })
+        col.add(switch("Vùng chạm động: nới vùng phím hợp lệ tiếp theo (một dạng tự sửa ngầm)", prefs.dynamicHitZones) { prefs.dynamicHitZones = it })
+        col.add(Button(this).apply {
+            text = "Xoá dữ liệu độ lệch đã học"
+            setOnClickListener { prefs.touchOffsets = emptyMap() }
+        })
+
         col.add(header("Cử chỉ"))
         col.add(TextView(this).apply {
             text = "Phím cách: vuốt trái = xoá (ngắn: 1 ký tự, dài: theo từ, có bôi đen xem trước); giữ rồi kéo = di con trỏ; chạm đúp rồi giữ-kéo = chọn; vuốt phải = dán; khi có vùng chọn: vuốt lên = chép, vuốt trái = cắt. Hai ngón vuốt trái/phải = undo/redo, hai ngón giữ = chọn hết."

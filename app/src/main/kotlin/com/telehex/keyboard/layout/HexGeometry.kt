@@ -69,7 +69,25 @@ class HexGeometry(
      * Hit-test: ô có tâm gần nhất (Voronoi của lưới lục giác chính là các lục giác).
      * Trả về (hàng, cột) hoặc null nếu ngoài lưới theo chiều dọc.
      */
-    fun cellAt(x: Float, y: Float): Pair<Int, Int>? {
+    fun cellAt(x: Float, y: Float): Pair<Int, Int>? = nearestCells(x, y).firstOrNull()?.first
+
+    /** Hai ô gần nhất kèm bình phương khoảng cách, gần trước. Rỗng nếu ngoài lưới theo chiều dọc. */
+    fun nearestCells(x: Float, y: Float): List<Pair<Pair<Int, Int>, Float>> {
+        if (y < top - h / 2 || y > top + gridHeight + h / 2) return emptyList()
+        val found = ArrayList<Pair<Pair<Int, Int>, Float>>(9)
+        val rGuess = ((y - top - h / 2) / p).toInt().coerceIn(0, 4)
+        for (r in (rGuess - 1).coerceAtLeast(0)..(rGuess + 1).coerceAtMost(4)) {
+            val cGuess = ((x - pad) / w - offsets[r] - 0.5f).toInt().coerceIn(0, 6)
+            for (c in (cGuess - 1).coerceAtLeast(0)..(cGuess + 1).coerceAtMost(6)) {
+                val dx = x - centerX(r, c); val dy = y - centerY(r)
+                found.add((r to c) to dx * dx + dy * dy)
+            }
+        }
+        return found.sortedBy { it.second }.take(2)
+    }
+
+    @Suppress("unused")
+    private fun cellAtLegacy(x: Float, y: Float): Pair<Int, Int>? {
         if (y < top - h / 2 || y > top + gridHeight + h / 2) return null
         var best: Pair<Int, Int>? = null
         var bestD = Float.MAX_VALUE

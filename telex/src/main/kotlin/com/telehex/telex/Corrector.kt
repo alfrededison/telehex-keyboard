@@ -1,0 +1,79 @@
+package com.telehex.telex
+
+/**
+ * Sinh gợi ý sửa cho một chuỗi phím đã gõ, từ ba nguồn rồi xếp hạng:
+ * - thay 1 phím bằng phím lân cận trên lưới lục giác (tối đa 6 ô);
+ * - thiếu hoặc thừa 1 phím, đảo 2 phím liền nhau;
+ * - lỗi Telex thường gặp (quên `w`, gõ dấu trước nguyên âm) — đã nằm trong hai nguồn trên.
+ *
+ * Chỉ giữ âm tiết hợp lệ. Không bao giờ tự thay chữ; caller chỉ hiện gợi ý.
+ *
+ * @param neighbors phím → các phím kề trên lưới.
+ */
+class Corrector(
+    private val config: TelexConfig,
+    private val neighbors: Map<Char, List<Char>>,
+) {
+    data class Suggestion(val text: String, val cost: Float, val rank: Int)
+
+    fun suggest(rawKeys: String, caps: List<Boolean> = emptyList(), max: Int = 5): List<String> {
+        val keys = rawKeys.lowercase()
+        if (keys.isEmpty() || keys.length > 10) return emptyList()
+        val candidates = HashMap<String, Float>()
+        fun offer(k: String, cost: Float) {
+            if (k.isEmpty()) return
+            val prev = candidates[k]
+            if (prev == null || cost < prev) candidates[k] = cost
+        }
+        val n = keys.length
+        // Thay bằng phím lân cận
+        for (i in 0 until n) {
+            for (nb in neighbors[keys[i]] ?: emptyList()) {
+                if (nb !in 'a'..'z') continue
+                offer(keys.substring(0, i) + nb + keys.substring(i + 1), 1f)
+            }
+        }
+        // Thừa 1 phím
+        for (i in 0 until n) offer(keys.removeRange(i, i + 1), 1.4f)
+        // Thiếu 1 phím; quên phím biến đổi Telex (a/e/o/w/d) là lỗi phổ biến nên rẻ hơn
+        for (i in 0..n) for (c in 'a'..'z') {
+            val cost = if (c == 'a' || c == 'e' || c == 'o' || c == 'w' || c == 'd') 1.1f else 1.6f
+            offer(keys.substring(0, i) + c + keys.substring(i), cost)
+        }
+        // Đảo 2 phím liền nhau
+        for (i in 0 until n - 1) {
+            offer(keys.substring(0, i) + keys[i + 1] + keys[i] + keys.substring(i + 2), 1.2f)
+        }
+        val original = render(keys, caps)
+        val out = ArrayList<Suggestion>()
+        for ((k, cost) in candidates) {
+            val text = renderValid(k, caps) ?: continue
+            if (text == original) continue
+            out.add(Suggestion(text, cost, CommonSyllables.rankOf(text)))
+        }
+        return out
+            .sortedWith(compareBy<Suggestion> { score(it) })
+            .map { it.text }
+            .distinct()
+            .take(max)
+    }
+
+    /** Điểm thấp = tốt: khoảng cách bàn phím, cộng thêm nếu âm tiết hiếm. */
+    private fun score(s: Suggestion): Float {
+        val rarity = if (s.rank == Int.MAX_VALUE) 3f else s.rank / 300f
+        return s.cost + rarity
+    }
+
+    private fun render(keys: String, caps: List<Boolean>): String {
+        val e = TelexEngine(config)
+        for (i in keys.indices) e.press(keys[i], caps.getOrElse(i) { false })
+        return e.text()
+    }
+
+    /** Chuỗi phím có cho ra âm tiết tiếng Việt hợp lệ, đầy đủ không. */
+    private fun renderValid(keys: String, caps: List<Boolean>): String? {
+        val e = TelexEngine(config)
+        for (i in keys.indices) e.press(keys[i], caps.getOrElse(i) { false })
+        return if (e.isValid()) e.text() else null
+    }
+}

@@ -9,8 +9,8 @@ import android.view.inputmethod.InputConnection
  * nên có chế độ dự phòng dùng `deleteSurroundingText` + `commitText`.
  */
 interface TextSink {
-    /** Hiện âm tiết đang soạn (thay thế bản trước). */
-    fun setComposing(ic: InputConnection, text: String)
+    /** Hiện âm tiết đang soạn (thay thế bản trước). [suspicious] = tô đỏ nhạt vì không thể là tiếng Việt. */
+    fun setComposing(ic: InputConnection, text: String, suspicious: Boolean = false)
 
     /** Bỏ phần đang soạn khỏi ô nhập (khi engine về rỗng do xoá). */
     fun clearComposing(ic: InputConnection)
@@ -26,7 +26,12 @@ interface TextSink {
 }
 
 class ComposingSink : TextSink {
-    override fun setComposing(ic: InputConnection, text: String) { ic.setComposingText(text, 1) }
+    override fun setComposing(ic: InputConnection, text: String, suspicious: Boolean) {
+        if (!suspicious) { ic.setComposingText(text, 1); return }
+        val sp = android.text.SpannableString(text)
+        sp.setSpan(android.text.style.BackgroundColorSpan(0x40FF3B30), 0, text.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        ic.setComposingText(sp, 1)
+    }
 
     override fun clearComposing(ic: InputConnection) {
         ic.setComposingText("", 1)
@@ -47,7 +52,7 @@ class ComposingSink : TextSink {
 class CommitSink : TextSink {
     private var committed = 0
 
-    override fun setComposing(ic: InputConnection, text: String) {
+    override fun setComposing(ic: InputConnection, text: String, suspicious: Boolean) {
         ic.beginBatchEdit()
         if (committed > 0) ic.deleteSurroundingText(committed, 0)
         ic.commitText(text, 1)
