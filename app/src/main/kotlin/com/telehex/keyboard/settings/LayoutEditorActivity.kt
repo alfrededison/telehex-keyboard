@@ -4,10 +4,12 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Canvas
+import android.os.Build
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -93,21 +95,39 @@ class LayoutEditorActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         prefs = Prefs(this)
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12), dp(12), dp(12), dp(24)) }
-        setContentView(ScrollView(this).apply { addView(col) })
+        // Nút ở trên, lưới phím ở đáy màn hình đúng chỗ bàn phím thật sẽ hiện
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12), dp(12), dp(12), dp(12)) }
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(ScrollView(context).apply { addView(col) }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+            // Không edge-to-edge (Android < 15) thì decor đã chừa thanh hệ thống và listener có thể không được gọi
+            setPadding(0, 0, 0, dp(prefs.extraBottomDp))
+            setOnApplyWindowInsetsListener { v, insets ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    val bars = insets.getInsets(WindowInsets.Type.systemBars())
+                    v.setPadding(0, bars.top, 0, bars.bottom + dp(prefs.extraBottomDp))
+                } else {
+                    @Suppress("DEPRECATION")
+                    v.setPadding(0, insets.systemWindowInsetTop, 0, insets.systemWindowInsetBottom + dp(prefs.extraBottomDp))
+                }
+                insets
+            }
+        }
+        setContentView(root)
 
         col.add(TextView(this).apply {
             text = "Kéo một phím thả lên phím khác để đổi chỗ. Phím cách và ↵ cố định. Số ở lớp ký tự tự đi theo chữ (Q→1 … P→0)."
         })
         status = TextView(this)
+        val t = Theme.resolve(this, prefs.themeMode)
         editor = LayoutEditorView(this).apply {
-            theme = Theme.resolve(context, prefs.themeMode)
+            theme = t
             hintOf = prefs::hintOf
             onLayoutChanged = { l -> status.text = l.validate() ?: "Bố cục hợp lệ" }
             layout = prefs.layout
         }
-        col.addView(editor, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(12) })
         col.add(status)
+        root.addView(editor, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
 
         col.add(Button(this).apply {
             text = "Lưu"
