@@ -24,6 +24,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private lateinit var root: LinearLayout
     private lateinit var candidateBar: CandidateBar
     private lateinit var keyboardView: KeyboardView
+    private var emojiPanel: EmojiPanel? = null
 
     private var sink: TextSink = ComposingSink()
     private var mode = Mode.ABC
@@ -81,7 +82,40 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         keyboardView.hapticEnabled = prefs.haptic
         candidateBar.theme = t
         root.setBackgroundColor(t.background)
-        root.setPadding(0, 0, 0, root.paddingBottom)
+        emojiPanel = null // dựng lại theo theme khi mở lần sau
+    }
+
+    /** Thay lưới phím bằng một bảng (emoji, dialpad...) có cùng chiều cao; null = về lưới phím. */
+    private fun showPanel(panel: View?) {
+        val index = root.indexOfChild(keyboardView).takeIf { it >= 0 } ?: (root.childCount - 1)
+        if (root.childCount > 1) root.removeViewAt(index)
+        val h = keyboardView.gridHeightPx.takeIf { it > 0 } ?: LinearLayout.LayoutParams.WRAP_CONTENT
+        if (panel == null) {
+            mode = if (mode == Mode.EMOJI) Mode.ABC else mode
+            root.addView(keyboardView, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+            refreshKeys()
+        } else {
+            root.addView(panel, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, h))
+        }
+    }
+
+    private fun openEmoji() {
+        val panel = emojiPanel ?: EmojiPanel(this, Theme.resolve(this, prefs.themeMode)).also { p ->
+            p.listener = object : EmojiPanel.Listener {
+                override fun onEmoji(emoji: String) {
+                    commitSyllable(emoji)
+                    prefs.recentEmoji = listOf(emoji) + prefs.recentEmoji.filter { it != emoji }
+                    p.recent = prefs.recentEmoji
+                }
+                override fun onAbc() { showPanel(null) }
+                override fun onBackspace() { deleteBackward() }
+            }
+            emojiPanel = p
+        }
+        mode = Mode.EMOJI
+        panel.recent = prefs.recentEmoji
+        panel.open()
+        showPanel(panel)
     }
 
     private fun refreshKeys() {
@@ -117,6 +151,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         applyTheme()
+        if (root.indexOfChild(keyboardView) < 0) showPanel(null)
         refreshKeys()
         updateCandidates()
     }
@@ -259,7 +294,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                 refreshKeys()
             }
             code == KeyCode.PAGE -> { symbolPage = if (symbolPage == 2) 1 else 2; refreshKeys() }
-            code == KeyCode.EMOJI -> {}
+            code == KeyCode.EMOJI -> openEmoji()
             code == KeyCode.SETTINGS -> {}
             code == KeyCode.BACKSPACE -> deleteBackward()
             code == "," || code == "." ->
