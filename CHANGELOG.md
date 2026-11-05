@@ -2,6 +2,14 @@
 
 ## 0.1.1 — unreleased
 
+- Tự viết hoa chữ đầu câu (tắt được trong Cài đặt). Nhãn phím hiện hoa/thường theo chữ sắp gõ; vuốt lên đảo hoa/thường như Gboard. Chữ hoa tự thêm không bị học thành "hay viết hoa"; gõ tắt ở đầu câu cũng viết hoa.
+- Enter chèn xuống dòng thay vì gửi phím ENTER, nên Messenger không còn gửi tin khi xuống dòng.
+- Vuốt trái dài trên phím cách kéo tiếp được qua các dòng.
+- `uaw` ra `ưa` (vuaw → vưa).
+- Bỏ chữ dấu (á, ả…) dưới phím, chỉ dùng màu; ký tự vuốt xuống hiện dưới chữ cái.
+- Màn sắp xếp phím đặt lưới ở đáy màn hình, đúng chỗ bàn phím thật.
+- Thông báo ngắn sau undo, redo, cắt, chép, dán, chọn hết.
+
 ## 0.1.0 — 2026-11-05
 
 Bản đầu tiên.

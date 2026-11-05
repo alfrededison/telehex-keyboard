@@ -25,11 +25,12 @@ Z   C   B   .   N   M   K
 | Cử chỉ | Hành vi |
 |---|---|
 | Chạm phím chữ | Gõ Telex (`tieengs vieetj` → tiếng việt) |
-| Vuốt **lên** phím chữ | Chữ hoa (giữ hoa khi biến đổi: vuốt lên D rồi gõ d → Đ) |
-| Vuốt **xuống** phím chữ / `,` / `.` | Ký tự phụ hiện nhỏ phía trên (số, emoji, ký hiệu; tuỳ biến từng phím trong Cài đặt) |
+| Vuốt **lên** phím chữ | Đảo hoa/thường như Gboard: nhãn phím đang thường thì ra chữ hoa (giữ hoa khi biến đổi: vuốt lên D rồi gõ d → Đ), đang hoa (đầu câu) thì ra chữ thường |
+| Vuốt **xuống** phím chữ / `,` / `.` | Ký tự phụ hiện nhỏ phía dưới chữ (số, emoji, ký hiệu; tuỳ biến từng phím trong Cài đặt) |
+| Chạm phím ↵ | Ô có hành động (Tìm, Gửi…) thì làm hành động đó, ngược lại xuống dòng (không gửi tin ở Messenger) |
 | Chạm phím cách | Chốt âm tiết + khoảng trắng; áp dụng gõ tắt nếu khớp |
 | Vuốt **trái ngắn** trên phím cách | Xoá 1 ký tự (xoá theo grapheme, emoji ghép xoá một lần) |
-| Vuốt **trái dài** trên phím cách | Chọn-để-xoá theo từ: bôi đen xem trước, mỗi ~1 phím thêm 1 từ, kéo ngược để bớt, nhả để xoá, kéo quá mép trái = tới đầu dòng |
+| Vuốt **trái dài** trên phím cách | Chọn-để-xoá theo từ: bôi đen xem trước, mỗi ~1 phím thêm 1 từ, kéo ngược để bớt, nhả để xoá; mỗi dấu xuống dòng là một bước nên kéo tiếp được lên dòng trên; kéo quá mép trái = tới đầu dòng |
 | **Giữ** phím cách ≥ 300 ms rồi kéo | Di con trỏ (ngang theo ký tự, dọc theo dòng); bàn phím mờ đi |
 | Chạm đúp phím cách, giữ lần hai rồi kéo | Chọn văn bản |
 | Vuốt **phải** trên phím cách | Dán |
@@ -69,7 +70,7 @@ rồi Cài đặt → "Nạp gói ngôn ngữ (.ngram)…". Dữ liệu Wikipedi
 
 - **Sắp xếp phím**: kéo một phím thả lên phím khác để đổi chỗ; phím cách và ↵ cố định; lưu nhiều preset. Số ở lớp ký tự luôn đi theo chữ (Q→1 … P→0).
 - **Ký tự vuốt xuống** cho từng phím: số, ký hiệu, emoji hoặc đoạn văn bản ngắn (≤ 8 ký tự).
-- Kiểu đặt dấu cũ/mới (hòa/hoà), "L cũng là dấu huyền" (`lal` → là), rung, âm thanh, giao diện sáng/tối, chế độ một tay, tông da emoji, gõ tắt, clipboard history, chế độ ẩn danh, vùng chạm động (tắt mặc định), học độ lệch chạm.
+- Kiểu đặt dấu cũ/mới (hòa/hoà), "L cũng là dấu huyền" (`lal` → là), tự viết hoa đầu câu, rung, âm thanh, giao diện sáng/tối, chế độ một tay, tông da emoji, gõ tắt, clipboard history, chế độ ẩn danh, vùng chạm động (tắt mặc định), học độ lệch chạm.
 - **Sao lưu / khôi phục** mọi thứ ra một file zip.
 - **Giọng nói**: nút 🎤 trong bảng sửa văn bản chuyển sang IME giọng nói đã bật (ví dụ FUTO Voice Input chạy offline).
 
