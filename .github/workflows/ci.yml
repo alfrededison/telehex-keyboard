@@ -1,12 +1,18 @@
+# Pull requests only: on main, dev-build runs the same tests and lint before building the signed APK.
 name: ci
 
 on:
-  push:
-    branches: [main]
   pull_request:
+    paths-ignore: ["**.md", "prototype/**", "LICENSE", "NOTICE"]
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+# A newer push to the same pull request makes the older run pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:

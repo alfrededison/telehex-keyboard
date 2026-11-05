@@ -1,9 +1,12 @@
-# Every push to main replaces the "dev" prerelease with a fresh X.Y.Z-dev.N APK.
+# Every push to main that changes code replaces the "dev" prerelease with a fresh X.Y.Z-dev.N APK.
+# Skipped for documentation-only pushes and for the "Start <next> development" commit that
+# tools/release.sh puts right after a release tag: its code is the release itself.
 name: dev-build
 
 on:
   push:
     branches: [main]
+    paths-ignore: ["**.md", "prototype/**", "LICENSE", "NOTICE"]
 
 permissions:
   contents: write
@@ -14,13 +17,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  dev:
+  check:
+    name: decide whether to build
     runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.decide.outputs.build }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # The gh steps use GH_TOKEN; keep the write token out of .git/config while Gradle runs.
           persist-credentials: false
       - name: appVersion must be bumped after a release
         run: |
@@ -30,6 +35,27 @@ jobs:
                  "otherwise this dev build would be a downgrade from the release." >&2
             exit 1
           fi
+      - name: Skip the commit right after a release tag
+        id: decide
+        run: |
+          released=$(git tag --points-at HEAD^ --list 'v*' 2>/dev/null | head -n1)
+          if [ -n "$released" ]; then
+            echo "HEAD only starts the next version after $released: nothing new to build."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  dev:
+    needs: check
+    if: needs.check.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # The gh steps use GH_TOKEN; keep the write token out of .git/config while Gradle runs.
+          persist-credentials: false
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
