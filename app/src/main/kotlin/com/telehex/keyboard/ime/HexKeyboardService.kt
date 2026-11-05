@@ -71,6 +71,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private var selEnd = 0
     private var cursorMode = false
     private var numberOnly = false
+    /** Chữ đầu của âm tiết đang soạn được viết hoa chỉ vì đầu câu. */
+    private var autoCappedFirst = false
     private var numberSigned = true
     private var numberDecimal = true
     private var autoDial = false
@@ -216,8 +218,10 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         for (tok in tail.split(Regex("\\s+")).filter { it.isNotEmpty() && it.all { c -> c.isLetter() } }.takeLast(2)) recent.addLast(tok)
     }
 
-    private fun pushContext(syllable: String) {
-        if (syllable.isEmpty() || !syllable.all { it.isLetter() }) return
+    /** @param autoCapped chữ hoa đầu do bàn phím tự thêm (đầu câu): học như chữ thường, đừng coi là tên riêng. */
+    private fun pushContext(raw: String, autoCapped: Boolean = false) {
+        if (raw.isEmpty() || !raw.all { it.isLetter() }) return
+        val syllable = if (autoCapped) raw.replaceFirstChar { it.lowercaseChar() } else raw
         if (!incognito()) {
             predictions.predictor.personal.learn(recent.toList(), syllable)
             personalDirty = true
@@ -308,6 +312,12 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private fun refreshKeys() {
         if (!::keyboardView.isInitialized) return
         keyboardView.keys = KeyPage.build(prefs.layout, mode, symbolPage, engine.config, prefs::hintOf, enterLabel)
+        updateShift()
+    }
+
+    /** Nhãn chữ hoa/thường theo chữ sắp gõ. */
+    private fun updateShift() {
+        if (::keyboardView.isInitialized) keyboardView.shifted = autoCaps()
     }
 
     /** Thay lưới phím bằng một bảng (emoji, dialpad) có cùng chiều cao; null = về lưới phím. */
@@ -476,6 +486,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     /** Thanh trên bàn phím: biến thể dấu khi đang soạn; thanh chỉnh sửa khi có vùng chọn / chế độ con trỏ. */
     private fun updateBar() {
+        updateShift()
         if (!::candidateBar.isInitialized) return
         if (emojiSearch) {
             val q = engine.text()
@@ -509,7 +520,11 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             val next = predictions.predictor.next(recent.toList(), "", 3).map { casedPrediction(it) }
             val emoji = recent.lastOrNull()?.let { emojiFor(it) } ?: emptyList()
             if (next.isEmpty() && emoji.isEmpty()) showWordAtCursorSuggestions()
-            else candidateBar.showPredictions(next, emoji, onPick = { commitSyllable("$it "); pushContext(it) }, onPickEmoji = { commitSyllable(it) }, onForget = { forget(it) })
+            else candidateBar.showPredictions(next, emoji, onPick = { pick ->
+                // Gợi ý được viết hoa vì đầu câu (không phải tên riêng đã học) thì học như chữ thường
+                val auto = atSentenceStart() && !predictions.predictor.personal.usuallyCapitalized(pick)
+                commitSyllable("$pick "); pushContext(pick, auto)
+            }, onPickEmoji = { commitSyllable(it) }, onForget = { forget(it) })
         } else {
             showWordAtCursorSuggestions()
         }
@@ -537,10 +552,11 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     /** Thay âm tiết đang gõ bằng gợi ý người dùng chạm, rồi thêm khoảng trắng như khi chạm cách. */
     private fun replaceComposing(text: String) {
         val ic = currentInputConnection ?: return
+        val auto = autoCappedFirst
         engine.reset()
         sink.commit(ic, "$text ")
         history.record(EditHistory.Op.Insert("$text "))
-        pushContext(text) // học cả từ gợi ý người dùng đã chọn
+        pushContext(text, auto) // học cả từ gợi ý người dùng đã chọn
         updateBar()
     }
 
@@ -588,7 +604,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             val before = (ic.getTextBeforeCursor(32 + syllable.length, 0)?.toString() ?: "").removeSuffix(syllable)
             val head = before.takeLastWhile { !it.isWhitespace() }
             val token = head + syllable
-            val expansion = prefs.shortcuts[token] ?: prefs.shortcuts[token.lowercase()]
+            // "Ko" (tự viết hoa đầu câu) khớp "ko" thì giữ chữ hoa: "Không"
+            val expansion = prefs.shortcuts[token]
+                ?: prefs.shortcuts[token.lowercase()]?.let { e -> if (token.first().isUpperCase()) e.replaceFirstChar { it.titlecase() } else e }
             if (expansion != null) {
                 shortcutHead = head.length
                 text = expansion + " "
@@ -607,18 +625,48 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             } else sink.commit(ic, text)
             history.record(EditHistory.Op.Insert(text))
         } else sink.detach(ic)
-        if (syllable.isNotEmpty() && shortcutHead == 0) pushContext(syllable)
+        if (syllable.isNotEmpty() && shortcutHead == 0) pushContext(syllable, autoCappedFirst)
         if (extra.isNotEmpty() && extra.last() in ".!?\n") recent.clear()
         updateBar()
     }
 
-    private fun typeLetter(ch: Char, upper: Boolean) {
+    /**
+     * Như Gboard: vuốt lên đảo hoa/thường so với trạng thái hiện tại (nhãn phím cho biết trạng thái),
+     * nên đầu câu vuốt lên ra chữ thường.
+     */
+    private fun typeLetter(ch: Char, swipedUp: Boolean) {
+        val auto = autoCaps()
+        val upper = auto != swipedUp
+        if (engine.isEmpty) autoCappedFirst = auto && !swipedUp
         if (!telexEnabled) {
             commitSyllable((if (upper) ch.uppercaseChar() else ch).toString())
             return
         }
         engine.press(ch, upper)
         updateComposing()
+    }
+
+    /**
+     * Phím chữ sắp gõ có tự viết hoa không. Theo cờ CAP_* của ô nhập. Ô không đặt cờ nào thường là
+     * cố ý (username, tìm kiếm, mã), nên chỉ coi như viết hoa đầu câu khi là ô tin nhắn / nhiều dòng.
+     */
+    private fun autoCaps(): Boolean {
+        if (!prefs.autoCapitalize || !telexEnabled || emojiSearch || mode != Mode.ABC) return false
+        val type = currentInputEditorInfo?.inputType ?: return false
+        if (type and InputType.TYPE_MASK_CLASS != InputType.TYPE_CLASS_TEXT) return false
+        val capFlags = InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS or InputType.TYPE_TEXT_FLAG_CAP_WORDS or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        var req = type and capFlags
+        if (req == 0) {
+            val v = type and InputType.TYPE_MASK_VARIATION
+            val message = v == InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE || v == InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE ||
+                (v == InputType.TYPE_TEXT_VARIATION_NORMAL && type and InputType.TYPE_TEXT_FLAG_MULTI_LINE != 0)
+            if (!message) return false
+            req = InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+        }
+        // Đang giữa âm tiết: chỉ CAP_CHARACTERS mới viết hoa tiếp
+        if (!engine.isEmpty) req = req and InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS
+        if (req == 0) return false
+        return (currentInputConnection?.getCursorCapsMode(req) ?: 0) != 0
     }
 
     private fun deleteBackward() {

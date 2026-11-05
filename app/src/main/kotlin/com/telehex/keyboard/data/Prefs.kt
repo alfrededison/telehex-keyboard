@@ -100,6 +100,11 @@ class Prefs(context: Context) {
         get() = sp.getBoolean(KEY_PREDICTIONS, true)
         set(v) = sp.edit().putBoolean(KEY_PREDICTIONS, v).apply()
 
+    /** Tự viết hoa chữ đầu câu. */
+    var autoCapitalize: Boolean
+        get() = sp.getBoolean(KEY_AUTO_CAP, true)
+        set(v) = sp.edit().putBoolean(KEY_AUTO_CAP, v).apply()
+
     /** Chế độ ẩn danh: không học từ người dùng (bật thủ công). */
     var incognito: Boolean
         get() = sp.getBoolean(KEY_INCOGNITO, false)
@@ -222,6 +227,7 @@ class Prefs(context: Context) {
         const val KEY_SHORTCUTS = "shortcuts"
         const val KEY_PREDICTIONS = "predictions"
         const val KEY_INCOGNITO = "incognito"
+        const val KEY_AUTO_CAP = "auto_capitalize"
         const val KEY_DYNAMIC_ZONES = "dynamic_hit_zones"
         const val KEY_LEARN_OFFSETS = "learn_touch_offsets"
         const val KEY_TOUCH_OFFSETS = "touch_offsets"
@@ -244,7 +250,7 @@ class Prefs(context: Context) {
             KEY_PREDICTIONS to Boolean::class, KEY_INCOGNITO to Boolean::class,
             KEY_DYNAMIC_ZONES to Boolean::class, KEY_LEARN_OFFSETS to Boolean::class,
             KEY_ONE_HANDED to Int::class, KEY_SKIN_TONE to Int::class, KEY_CLIPBOARD to Boolean::class,
-            KEY_SHORTCUTS to String::class,
+            KEY_SHORTCUTS to String::class, KEY_AUTO_CAP to Boolean::class,
         )
 
         val DEFAULT_SWIPE_DOWN: Map<String, String> = mapOf(

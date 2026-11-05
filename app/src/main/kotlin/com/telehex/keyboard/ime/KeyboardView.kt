@@ -40,6 +40,10 @@ open class KeyboardView @JvmOverloads constructor(
     var keys: List<Key> = emptyList()
         set(value) { field = value; rebuild(); invalidate() }
 
+    /** Nhãn chữ cái viết hoa (chữ sắp gõ sẽ hoa) hay thường, như Gboard. */
+    var shifted: Boolean = true
+        set(value) { if (field != value) { field = value; invalidate() } }
+
     /** Phím đang mờ đi (ví dụ chế độ con trỏ). */
     var dimmed: Boolean = false
         set(value) { field = value; invalidate() }
@@ -246,7 +250,7 @@ open class KeyboardView @JvmOverloads constructor(
             }
             // Nhãn chính; nếu có nhãn phụ hoặc ký tự vuốt xuống ở dưới thì nhích lên một chút
             val labelY = cy + labelPaint.textSize * 0.36f - (if (hasSub || hasHint) sp(4f) else 0f)
-            canvas.drawText(k.label, cx, labelY, labelPaint)
+            canvas.drawText(if (k.isLetter && !shifted) k.code else k.label, cx, labelY, labelPaint)
             if (hasSub) {
                 subPaint.color = fg; subPaint.textSize = sp(11f)
                 canvas.drawText(k.sub, cx, labelY + sp(12f), subPaint)

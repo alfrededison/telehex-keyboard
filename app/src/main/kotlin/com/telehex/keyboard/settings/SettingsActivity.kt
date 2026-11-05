@@ -66,6 +66,7 @@ class SettingsActivity : Activity() {
             setOnCheckedChangeListener { _, id -> prefs.newToneStyle = id == new.id }
         })
         col.add(switch("L cũng là dấu huyền (lal → là)", prefs.lAsGrave) { prefs.lAsGrave = it })
+        col.add(switch("Tự viết hoa chữ đầu câu", prefs.autoCapitalize) { prefs.autoCapitalize = it })
         col.add(switch("Tự khôi phục từ tiếng Anh (windows không thành ưindows)", prefs.englishFallback) { prefs.englishFallback = it })
 
         col.add(header("Bàn phím"))
