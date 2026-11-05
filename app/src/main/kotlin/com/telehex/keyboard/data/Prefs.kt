@@ -65,6 +65,20 @@ class Prefs(context: Context) {
         } ?: emptyMap()
         set(v) = sp.edit().putString(KEY_CUSTOM, JSONObject(v).toString()).apply()
 
+    /** Preset layout do người dùng lưu: tên → LayoutModel. */
+    var presets: Map<String, LayoutModel>
+        get() = sp.getString(KEY_PRESETS, null)?.let { json ->
+            runCatching {
+                val o = JSONObject(json)
+                o.keys().asSequence().mapNotNull { name -> LayoutModel.fromJson(o.getString(name))?.let { name to it } }.toMap()
+            }.getOrNull()
+        } ?: emptyMap()
+        set(v) {
+            val o = JSONObject()
+            for ((name, layout) in v) o.put(name, layout.toJson())
+            sp.edit().putString(KEY_PRESETS, o.toString()).apply()
+        }
+
     var recentEmoji: List<String>
         get() = sp.getString(KEY_RECENT_EMOJI, "")!!.split('\u001F').filter { it.isNotEmpty() }
         set(v) = sp.edit().putString(KEY_RECENT_EMOJI, v.take(32).joinToString("\u001F")).apply()
@@ -90,6 +104,7 @@ class Prefs(context: Context) {
         const val KEY_LAYOUT = "layout_json"
         const val KEY_CUSTOM = "custom_keys"
         const val KEY_RECENT_EMOJI = "recent_emoji"
+        const val KEY_PRESETS = "layout_presets"
 
         val DEFAULT_FALLBACK_PKGS: Set<String> = setOf("com.zing.zalo", "com.facebook.orca")
 

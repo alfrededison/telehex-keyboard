@@ -1,5 +1,6 @@
 package com.telehex.keyboard.ime
 
+import android.content.Intent
 import android.content.SharedPreferences
 import android.icu.text.BreakIterator
 import android.inputmethodservice.InputMethodService
@@ -13,6 +14,7 @@ import android.view.inputmethod.InputConnection
 import android.widget.LinearLayout
 import com.telehex.keyboard.data.Prefs
 import com.telehex.keyboard.layout.KeyCode
+import com.telehex.keyboard.settings.SettingsActivity
 import com.telehex.telex.TelexEngine
 import kotlin.math.ceil
 
@@ -80,6 +82,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         val t = Theme.resolve(this, prefs.themeMode)
         keyboardView.theme = t
         keyboardView.hapticEnabled = prefs.haptic
+        keyboardView.soundEnabled = prefs.sound
         candidateBar.theme = t
         root.setBackgroundColor(t.background)
         emojiPanel = null // dựng lại theo theme khi mở lần sau
@@ -97,6 +100,14 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         } else {
             root.addView(panel, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, h))
         }
+    }
+
+    private fun openSettings() {
+        commitSyllable()
+        startActivity(
+            Intent(this, SettingsActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        )
     }
 
     private fun openEmoji() {
@@ -295,7 +306,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             }
             code == KeyCode.PAGE -> { symbolPage = if (symbolPage == 2) 1 else 2; refreshKeys() }
             code == KeyCode.EMOJI -> openEmoji()
-            code == KeyCode.SETTINGS -> {}
+            code == KeyCode.SETTINGS -> openSettings()
             code == KeyCode.BACKSPACE -> deleteBackward()
             code == "," || code == "." ->
                 commitSyllable(if (gesture == Gesture.SWIPE_DOWN && key.hint.isNotEmpty()) key.hint else code)

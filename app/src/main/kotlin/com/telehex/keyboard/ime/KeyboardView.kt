@@ -3,6 +3,7 @@ package com.telehex.keyboard.ime
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
+import android.media.AudioManager
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PointF
@@ -17,7 +18,7 @@ import com.telehex.keyboard.layout.HexGeometry
 /**
  * Bàn phím lục giác vẽ bằng Canvas với `Path` dựng sẵn cho mỗi phím, cache lại khi kích thước đổi.
  */
-class KeyboardView @JvmOverloads constructor(
+open class KeyboardView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
 ) : View(context, attrs) {
@@ -42,6 +43,8 @@ class KeyboardView @JvmOverloads constructor(
         set(value) { field = value; invalidate() }
 
     var hapticEnabled: Boolean = true
+    var soundEnabled: Boolean = false
+    private val audio by lazy { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
 
     private class Drawn(val key: Key, val path: Path, val center: PointF)
 
@@ -70,6 +73,7 @@ class KeyboardView @JvmOverloads constructor(
             key ?: return
             pressed[pointerId] = key
             if (hapticEnabled) performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            if (soundEnabled) audio.playSoundEffect(AudioManager.FX_KEYPRESS_STANDARD, 0.5f)
             listener?.onKeyDown(key)
             invalidate()
         }
@@ -129,9 +133,19 @@ class KeyboardView @JvmOverloads constructor(
         return cellToKey[cell]
     }
 
+    /** Các phím được tô "đang nhấn" thêm từ ngoài (editor). */
+    var highlighted: Set<Key> = emptySet()
+        set(value) { field = value; invalidate() }
+
+    /** Tâm của một phím đã dựng (px), hoặc null. */
+    fun centerOf(key: Key): PointF? = drawn.firstOrNull { it.key == key }?.center
+
+    /** Hook vẽ thêm lên trên lưới (ví dụ phím đang kéo). */
+    protected open fun drawOverlay(canvas: Canvas) {}
+
     override fun onDraw(canvas: Canvas) {
         canvas.drawColor(theme.background)
-        val pressedKeys = pressed.values
+        val pressedKeys = pressed.values + highlighted
         val labelSize = sp(20f)
         val smallSize = sp(14f)
         for (d in drawn) {
@@ -172,9 +186,14 @@ class KeyboardView @JvmOverloads constructor(
                 canvas.drawText(k.hint, cx, cy - labelPaint.textSize * 0.7f - sp(1f), hintPaint)
             }
         }
+        drawOverlay(canvas)
     }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean =
         gestures.onTouch(event, ::keyAt, gestureListener)
+
+    /** Paint nhãn dùng lại cho overlay của lớp con. */
+    protected fun labelPaint(): Paint = labelPaint
+    protected fun fillPaint(): Paint = fill
 }
