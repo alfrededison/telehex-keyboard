@@ -1,0 +1,189 @@
+package com.telehex.telex
+
+/**
+ * Engine Telex cho **một âm tiết đang soạn**. Kotlin thuần, không phụ thuộc Android.
+ *
+ * Trạng thái: [chars] (đã biến đổi, chữ thường), [caps], [tone]. Ngoài ra giữ [rawKeys]
+ * (đúng các phím đã gõ) để quay về chữ tiếng Anh khi chuỗi phím không thể là âm tiết tiếng Việt.
+ *
+ * Sau khi người dùng xoá bớt ký tự của âm tiết hợp lệ, [rawKeys] không còn khớp với [chars]
+ * ([rawDirty]); khi đó không quay về phím gốc nữa mà hiện đúng [chars] (như Gboard).
+ */
+class TelexEngine(config: TelexConfig = TelexConfig()) {
+    var config: TelexConfig = config
+        set(value) { field = value; invalidateCache() }
+
+    private val chars = ArrayList<Char>(8)
+    private val caps = ArrayList<Boolean>(8)
+    private val rawKeys = ArrayList<Char>(8)
+    private val rawCaps = ArrayList<Boolean>(8)
+
+    /** Dấu thanh hiện tại (0..5). */
+    var tone: Int = Tone.NONE
+        private set
+
+    private var rawDirty = false
+    private var cachedText: String? = null
+    private var cachedFallback: Boolean? = null
+
+    val isEmpty: Boolean get() = chars.isEmpty() && rawKeys.isEmpty()
+    val length: Int get() = chars.size
+
+    /** Âm tiết có nguyên âm chưa (điều kiện để phím dấu có hiệu lực). */
+    fun hasVowel(): Boolean = ToneRules.vowelIndices(chars).isNotEmpty()
+
+    /** Âm tiết đang hiển thị dạng "phím gốc" vì không thể là tiếng Việt. */
+    fun isFallback(): Boolean {
+        cachedFallback?.let { return it }
+        val fb = config.englishFallback && !rawDirty && !SyllableValidator.couldBecomeValid(baseString(), tone)
+        cachedFallback = fb
+        return fb
+    }
+
+    /** Âm tiết hiện tại có hợp lệ (đầy đủ) không. */
+    fun isValid(): Boolean = !isFallback() && SyllableValidator.isValid(baseString(), tone)
+
+    /** Chuỗi đang soạn để hiển thị / commit. */
+    fun text(): String {
+        cachedText?.let { return it }
+        val t = if (isFallback()) rawText() else ToneRules.spell(chars, tone, caps, config.newToneStyle)
+        cachedText = t
+        return t
+    }
+
+    /** Đúng các phím đã gõ (kèm chữ hoa). */
+    fun rawText(): String {
+        val sb = StringBuilder(rawKeys.size)
+        for (i in rawKeys.indices) sb.append(if (rawCaps[i]) rawKeys[i].uppercaseChar() else rawKeys[i])
+        return sb.toString()
+    }
+
+    /** 6 biến thể dấu cho thanh gợi ý; rỗng nếu chưa có nguyên âm hoặc đang ở chế độ phím gốc. */
+    fun candidates(): List<Candidate> {
+        if (isFallback() || !hasVowel()) return emptyList()
+        return Tone.CANDIDATE_ORDER.map { t ->
+            Candidate(t, ToneRules.spell(chars, t, caps, config.newToneStyle), t == tone)
+        }
+    }
+
+    fun setTone(t: Int) {
+        require(t in 0..5)
+        tone = t
+        invalidateCache()
+    }
+
+    fun reset() {
+        chars.clear(); caps.clear(); rawKeys.clear(); rawCaps.clear()
+        tone = Tone.NONE
+        rawDirty = false
+        invalidateCache()
+    }
+
+    /**
+     * Gõ một phím chữ `a`..`z`.
+     * @param upper chữ hoa (vuốt lên). Giữ hoa khi engine biến đổi: `D` + `d` → `Đ`.
+     */
+    fun press(key: Char, upper: Boolean = false) {
+        val k = key.lowercaseChar()
+        require(k in 'a'..'z') { "press() chỉ nhận a..z, nhận: '$key'" }
+        rawKeys.add(k); rawCaps.add(upper)
+        apply(k, upper)
+        invalidateCache()
+    }
+
+    /**
+     * Xoá một ký tự của âm tiết đang soạn.
+     * @return `false` nếu không còn gì để xoá trong âm tiết (caller xoá trong ô nhập).
+     */
+    fun backspace(): Boolean {
+        if (isEmpty) return false
+        if (isFallback()) {
+            // Ở chế độ phím gốc, phím gốc là nguồn sự thật: bỏ phím cuối rồi gõ lại từ đầu.
+            rawKeys.removeAt(rawKeys.size - 1); rawCaps.removeAt(rawCaps.size - 1)
+            replay()
+        } else {
+            // Xoá theo ký tự đã biến đổi, giữ dấu nếu còn nguyên âm ("tiếng" → "tiến").
+            if (chars.isNotEmpty()) { chars.removeAt(chars.size - 1); caps.removeAt(caps.size - 1) }
+            if (!hasVowel()) tone = Tone.NONE
+            rawDirty = true
+        }
+        if (chars.isEmpty()) {
+            rawKeys.clear(); rawCaps.clear(); tone = Tone.NONE; rawDirty = false
+        }
+        invalidateCache()
+        return true
+    }
+
+    private fun replay() {
+        val keys = rawKeys.toList(); val ups = rawCaps.toList()
+        chars.clear(); caps.clear(); tone = Tone.NONE
+        for (i in keys.indices) apply(keys[i], ups[i])
+    }
+
+    private fun add(ch: Char, upper: Boolean) { chars.add(ch); caps.add(upper) }
+
+    private fun apply(k: Char, upper: Boolean) {
+        val hasV = hasVowel()
+        val tv = config.toneOf(k)
+        when {
+            tv in 1..5 && hasV -> {
+                if (tone == tv) { tone = Tone.NONE; add(k, upper) } else tone = tv
+            }
+            tv == Tone.REMOVE && hasV && tone > 0 -> tone = Tone.NONE
+            k == 'a' || k == 'e' || k == 'o' -> applyCircumflex(k, upper)
+            k == 'd' -> applyD(upper)
+            k == 'w' -> applyW(upper)
+            else -> add(k, upper)
+        }
+    }
+
+    private fun applyCircumflex(k: Char, upper: Boolean) {
+        val c = when (k) { 'a' -> 'â'; 'e' -> 'ê'; else -> 'ô' }
+        var j = -1
+        for (i in chars.indices.reversed()) if (chars[i] == k || chars[i] == c) { j = i; break }
+        when {
+            j >= 0 && chars[j] == k -> chars[j] = c
+            j >= 0 && chars[j] == c -> { chars[j] = k; add(k, upper) }
+            else -> add(k, upper)
+        }
+    }
+
+    private fun applyD(upper: Boolean) {
+        when {
+            chars.isNotEmpty() && chars[0] == 'd' -> chars[0] = 'đ'
+            chars.isNotEmpty() && chars[0] == 'đ' -> { chars[0] = 'd'; add('d', upper) }
+            else -> add('d', upper)
+        }
+    }
+
+    private fun applyW(upper: Boolean) {
+        val p = lastIndexOfUo()
+        if (p >= 0 && !(p > 0 && chars[p - 1] == 'q')) {
+            chars[p] = 'ư'; chars[p + 1] = 'ơ'
+            return
+        }
+        for (i in chars.indices.reversed()) {
+            val ch = chars[i]
+            val m = when (ch) { 'a' -> 'ă'; 'o' -> 'ơ'; 'u' -> 'ư'; else -> null }
+            if (m != null && !(ch == 'u' && i > 0 && chars[i - 1] == 'q')) { chars[i] = m; return }
+            val r = when (ch) { 'ă' -> 'a'; 'ơ' -> 'o'; 'ư' -> 'u'; else -> null }
+            if (r != null) { chars[i] = r; add('w', upper); return }
+        }
+        add('ư', upper)
+    }
+
+    private fun lastIndexOfUo(): Int {
+        for (i in chars.size - 2 downTo 0) if (chars[i] == 'u' && chars[i + 1] == 'o') return i
+        return -1
+    }
+
+    private fun baseString(): String {
+        val sb = StringBuilder(chars.size)
+        for (c in chars) sb.append(c)
+        return sb.toString()
+    }
+
+    private fun invalidateCache() { cachedText = null; cachedFallback = null }
+
+    data class Candidate(val tone: Int, val text: String, val selected: Boolean)
+}
