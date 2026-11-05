@@ -7,6 +7,8 @@
 - Vuốt trái dài trên phím cách kéo tiếp được qua các dòng.
 - `uaw` ra `ưa` (vuaw → vưa).
 - Bỏ chữ dấu (á, ả…) dưới phím, chỉ dùng màu; ký tự vuốt xuống hiện dưới chữ cái.
+- Bố cục mặc định mới: ⚙ và 123 lên hàng trên, ☺ `,` `.` xuống hàng phím cách, chữ dồn thành 4 hàng (Q E T F H I P / A S D G J K L / Z X C V B M N). Bố cục đã lưu không đổi.
+- Trang ký tự 2 cũng đi theo chữ như trang 1, nên phím chức năng không nhảy chỗ khi chuyển trang ở bố cục tuỳ biến.
 - Màn sắp xếp phím đặt lưới ở đáy màn hình, đúng chỗ bàn phím thật.
 - Thông báo ngắn sau undo, redo, cắt, chép, dán, chọn hết.
 

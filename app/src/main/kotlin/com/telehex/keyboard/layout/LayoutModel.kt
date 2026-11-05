@@ -96,11 +96,11 @@ class LayoutModel(val rows: List<List<String?>>) {
 
         val DEFAULT: LayoutModel = LayoutModel(
             listOf(
-                listOf("w", "r", "y", KeyCode.EMOJI, KeyCode.NUMBERS, "o", "p"),
-                listOf("q", "e", "t", KeyCode.SETTINGS, "u", "i", "h"),
-                listOf("a", "s", "d", ",", "f", "g", "j"),
-                listOf("z", "c", "b", ".", "n", "m", "k"),
-                listOf("x", "v", null, null, null, "l", KeyCode.ENTER),
+                listOf("w", "r", "y", KeyCode.SETTINGS, "u", "o", KeyCode.NUMBERS),
+                listOf("q", "e", "t", "f", "h", "i", "p"),
+                listOf("a", "s", "d", "g", "j", "k", "l"),
+                listOf("z", "x", "c", "v", "b", "n", "m"),
+                listOf(KeyCode.EMOJI, ",", null, null, null, ".", KeyCode.ENTER),
             )
         )
 

@@ -31,7 +31,7 @@ object KeyPage {
         enterLabel: String,
     ): List<Key> {
         val rows: List<List<String?>> = when (mode) {
-            Mode.SYMBOLS -> if (symbolPage == 2) SymbolPages.PAGE2 else SymbolPages.page1(layout)
+            Mode.SYMBOLS -> if (symbolPage == 2) SymbolPages.page2(layout) else SymbolPages.page1(layout)
             else -> layout.rows
         }
         val keys = ArrayList<Key>(32)

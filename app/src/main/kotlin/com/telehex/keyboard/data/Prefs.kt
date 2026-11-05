@@ -57,7 +57,7 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putInt(KEY_ONE_HANDED, v).apply()
 
     /** Toàn bộ tuỳ chọn dạng JSON để sao lưu (không gồm dữ liệu học, lưu riêng). */
-    fun exportJson(): String = JSONObject(sp.all.filterKeys { it != KEY_TOUCH_OFFSETS }.mapValues { (_, v) ->
+    fun exportJson(): String = JSONObject(sp.all.filterKeys { it != KEY_TOUCH_OFFSETS && it != KEY_OFFSETS_LAYOUT }.mapValues { (_, v) ->
         if (v is Set<*>) org.json.JSONArray(v.toList()) else v
     }).toString()
 
@@ -120,9 +120,12 @@ class Prefs(context: Context) {
         get() = sp.getBoolean(KEY_LEARN_OFFSETS, true)
         set(v) = sp.edit().putBoolean(KEY_LEARN_OFFSETS, v).apply()
 
-    /** Độ lệch chạm đã học (dp): mã phím → [dx, dy]. */
+    /**
+     * Độ lệch chạm đã học (dp): mã phím → [dx, dy]. Học theo chữ nhưng đúng cho ô mà chữ đang đứng,
+     * nên lưu kèm bố cục lúc học; bố cục đổi (sắp xếp lại, khôi phục, đổi mặc định khi nâng cấp) thì bỏ.
+     */
     var touchOffsets: Map<String, FloatArray>
-        get() = sp.getString(KEY_TOUCH_OFFSETS, null)?.let { json ->
+        get() = sp.getString(KEY_TOUCH_OFFSETS, null)?.takeIf { offsetsMatchLayout() }?.let { json ->
             runCatching {
                 val o = JSONObject(json)
                 o.keys().asSequence().associateWith { k ->
@@ -133,8 +136,15 @@ class Prefs(context: Context) {
         set(v) {
             val o = JSONObject()
             for ((k, a) in v) o.put(k, org.json.JSONArray().put(a[0].toDouble()).put(a[1].toDouble()))
-            sp.edit().putString(KEY_TOUCH_OFFSETS, o.toString()).apply()
+            sp.edit().putString(KEY_TOUCH_OFFSETS, o.toString()).putString(KEY_OFFSETS_LAYOUT, layout.toJson()).apply()
         }
+
+    private fun offsetsMatchLayout(): Boolean {
+        val learnedOn = sp.getString(KEY_OFFSETS_LAYOUT, null)
+            // Bản cũ không lưu bố cục: chưa từng lưu bố cục riêng nghĩa là học trên bố cục mặc định cũ
+            ?: return sp.contains(KEY_LAYOUT)
+        return learnedOn == layout.toJson()
+    }
 
     /** Ngưỡng cử chỉ, chỉnh theo tay từng người. */
     var swipeThresholdDp: Int
@@ -231,6 +241,7 @@ class Prefs(context: Context) {
         const val KEY_DYNAMIC_ZONES = "dynamic_hit_zones"
         const val KEY_LEARN_OFFSETS = "learn_touch_offsets"
         const val KEY_TOUCH_OFFSETS = "touch_offsets"
+        const val KEY_OFFSETS_LAYOUT = "touch_offsets_layout"
         const val KEY_SWIPE_DP = "swipe_threshold_dp"
         const val KEY_HOLD_MS = "hold_ms"
         const val KEY_LONG_PRESS_MS = "long_press_ms"

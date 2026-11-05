@@ -247,7 +247,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        if (key == Prefs.KEY_RECENT_EMOJI || key == Prefs.KEY_PRESETS) return
+        if (key == Prefs.KEY_RECENT_EMOJI || key == Prefs.KEY_PRESETS || key == Prefs.KEY_OFFSETS_LAYOUT) return
         if (key == Prefs.KEY_TOUCH_OFFSETS) {
             // Người dùng xoá dữ liệu độ lệch trong Cài đặt: bỏ bản trong bộ nhớ, đừng ghi đè lại
             if (prefs.touchOffsets.isEmpty()) { touchOffsets.clear(); offsetsDirty = false; if (::keyboardView.isInitialized) keyboardView.removeCallbacks(saveOffsets) }
@@ -258,6 +258,11 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             predictions = PredictionStore(this)
             clipboardStore = ClipboardStore(this)
             return
+        }
+        if (key == Prefs.KEY_LAYOUT) {
+            // Độ lệch học cho ô cũ của chữ; bản lưu cũng tự bị bỏ vì khác bố cục (Prefs.touchOffsets)
+            touchOffsets.clear(); offsetsDirty = false
+            if (::keyboardView.isInitialized) keyboardView.removeCallbacks(saveOffsets)
         }
         engine.config = prefs.telexConfig()
         rebuildCorrector()

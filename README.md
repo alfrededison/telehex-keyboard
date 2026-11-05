@@ -3,11 +3,11 @@
 Bàn phím tiếng Việt gõ **Telex** trên lưới **lục giác đều 7 cột**. Giữ tinh thần QWERTY (Q-W-E-R-T-Y đọc zigzag giữa hai hàng trên) nhưng phím to hơn ~45% so với bàn phím 10 cột. Thao tác phụ (xoá, chữ hoa, ký tự phụ, con trỏ, chọn, dán…) chuyển sang cử chỉ vuốt, nên lưới chữ không có phím backspace hay shift.
 
 ```
-  W   R   Y   ☺  123  O   P
-Q   E   T   ⚙   U   I   H
-  A   S   D   ,   F   G   J
-Z   C   B   .   N   M   K
-  X   V  \___cách___/  L   ↵
+  W   R   Y   ⚙   U   O  123
+Q   E   T   F   H   I   P
+  A   S   D   G   J   K   L
+Z   X   C   V   B   M   N
+  ☺   ,  \___cách___/  .   ↵
 ```
 
 ## Quyền riêng tư
