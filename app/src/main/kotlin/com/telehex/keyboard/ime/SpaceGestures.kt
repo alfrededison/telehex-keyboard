@@ -88,7 +88,8 @@ class SpaceGestures(private val host: Host) {
             State.PENDING -> {
                 if (!moved) return
                 cancelTimer()
-                if (dx < 0 && ax > ay && ax > wordThreshold()) enterWordSelect(dx)
+                // Có vùng chọn thì vuốt trái (dài hay ngắn) là cắt khi nhả, không chọn-để-xoá theo từ
+                if (dx < 0 && ax > ay && ax > wordThreshold() && !host.hasSelection()) enterWordSelect(dx)
             }
             State.WORD_SELECT -> updateWordSelect(dx)
             State.CURSOR -> {
