@@ -58,7 +58,7 @@ tots	tót
 mowis	mới
 cux	cũ
 dder	đẻ
-dderr	dderr
+dderr	đer
 ddawts	đắt
 rer	rẻ
 nhanh	nhanh
@@ -134,33 +134,33 @@ Thais	Thái
 Thaif	Thài
 # Gõ hoàn tác (gõ lại cùng phím)
 aa	â
-aaa	aaa
+aaa	aa
 ee	ê
-eee	eee
+eee	ee
 oo	ô
 ooo	oo
 xoong	xông
 xooong	xoong
 dd	đ
-ddd	ddd
+ddd	dd
 ddi	đi
 ddii	ddii
-ass	ass
+ass	as
 tooi	tôi
 toois	tối
-tooiss	tooiss
+tooiss	tôis
 tooisf	tồi
 tooisz	tôi
 # w
 w	ư
-ww	ww
+ww	w
 wa	ưa
 aw	ă
-aww	aww
+aww	aw
 ow	ơ
-oww	oww
+oww	ow
 uw	ư
-uww	uww
+uww	uw
 quw	quw
 # Dấu z (bỏ dấu)
 tooisz	tôi
@@ -198,7 +198,7 @@ http	http
 xyz	xyz
 ok	ok
 add	add
-ass	ass
+ass	as
 css	css
 async	async
 await	await
@@ -210,17 +210,21 @@ WINDOWS	WINDOWS
 wtf	wtf
 good	good
 boot	bôt
-# Gõ lại cùng dấu: huỷ dấu, in chữ (khi vẫn là âm tiết hợp lệ)
+# Gõ lại cùng dấu: huỷ dấu, in chữ, và từ đó hiện nguyên văn (ass → as) dù không phải tiếng Việt
 toois	tối
-tooiss	tooiss
-tooisss	tooisss
-# Có dấu + tiếng Anh: Telex vốn biến đổi, chỉ quay về phím gốc khi không thể là tiếng Việt
+tooiss	tôis
+tooisss	tốis
+# Tiếng Anh: quay về phím gốc khi không thể là tiếng Việt và không có thao tác huỷ (pornt → pornt)
+pornt	pornt
+print	print
+sort	sort
+
 their	their
-class	class
-pass	pass
+class	clas
+pass	pas
 hello	hello
-all	all	l
-will	will	l
+all	al	l
+will	ưil	l
 # Phím L là dấu huyền (tuỳ chọn)
 lal	là	l
 nguowil	người	l
