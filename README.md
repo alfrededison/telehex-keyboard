@@ -91,10 +91,10 @@ Yêu cầu JDK 17+, Android SDK 36.
 
   ```
   tools/release.sh            # hoặc: tools/release.sh minor | major
-  git push origin main vX.Y.Z
+  git push --atomic origin main vX.Y.Z
   ```
 
-  Script đóng ngày cho mục CHANGELOG, commit "Release X.Y.Z", gắn tag `vX.Y.Z`, rồi tạo ngay commit "Start X.Y.(Z+1) development" tăng `appVersion` và mở mục CHANGELOG mới. Script không tự push. Push tag thì workflow chạy test, build, kiểm tra chứng chỉ, rồi tạo **release nháp** kèm APK + `.sha256` để bạn đọc lại và bấm Publish; push `main` thì bản dev mới là `X.Y.(Z+1)-dev.1`, cao hơn bản release.
+  Script đóng ngày cho mục CHANGELOG, commit "Release X.Y.Z", gắn tag `vX.Y.Z`, rồi tạo ngay commit "Start X.Y.(Z+1) development" tăng `appVersion` và mở mục CHANGELOG mới. Trước khi ghi gì, script fetch `origin` và dừng nếu `main` đang tụt sau GitHub hoặc tag đã có trên GitHub; nếu lỗi giữa chừng (hook, GPG) thì tự quay về commit ban đầu và xoá tag để chạy lại được. Script không tự push; `--atomic` đảm bảo tag và `main` cùng lên hoặc cùng không. Push tag thì workflow chạy test, build, kiểm tra chứng chỉ, rồi tạo **release nháp** kèm APK + `.sha256` để bạn đọc lại và bấm Publish; push `main` thì bản dev mới là `X.Y.(Z+1)-dev.1`, cao hơn bản release.
 - **Ghim chứng chỉ**: `signing/release-cert.sha256` là SHA-256 của chứng chỉ ký. Bản release và bản dev bị chặn nếu APK không ký đúng key này, vì Android không cho cài đè một APK ký bằng key khác.
 - **Secrets**: `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. Keystore và mật khẩu nằm trong `.signing/` (không commit); `python3 .signing/upload-secrets.py` đẩy chúng lên GitHub Secrets bằng `gh`.
 

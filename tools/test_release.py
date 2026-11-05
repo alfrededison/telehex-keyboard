@@ -24,13 +24,31 @@ class ReleaseTest(unittest.TestCase):
         self.git("init", "-q", "-b", "main")
         self.git("add", ".")
         self.git("commit", "-q", "-m", "Initial")
+        self.origin = Path(self.tmp.name + "-origin.git")
+        self.addCleanup(shutil.rmtree, self.origin, True)
+        subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(self.origin)], check=True)
+        self.git("remote", "add", "origin", str(self.origin))
+        self.git("push", "-q", "origin", "main")
+        self.git("fetch", "-q", "origin")
 
-    def git(self, *args):
+    def git(self, *args, cwd=None):
         return subprocess.run(
             ["git", "-c", "user.name=Release Test", "-c", "user.email=release@example.invalid",
              "-c", "commit.gpgsign=false", "-c", "tag.gpgsign=false", *args],
-            cwd=self.repo, text=True, capture_output=True, check=True,
+            cwd=cwd or self.repo, text=True, capture_output=True, check=True,
         ).stdout.strip()
+
+    def other_clone(self):
+        """A second clone that pushes to origin behind this repo's back."""
+        other = Path(self.tmp.name + "-other")
+        self.addCleanup(shutil.rmtree, other, True)
+        subprocess.run(["git", "clone", "-q", str(self.origin), str(other)], check=True)
+        return other
+
+    def assert_untouched(self, start):
+        self.assertEqual(start, self.git("rev-parse", "HEAD"))
+        self.assertEqual("", self.git("tag", "-l", "v0.1.0"))
+        self.assertEqual("", self.git("status", "--porcelain"))
 
     def release(self, *args):
         env = dict(os.environ, RELEASE_DATE="2026-11-05",
@@ -91,6 +109,63 @@ class ReleaseTest(unittest.TestCase):
         self.assertNotEqual(0, result.returncode)
         self.assertIn("already exists", result.stderr)
         self.assertEqual("", self.git("status", "--porcelain"))
+
+
+    def test_prints_an_atomic_push_that_lands_both_refs(self):
+        result = self.release()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("git push --atomic origin main v0.1.0", result.stdout)
+        self.git("push", "-q", "--atomic", "origin", "main", "v0.1.0")
+        self.assertEqual(self.git("rev-parse", "HEAD"), self.git("rev-parse", "main", cwd=self.origin))
+        self.assertEqual(self.git("rev-parse", "v0.1.0^{commit}"),
+                         self.git("rev-parse", "v0.1.0^{commit}", cwd=self.origin))
+
+    def test_refuses_when_main_is_behind_origin(self):
+        start = self.git("rev-parse", "HEAD")
+        other = self.other_clone()
+        (other / "README.md").write_text("pushed elsewhere\n")
+        self.git("add", "README.md", cwd=other)
+        self.git("commit", "-q", "-m", "Elsewhere", cwd=other)
+        self.git("push", "-q", "origin", "main", cwd=other)
+        result = self.release()
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("pull first", result.stderr)
+        self.assert_untouched(start)
+
+    def test_refuses_when_the_tag_exists_only_on_origin(self):
+        start = self.git("rev-parse", "HEAD")
+        other = self.other_clone()
+        self.git("tag", "v0.1.0", cwd=other)
+        self.git("push", "-q", "origin", "v0.1.0", cwd=other)
+        result = self.release()
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("already exists", result.stderr)
+        self.assertEqual(start, self.git("rev-parse", "HEAD"))
+        self.assertEqual("", self.git("status", "--porcelain"))
+
+    def test_bad_changelog_header_is_caught_before_any_write(self):
+        (self.repo / "CHANGELOG.md").write_text("# TeleHex changelog\n\n## 0.1.0 — unreleased\n")
+        self.git("commit", "-q", "-am", "Rename header")
+        self.git("push", "-q", "origin", "main")
+        start = self.git("rev-parse", "HEAD")
+        result = self.release()
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("# Changelog", result.stderr)
+        self.assert_untouched(start)
+
+    def test_failure_after_tagging_rolls_back_and_can_be_rerun(self):
+        start = self.git("rev-parse", "HEAD")
+        hook = self.repo / ".git/hooks/commit-msg"
+        hook.write_text('#!/bin/sh\ngrep -q "^Start " "$1" && exit 1\nexit 0\n')
+        hook.chmod(0o755)
+        result = self.release()
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("resetting", result.stderr)
+        self.assert_untouched(start)
+        hook.unlink()
+        result = self.release()
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(("0.1.1-dev.1", 101001), self.version(release=False))
 
 
 if __name__ == "__main__":
