@@ -57,14 +57,7 @@ Chuỗi phím không thể là tiếng Việt thì hiện đúng phím đã gõ 
 
 ### Gói ngôn ngữ (tuỳ chọn)
 
-Gợi ý âm tiết tiếp theo dùng mô hình n-gram âm tiết nếu có. APK không đóng gói sẵn mô hình; bạn tự dựng và nạp bằng tay (app không có quyền INTERNET nên không tải từ mạng):
-
-```
-python3 tools/build_ngram.py corpus1.txt corpus2.txt -o vi.ngram   # Kneser–Ney, lượng tử hoá 8 bit
-python3 tools/eval_ngram.py vi.ngram test.txt                       # top-1/top-3, keystroke savings
-```
-
-rồi Cài đặt → "Nạp gói ngôn ngữ (.ngram)…". Dữ liệu Wikipedia tiếng Việt là CC-BY-SA-4.0: mô hình dựng từ đó phải ghi công và giữ cùng điều khoản. Đặt file vào `app/src/main/assets/vi.ngram` nếu muốn đóng gói sẵn.
+Gợi ý âm tiết tiếp theo dùng thêm một mô hình n-gram âm tiết nếu có. APK không đóng gói sẵn mô hình, và app không có quyền INTERNET nên không tự tải. Bạn tự dựng từ corpus tiếng Việt rồi nạp trong Cài đặt → "Nạp gói ngôn ngữ (.ngram)…". Hướng dẫn đầy đủ gồm nguồn corpus và giấy phép, cách tải, làm sạch, dựng, đo chất lượng và nạp: [docs/language-pack.md](docs/language-pack.md).
 
 ## Tuỳ biến
 

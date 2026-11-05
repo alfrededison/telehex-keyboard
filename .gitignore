@@ -25,3 +25,7 @@ __pycache__/
 # Build output và key ký (không bao giờ commit)
 out/
 .signing/
+
+# Gói ngôn ngữ dựng từ corpus có giấy phép riêng; chỉ commit có chủ đích (git add -f)
+*.ngram
+!telex/src/test/resources/*.ngram

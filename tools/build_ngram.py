@@ -8,9 +8,10 @@ Cách dùng:
 (CC-BY-SA-4.0: mô hình sinh ra phải ghi công và giữ cùng điều khoản) hoặc corpus tin tức mở.
 
 Thuật toán: đếm n-gram theo âm tiết (chữ thường, chỉ ký tự Latin/Việt), cắt tỉa theo ngưỡng,
-làm trơn Kneser–Ney nội suy (discount cố định 0.75), lượng tử hoá xác suất thành 8 bit
+làm trơn Kneser–Ney nội suy (discount mặc định 0.75, đổi bằng --discount), lượng tử hoá xác suất thành 8 bit
 (q = round(-log2 p × 8), clamp 255), ghi theo định dạng `BinaryNgramModel` (xem mô tả trong
-telex/.../predict/BinaryNgramModel.kt). Mục tiêu < 20 MB: chỉnh --min-count và --max-vocab.
+telex/.../predict/BinaryNgramModel.kt). Mục tiêu < 20 MB: chỉnh --min-bigram, --min-trigram và --max-vocab.
+Hướng dẫn đầy đủ: docs/language-pack.md.
 """
 import argparse
 import math
