@@ -11,6 +11,7 @@
 - Trang ký tự 2 cũng đi theo chữ như trang 1, nên phím chức năng không nhảy chỗ khi chuyển trang ở bố cục tuỳ biến.
 - Màn sắp xếp phím đặt lưới ở đáy màn hình, đúng chỗ bàn phím thật.
 - Thông báo ngắn sau undo, redo, cắt, chép, dán, chọn hết.
+- Thoát được tìm emoji mà không cần chọn emoji: chạm ô tìm (✕), ⌫ khi ô tìm trống, ↵ hoặc ☺ đều về bảng emoji; trước đây ⌫ xoá chữ trong ô nhập và ↵ gửi tin.
 
 ## 0.1.0 — 2026-11-05
 

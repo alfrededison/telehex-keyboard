@@ -202,6 +202,12 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         updateBar()
     }
 
+    /** Bỏ tìm mà không chọn emoji: về bảng emoji, nơi bắt đầu tìm. */
+    private fun cancelEmojiSearch() {
+        stopEmojiSearch()
+        openEmoji()
+    }
+
     private fun insertEmoji(emoji: String) {
         val e = EmojiData.get(this).withSkinTone(emoji, prefs.skinTone)
         commitSyllable(e)
@@ -371,6 +377,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     }
 
     private fun openEmoji() {
+        if (emojiSearch) stopEmojiSearch()
         val panel = emojiPanel ?: EmojiPanel(this, Theme.resolve(this, prefs.themeMode), EmojiData.get(this)).also { p ->
             p.listener = object : EmojiPanel.Listener {
                 override fun onEmoji(emoji: String) { insertEmoji(emoji) }
@@ -511,7 +518,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         if (emojiSearch) {
             val q = engine.text()
             val results = if (q.isEmpty()) prefs.recentEmoji.take(20) else EmojiData.get(this).search(q, 30)
-            candidateBar.showSuggestions("🔍 " + q.ifEmpty { "tìm emoji…" }, results) { insertEmoji(it); stopEmojiSearch() }
+            // Chạm ô tìm (có ✕), ⌫ khi ô tìm trống, ↵ hoặc ☺ đều bỏ tìm
+            candidateBar.showSuggestions("🔍 " + q.ifEmpty { "tìm emoji…" } + "  ✕", results, onTyped = { cancelEmojiSearch() }) { insertEmoji(it); stopEmojiSearch() }
             return
         }
         if ((hasSelection() || cursorMode) && engine.isEmpty) {
@@ -692,6 +700,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private fun deleteBackward() {
         val ic = currentInputConnection ?: return
         if (engine.backspace()) { updateComposing(); return }
+        if (emojiSearch) { cancelEmojiSearch(); return } // ô tìm đã trống: đừng xoá chữ trong ô nhập
         if (hasSelection()) { deleteSelection(); return }
         val before = ic.getTextBeforeCursor(16, 0)
         if (before.isNullOrEmpty()) {
@@ -727,7 +736,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
      * Chỉ ô TYPE_NULL (terminal) mới cần phím thật.
      */
     private fun pressEnter() {
-        commitSyllable() // cũng thoát tìm emoji
+        if (emojiSearch) { cancelEmojiSearch(); return } // không gửi / xuống dòng trong ô nhập
+        commitSyllable()
         if (sendDefaultEditorAction(true)) return
         if ((currentInputEditorInfo?.inputType ?: InputType.TYPE_NULL) == InputType.TYPE_NULL) sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
         else commitSyllable("\n")

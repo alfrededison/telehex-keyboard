@@ -76,9 +76,9 @@ class CandidateBar(context: Context) : HorizontalScrollView(context) {
     }
 
     /** Chữ đang gõ (ô đầu, giữ nguyên) + các gợi ý sửa; chạm gợi ý để thay. */
-    fun showSuggestions(typed: String, fixes: List<String>, onPick: (String) -> Unit) {
+    fun showSuggestions(typed: String, fixes: List<String>, onTyped: () -> Unit = {}, onPick: (String) -> Unit) {
         row.removeAllViews()
-        chip(typed, selected = true) {}
+        chip(typed, selected = true) { onTyped() }
         for (f in fixes) chip(f, selected = false) { onPick(f) }
         scrollTo(0, 0)
     }
