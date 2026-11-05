@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The gh steps use GH_TOKEN; keep the write token out of .git/config while Gradle runs.
+          persist-credentials: false
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

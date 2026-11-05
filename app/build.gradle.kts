@@ -11,8 +11,10 @@ val appVersion = "0.1.0"
 // Mặc định là số của bản release (X.Y.Z, code = X·10^7 + Y·10^5 + Z·10^3 + 999) để build từ tag
 // ở đâu cũng ra cùng kết quả. Bản dev do tools/release-build.sh đặt VERSION_NAME/VERSION_CODE.
 val releaseVersionCode = appVersion.split('.').map { it.toInt() }.let { (x, y, z) -> x * 10_000_000 + y * 100_000 + z * 1_000 + 999 }
-val resolvedVersionName = System.getenv("VERSION_NAME") ?: appVersion
-val resolvedVersionCode = System.getenv("VERSION_CODE")?.toInt() ?: releaseVersionCode
+val resolvedVersionName = System.getenv("VERSION_NAME")?.takeIf { it.isNotEmpty() } ?: appVersion
+val resolvedVersionCode = System.getenv("VERSION_CODE")?.takeIf { it.isNotEmpty() }?.let {
+    it.toIntOrNull() ?: error("VERSION_CODE must be an integer, got '$it'")
+} ?: releaseVersionCode
 
 // Ký bằng key dự án khi tools/release-build.sh đã giải mã keystore ra file tạm.
 val projectKeystore: String? = System.getenv("ANDROID_KEYSTORE_PATH")?.takeIf { it.isNotEmpty() }

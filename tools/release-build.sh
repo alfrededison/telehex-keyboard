@@ -15,6 +15,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$PWD"
+# Remove the previous output first, so any failure below leaves no stale APK behind.
+rm -f out/TeleHex.apk out/TeleHex.apk.sha256 out/TeleHex.apk.idsig
 
 . tools/signing.sh
 PROJECT_SIGNING=0
@@ -37,7 +39,6 @@ BT="$ANDROID_SDK/build-tools/$BUILD_TOOLS"
 echo "building $VERSION_NAME (versionCode $VERSION_CODE)"
 
 mkdir -p out
-rm -f out/TeleHex.apk out/TeleHex.apk.sha256 out/TeleHex.apk.idsig
 KS=
 cleanup() {
   local status=$?
