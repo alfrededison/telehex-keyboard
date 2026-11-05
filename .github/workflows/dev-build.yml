@@ -1,6 +1,8 @@
 # Every push to main that changes code replaces the "dev" prerelease with a fresh X.Y.Z-dev.N APK.
-# Skipped for documentation-only pushes and for the "Start <next> development" commit that
-# tools/release.sh puts right after a release tag: its code is the release itself.
+# Documentation-only pushes do nothing. The "Start <next> development" commit that tools/release.sh
+# puts right after a release tag only bumps the version: its code is the release, so nothing is
+# built and the old "dev" prerelease is deleted instead. Its X.Y.Z-dev.N is below the release, and
+# Android would refuse it as a downgrade; the next code commit publishes <next>-dev.N again.
 name: dev-build
 
 on:
@@ -9,7 +11,7 @@ on:
     paths-ignore: ["**.md", "prototype/**", "LICENSE", "NOTICE"]
 
 permissions:
-  contents: write
+  contents: read
 
 # Never cancel a run: one stopped between deleting and recreating the release would leave none.
 concurrency:
@@ -35,21 +37,63 @@ jobs:
                  "otherwise this dev build would be a downgrade from the release." >&2
             exit 1
           fi
-      - name: Skip the commit right after a release tag
+      - name: Skip a version-only commit right after a release tag
         id: decide
         run: |
-          released=$(git tag --points-at HEAD^ --list 'v*' 2>/dev/null | head -n1)
+          # Skip only when HEAD^ is a release and HEAD changes nothing but CHANGELOG.md and the
+          # appVersion line: an amended bump or a hand-made commit that also changes code still builds.
+          released=
+          if git rev-parse -q --verify HEAD^ >/dev/null; then
+            released=$(git tag --points-at HEAD^ --list 'v*' | head -n1)
+          fi
+          build=true
           if [ -n "$released" ]; then
-            echo "HEAD only starts the next version after $released: nothing new to build."
-            echo "build=false" >> "$GITHUB_OUTPUT"
+            # Diff first, so a git error builds (the safe side) instead of looking like "no changes".
+            if files=$(git diff --no-renames --name-only HEAD^ HEAD) &&
+               gradle_diff=$(git diff --no-renames -U0 HEAD^ HEAD -- app/build.gradle.kts); then
+              other_files=$(printf '%s\n' "$files" | grep -Fvx -e CHANGELOG.md -e app/build.gradle.kts || true)
+              other_lines=$(printf '%s\n' "$gradle_diff" | grep -E '^[-+]' | grep -vE '^(\+\+\+|---) ' |
+                grep -vE '^[-+]val appVersion = "[0-9]+\.[0-9]+\.[0-9]+"[[:space:]]*$' || true)
+              if [ -z "$other_files" ] && [ -z "$other_lines" ]; then
+                echo "HEAD only starts the next version after $released: nothing new to build."
+                build=false
+              fi
+            else
+              echo "::warning::cannot diff HEAD against $released; building to be safe"
+            fi
+          fi
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+
+  retire:
+    name: delete the dev prerelease superseded by the release
+    needs: check
+    if: needs.check.outputs.build == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        # Only "no dev prerelease" counts as done: any other gh error must fail the job, or the
+        # superseded X.Y.Z-dev.N would stay up unnoticed.
+        run: |
+          if out=$(gh release view dev --json tagName 2>&1); then
+            gh release delete dev --yes --cleanup-tag
+            echo "Deleted the dev prerelease: the release is now the newest build."
+          elif printf '%s' "$out" | grep -q "release not found"; then
+            echo "No dev prerelease to delete."
           else
-            echo "build=true" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "$out" >&2
+            exit 1
           fi
 
   dev:
     needs: check
     if: needs.check.outputs.build == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:

@@ -15,9 +15,11 @@
 #
 #   git push --atomic origin main vX.Y.Z
 #
-# The tag builds the signed release as a draft; main builds <next>-dev.1, whose versionCode is above
-# the release, so dev builds keep installing over the release. Without step 3 every dev build would
-# stay at X.Y.Z-dev.N, below X.Y.Z, and Android would refuse it as a downgrade.
+# The tag builds the signed release as a draft. The bump commit on main builds nothing and deletes
+# the old "dev" prerelease (its X.Y.Z-dev.N is below the release); the next code commit publishes
+# <next>-dev.N, whose versionCode is above the release, so dev builds keep installing over it.
+# Without step 3 every dev build would stay at X.Y.Z-dev.N, below X.Y.Z, and Android would refuse
+# it as a downgrade.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -42,7 +44,8 @@ TAG="v$CURRENT"
 
 git remote get-url "$REMOTE" >/dev/null 2>&1 || fail "no remote '$REMOTE' (set RELEASE_REMOTE)"
 # Only the branch: tags are checked with ls-remote below. Fetching all tags would fail whenever the
-# "dev" tag, which dev-build deletes and recreates on every push, has moved since the last fetch.
+# "dev" tag, which dev-build recreates on every code push (and deletes after a release), has moved
+# since the last fetch.
 git fetch -q "$REMOTE" "$BRANCH" || fail "cannot fetch $BRANCH from $REMOTE"
 if git rev-parse -q --verify "refs/remotes/$REMOTE/$BRANCH" >/dev/null; then
   git merge-base --is-ancestor "$REMOTE/$BRANCH" HEAD ||
