@@ -244,16 +244,16 @@ open class KeyboardView @JvmOverloads constructor(
                 canvas.drawText(k.sub, cx, cy + sp(4f), subPaint)
                 continue
             }
-            // Nhãn chính; nếu có nhãn phụ (dấu) thì nhích lên một chút
-            val labelY = cy + labelPaint.textSize * 0.36f - (if (hasSub) sp(4f) else 0f)
+            // Nhãn chính; nếu có nhãn phụ hoặc ký tự vuốt xuống ở dưới thì nhích lên một chút
+            val labelY = cy + labelPaint.textSize * 0.36f - (if (hasSub || hasHint) sp(4f) else 0f)
             canvas.drawText(k.label, cx, labelY, labelPaint)
             if (hasSub) {
                 subPaint.color = fg; subPaint.textSize = sp(11f)
                 canvas.drawText(k.sub, cx, labelY + sp(12f), subPaint)
-            }
-            if (hasHint) {
-                hintPaint.color = theme.hintFg; hintPaint.textSize = sp(9f)
-                canvas.drawText(k.hint, cx, cy - labelPaint.textSize * 0.7f - sp(1f), hintPaint)
+            } else if (hasHint) {
+                // Vuốt xuống thì ký tự nằm ở dưới, đúng hướng ngón tay
+                hintPaint.color = theme.hintFg; hintPaint.textSize = sp(11f)
+                canvas.drawText(k.hint, cx, labelY + sp(14f), hintPaint)
             }
         }
         drawOverlay(canvas)

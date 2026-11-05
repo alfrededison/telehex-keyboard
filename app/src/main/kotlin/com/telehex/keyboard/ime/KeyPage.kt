@@ -5,7 +5,7 @@ import com.telehex.keyboard.layout.LayoutModel
 import com.telehex.keyboard.layout.SymbolPages
 import com.telehex.telex.TelexConfig
 
-/** Một phím đã sẵn sàng để vẽ: mã, các ô nó chiếm, nhãn chính, nhãn phụ (dấu), gợi ý vuốt xuống, loại. */
+/** Một phím đã sẵn sàng để vẽ: mã, các ô nó chiếm, nhãn chính, nhãn phụ, ký tự vuốt xuống, loại. */
 data class Key(
     val code: String,
     val cells: List<Pair<Int, Int>>,
@@ -22,8 +22,6 @@ enum class Mode { ABC, SYMBOLS, EMOJI, DIAL, EDIT }
 
 /** Dựng danh sách phím cho một trang từ layout + chế độ + cấu hình. */
 object KeyPage {
-    private val TONE_MARK = arrayOf("", "á", "à", "ả", "ã", "ạ", "bỏ")
-
     fun build(
         layout: LayoutModel,
         mode: Mode,
@@ -68,11 +66,7 @@ object KeyPage {
             ch in "aeiouyw" -> KeyKind.VOWEL
             else -> KeyKind.CONSONANT
         }
-        val sub = when {
-            tv != 0 -> TONE_MARK[tv]
-            ch == 'w' -> "ư"
-            else -> ""
-        }
-        return Key(code, cell, code.uppercase(), sub = sub, hint = hint, kind = kind)
+        // Không ghi dấu (á, ả…) hay "ư" dưới chữ: màu phím đã cho biết phím dấu / nguyên âm.
+        return Key(code, cell, code.uppercase(), hint = hint, kind = kind)
     }
 }
