@@ -653,9 +653,16 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         return if (start == BreakIterator.DONE) 1 else end - start
     }
 
+    /**
+     * Ô có hành động (Gửi, Tìm…) thì làm hành động đó; ngược lại chèn "\n" như Gboard.
+     * Không gửi phím ENTER: Messenger và nhiều app chat coi phím ENTER cứng là "gửi".
+     * Chỉ ô TYPE_NULL (terminal) mới cần phím thật.
+     */
     private fun pressEnter() {
-        commitSyllable()
-        if (!sendDefaultEditorAction(true)) sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+        commitSyllable() // cũng thoát tìm emoji
+        if (sendDefaultEditorAction(true)) return
+        if ((currentInputEditorInfo?.inputType ?: InputType.TYPE_NULL) == InputType.TYPE_NULL) sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+        else commitSyllable("\n")
     }
 
     // ---- Chỉnh sửa: undo/redo, cut/copy/paste ----
