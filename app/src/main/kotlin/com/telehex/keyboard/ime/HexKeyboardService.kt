@@ -14,6 +14,7 @@ import android.view.WindowInsets
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.LinearLayout
+import com.telehex.keyboard.data.ClipboardStore
 import com.telehex.keyboard.data.PredictionStore
 import com.telehex.keyboard.data.Prefs
 import com.telehex.keyboard.layout.KeyCode
@@ -32,6 +33,11 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private lateinit var keyboardView: KeyboardView
     private var emojiPanel: EmojiPanel? = null
     private var dialpad: DialpadView? = null
+    private var editPanel: EditPanel? = null
+    private lateinit var clipboardStore: ClipboardStore
+    private val clipListener = ClipboardManager.OnPrimaryClipChangedListener { onClipChanged() }
+    /** Chế độ tìm emoji: chữ gõ vào thanh tìm thay vì ô nhập. */
+    private var emojiSearch = false
 
     private val history = EditHistory()
     private lateinit var spaceGestures: SpaceGestures
@@ -77,13 +83,126 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         spaceGestures = SpaceGestures(spaceHost)
         rebuildCorrector()
         predictions = PredictionStore(this)
+        clipboardStore = ClipboardStore(this)
+        clipboard().addPrimaryClipChangedListener(clipListener)
         touchOffsets = prefs.touchOffsets.mapValues { floatArrayOf(it.value[0] * density(), it.value[1] * density()) }.toMutableMap()
     }
 
     override fun onDestroy() {
         prefs.unregisterListener(this)
+        clipboard().removePrimaryClipChangedListener(clipListener)
         savePersonal.run()
         super.onDestroy()
+    }
+
+    /** Lưu clipboard history; bỏ qua nội dung nhạy cảm và khi đang ở ô mật khẩu. */
+    private fun onClipChanged() {
+        if (!prefs.clipboardHistory || !telexEnabled) return
+        val clip = clipboard().primaryClip ?: return
+        if (clip.itemCount == 0) return
+        val desc = clip.description
+        if (Build.VERSION.SDK_INT >= 33 && desc.extras?.getBoolean(android.content.ClipDescription.EXTRA_IS_SENSITIVE) == true) return
+        val text = clip.getItemAt(0).coerceToText(this)?.toString() ?: return
+        clipboardStore.add(text)
+    }
+
+    private fun openEditPanel() {
+        commitSyllable()
+        val t = Theme.resolve(this, prefs.themeMode)
+        val panel = editPanel ?: EditPanel(this, t).also { p ->
+            p.listener = object : EditPanel.Listener {
+                override fun onAction(action: String) = editAction(action)
+                override fun onPasteItem(text: String) { pasteText(text) }
+                override fun onPinItem(text: String) { clipboardStore.togglePin(text); p.showClipboard(clipboardStore.all()) }
+                override fun onDeleteItem(text: String) { clipboardStore.remove(text); p.showClipboard(clipboardStore.all()) }
+            }
+            editPanel = p
+        }
+        panel.showClipboard(clipboardStore.all())
+        mode = Mode.EDIT
+        showPanel(panel)
+    }
+
+    private fun editAction(action: String) {
+        when (action) {
+            "abc" -> openAbc()
+            "up" -> sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_UP)
+            "down" -> sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_DOWN)
+            "left" -> sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_LEFT)
+            "right" -> sendDownUpKeyEvents(KeyEvent.KEYCODE_DPAD_RIGHT)
+            "home" -> sendDownUpKeyEvents(KeyEvent.KEYCODE_MOVE_HOME)
+            "end" -> sendDownUpKeyEvents(KeyEvent.KEYCODE_MOVE_END)
+            "selectWord" -> selectWordAtCursor()
+            "selectAll" -> selectAll()
+            "cut" -> cut()
+            "copy" -> copy()
+            "paste" -> paste()
+            "undo" -> undo()
+            "redo" -> redo()
+            "backspace" -> deleteBackward()
+            "voice" -> switchToVoiceIme()
+        }
+    }
+
+    private fun selectWordAtCursor() {
+        val ic = currentInputConnection ?: return
+        val before = ic.getTextBeforeCursor(32, 0)?.toString() ?: ""
+        val after = ic.getTextAfterCursor(32, 0)?.toString() ?: ""
+        var i = before.length
+        while (i > 0 && !before[i - 1].isWhitespace()) i--
+        var j = 0
+        while (j < after.length && !after[j].isWhitespace()) j++
+        if (before.length - i + j == 0) return
+        ic.setSelection(selStart - (before.length - i), selStart + j)
+    }
+
+    /** Nhập giọng nói qua IME khác (ví dụ FUTO Voice Input chạy offline): chuyển sang IME có subtype "voice". */
+    private fun switchToVoiceIme() {
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        for (ime in imm.enabledInputMethodList) {
+            for (st in imm.getEnabledInputMethodSubtypeList(ime, true)) {
+                if (st.mode == "voice") {
+                    if (Build.VERSION.SDK_INT >= 28) switchInputMethod(ime.id, st)
+                    else {
+                        val token = window.window?.attributes?.token ?: return
+                        @Suppress("DEPRECATION") imm.setInputMethodAndSubtype(token, ime.id, st)
+                    }
+                    return
+                }
+            }
+        }
+        android.widget.Toast.makeText(this, "Chưa có bàn phím giọng nói nào được bật (ví dụ FUTO Voice Input).", android.widget.Toast.LENGTH_LONG).show()
+    }
+
+    private fun pasteText(text: String) {
+        val ic = currentInputConnection ?: return
+        commitSyllable()
+        if (hasSelection()) history.record(EditHistory.Op.Delete(ic.getSelectedText(0)?.toString() ?: ""))
+        ic.commitText(text, 1)
+        history.record(EditHistory.Op.Insert(text))
+        updateBar()
+    }
+
+    // ---- Tìm emoji ----
+
+    private fun startEmojiSearch() {
+        emojiSearch = true
+        engine.reset()
+        openAbc()
+        updateBar()
+    }
+
+    private fun stopEmojiSearch() {
+        emojiSearch = false
+        engine.reset()
+        updateBar()
+    }
+
+    private fun insertEmoji(emoji: String) {
+        val e = EmojiData.get(this).withSkinTone(emoji, prefs.skinTone)
+        commitSyllable(e)
+        prefs.recentEmoji = listOf(emoji) + prefs.recentEmoji.filter { it != emoji }
+        emojiPanel?.recent = prefs.recentEmoji
     }
 
     private fun incognito(): Boolean = noLearning || prefs.incognito || !telexEnabled
@@ -172,6 +291,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         root.setBackgroundColor(t.background)
         emojiPanel = null // dựng lại theo theme khi mở lần sau
         dialpad = null
+        editPanel = null
     }
 
     private fun refreshKeys() {
@@ -210,15 +330,12 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     }
 
     private fun openEmoji() {
-        val panel = emojiPanel ?: EmojiPanel(this, Theme.resolve(this, prefs.themeMode)).also { p ->
+        val panel = emojiPanel ?: EmojiPanel(this, Theme.resolve(this, prefs.themeMode), EmojiData.get(this)).also { p ->
             p.listener = object : EmojiPanel.Listener {
-                override fun onEmoji(emoji: String) {
-                    commitSyllable(emoji)
-                    prefs.recentEmoji = listOf(emoji) + prefs.recentEmoji.filter { it != emoji }
-                    p.recent = prefs.recentEmoji
-                }
+                override fun onEmoji(emoji: String) { insertEmoji(emoji) }
                 override fun onAbc() { openAbc() }
                 override fun onBackspace() { deleteBackward() }
+                override fun onSearch() { startEmojiSearch() }
             }
             emojiPanel = p
         }
@@ -251,6 +368,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         super.onStartInput(attribute, restarting)
         engine.reset()
         history.clear()
+        emojiSearch = false
         candStart = -1; candEnd = -1
         selStart = attribute?.initialSelStart ?: 0
         selEnd = attribute?.initialSelEnd ?: 0
@@ -339,6 +457,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     // ---- Soạn thảo ----
 
     private fun updateComposing() {
+        if (emojiSearch) { updateBar(); return }
         val ic = currentInputConnection ?: return
         if (engine.isEmpty) sink.clearComposing(ic) else sink.setComposing(ic, engine.text(), engine.isSuspicious())
         updateBar()
@@ -347,6 +466,12 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     /** Thanh trên bàn phím: biến thể dấu khi đang soạn; thanh chỉnh sửa khi có vùng chọn / chế độ con trỏ. */
     private fun updateBar() {
         if (!::candidateBar.isInitialized) return
+        if (emojiSearch) {
+            val q = engine.text()
+            val results = if (q.isEmpty()) prefs.recentEmoji.take(20) else EmojiData.get(this).search(q, 30)
+            candidateBar.showSuggestions("🔍 " + q.ifEmpty { "tìm emoji…" }, results) { insertEmoji(it); stopEmojiSearch() }
+            return
+        }
         if ((hasSelection() || cursorMode) && engine.isEmpty) {
             val sel = hasSelection()
             candidateBar.showEditBar(
@@ -367,16 +492,22 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         } else if (!engine.isEmpty) {
             val typed = engine.text()
             val completions = if (prefs.predictions) predictions.predictor.next(recent.toList(), typed, 2).map { casedPrediction(it) } else emptyList()
-            val emoji = EmojiKeywords.forWord(typed, recent.lastOrNull())
+            val emoji = emojiFor(typed)
             candidateBar.show(engine.candidates(), completions, emoji, onPickText = { replaceComposing(it) }, onPickEmoji = { commitSyllable(it) })
         } else if (prefs.predictions && mode == Mode.ABC && telexEnabled && afterSpace()) {
             val next = predictions.predictor.next(recent.toList(), "", 3).map { casedPrediction(it) }
-            val emoji = recent.lastOrNull()?.let { EmojiKeywords.forWord(it, recent.getOrNull(recent.size - 2)) } ?: emptyList()
+            val emoji = recent.lastOrNull()?.let { emojiFor(it) } ?: emptyList()
             if (next.isEmpty() && emoji.isEmpty()) showWordAtCursorSuggestions()
             else candidateBar.showPredictions(next, emoji, onPick = { commitSyllable("$it ") }, onPickEmoji = { commitSyllable(it) }, onForget = { forget(it) })
         } else {
             showWordAtCursorSuggestions()
         }
+    }
+
+    private fun emojiFor(word: String): List<String> {
+        val curated = EmojiKeywords.forWord(word, recent.lastOrNull()?.takeIf { it != word })
+        if (curated.isNotEmpty()) return curated
+        return if (word.length >= 3) EmojiData.get(this).exactKeyword(word, 2) else emptyList()
     }
 
     private fun afterSpace(): Boolean {
@@ -430,16 +561,42 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     /** Chốt âm tiết đang soạn rồi chèn thêm [extra]. */
     private fun commitSyllable(extra: String = "") {
+        if (emojiSearch && (extra == " " || extra == "\n" || extra.isEmpty())) {
+            if (extra.isEmpty() || extra == "\n") stopEmojiSearch() else { engine.reset(); updateBar() }
+            return
+        }
+        if (emojiSearch) stopEmojiSearch()
         val ic = currentInputConnection ?: return
         val syllable = engine.text()
-        val text = syllable + extra
+        var text = syllable + extra
         engine.reset()
+        var shortcutHead = 0
+        if (extra == " " && prefs.shortcuts.isNotEmpty()) {
+            // Gõ tắt: so khớp token trước con trỏ (cả phần đã commit như "@@") + âm tiết đang soạn
+            // getTextBeforeCursor có cả phần đang soạn (composing) nên bỏ nó đi trước
+            val before = (ic.getTextBeforeCursor(32 + syllable.length, 0)?.toString() ?: "").removeSuffix(syllable)
+            val head = before.takeLastWhile { !it.isWhitespace() }
+            val token = head + syllable
+            val expansion = prefs.shortcuts[token] ?: prefs.shortcuts[token.lowercase()]
+            if (expansion != null) {
+                shortcutHead = head.length
+                text = expansion + " "
+            }
+        }
         if (text.isNotEmpty()) {
             if (hasSelection()) history.record(EditHistory.Op.Delete(ic.getSelectedText(0)?.toString() ?: ""))
-            sink.commit(ic, text)
+            if (shortcutHead > 0) {
+                ic.beginBatchEdit()
+                sink.clearComposing(ic) // bỏ âm tiết đang soạn khỏi ô nhập
+                val head = ic.getTextBeforeCursor(shortcutHead, 0)?.toString() ?: ""
+                ic.deleteSurroundingText(shortcutHead, 0)
+                history.record(EditHistory.Op.Delete(head))
+                ic.commitText(text, 1)
+                ic.endBatchEdit()
+            } else sink.commit(ic, text)
             history.record(EditHistory.Op.Insert(text))
         } else sink.detach(ic)
-        if (syllable.isNotEmpty()) pushContext(syllable)
+        if (syllable.isNotEmpty() && shortcutHead == 0) pushContext(syllable)
         if (extra.isNotEmpty() && extra.last() in ".!?\n") recent.clear()
         updateBar()
     }
@@ -626,7 +783,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             }
             code == KeyCode.PAGE -> { symbolPage = if (symbolPage == 2) 1 else 2; refreshKeys() }
             code == KeyCode.EMOJI -> openEmoji()
-            code == KeyCode.SETTINGS -> openSettings()
+            code == KeyCode.SETTINGS -> if (gesture == Gesture.LONG_PRESS) openEditPanel() else openSettings()
             code == KeyCode.ABC -> openAbc()
             code == KeyCode.BACKSPACE -> deleteBackward()
             code == "," || code == "." ->

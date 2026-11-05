@@ -94,7 +94,7 @@ class CustomKeysActivity : Activity() {
             setOnClickListener { items = list; adapter.notifyDataSetChanged() }
         }
         tabs.addView(tab("Ký hiệu", symbols), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        for (c in EmojiData.CATEGORIES.take(3)) tabs.addView(tab(c.icon, c.emoji), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        for (c in EmojiData.get(this).categories.take(4)) tabs.addView(tab(c.icon, c.emoji), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         box.addView(tabs)
         box.addView(grid, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(220)))
 

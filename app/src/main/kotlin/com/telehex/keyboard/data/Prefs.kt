@@ -51,6 +51,23 @@ class Prefs(context: Context) {
         get() = sp.getLong(KEY_MODELS_VERSION, 0)
         set(v) = sp.edit().putLong(KEY_MODELS_VERSION, v).apply()
 
+    /** Tông da mặc định cho emoji (0 = không, 1..5 = sáng → tối). */
+    var skinTone: Int
+        get() = sp.getInt(KEY_SKIN_TONE, 0)
+        set(v) = sp.edit().putInt(KEY_SKIN_TONE, v).apply()
+
+    /** Lưu clipboard history. */
+    var clipboardHistory: Boolean
+        get() = sp.getBoolean(KEY_CLIPBOARD, true)
+        set(v) = sp.edit().putBoolean(KEY_CLIPBOARD, v).apply()
+
+    /** Gõ tắt do người dùng định nghĩa: "ko" → "không". */
+    var shortcuts: Map<String, String>
+        get() = sp.getString(KEY_SHORTCUTS, null)?.let { json ->
+            runCatching { val o = JSONObject(json); o.keys().asSequence().associateWith { o.getString(it) } }.getOrNull()
+        } ?: emptyMap()
+        set(v) = sp.edit().putString(KEY_SHORTCUTS, JSONObject(v).toString()).apply()
+
     /** Gợi ý âm tiết tiếp theo trên thanh gợi ý. */
     var predictions: Boolean
         get() = sp.getBoolean(KEY_PREDICTIONS, true)
@@ -172,6 +189,9 @@ class Prefs(context: Context) {
         const val KEY_RECENT_EMOJI = "recent_emoji"
         const val KEY_PRESETS = "layout_presets"
         const val KEY_MODELS_VERSION = "models_version"
+        const val KEY_SKIN_TONE = "skin_tone"
+        const val KEY_CLIPBOARD = "clipboard_history"
+        const val KEY_SHORTCUTS = "shortcuts"
         const val KEY_PREDICTIONS = "predictions"
         const val KEY_INCOGNITO = "incognito"
         const val KEY_DYNAMIC_ZONES = "dynamic_hit_zones"

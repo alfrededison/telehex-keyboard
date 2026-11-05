@@ -13,24 +13,25 @@ import android.widget.LinearLayout
 import android.widget.TextView
 
 /**
- * Bảng emoji kiểu Gboard: lưới 8 cột cuộn được; hàng dưới có ABC, các tab và nút xoá.
+ * Bảng emoji kiểu Gboard: lưới 8 cột cuộn được; hàng dưới có ABC, nút tìm, các tab và nút xoá.
  */
-class EmojiPanel(context: Context, private val theme: Theme) : LinearLayout(context) {
+class EmojiPanel(context: Context, private val theme: Theme, private val data: EmojiData) : LinearLayout(context) {
 
     interface Listener {
         fun onEmoji(emoji: String)
         fun onAbc()
         fun onBackspace()
+        fun onSearch()
     }
 
     var listener: Listener? = null
     /** Danh sách Gần đây; chỉ áp dụng khi mở lại tab để không xê dịch dưới ngón tay. */
     var recent: List<String> = emptyList()
 
-    private var currentTab = "face"
+    private var currentTab = RECENT
     private val grid = GridView(context)
     private val tabRow = LinearLayout(context).apply { orientation = HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-    private val tabButtons = HashMap<String, TextView>()
+    private val tabButtons = LinkedHashMap<String, TextView>()
     private var items: List<String> = emptyList()
 
     private val adapter = object : BaseAdapter() {
@@ -62,15 +63,16 @@ class EmojiPanel(context: Context, private val theme: Theme) : LinearLayout(cont
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(6), dp(2), dp(6), dp(2))
         }
-        bottom.addView(button("ABC", 14f) { listener?.onAbc() }, LayoutParams(dp(56), dp(38)))
+        bottom.addView(button("ABC", 14f) { listener?.onAbc() }, LayoutParams(dp(52), dp(38)))
+        bottom.addView(button("🔍", 16f) { listener?.onSearch() }, LayoutParams(dp(40), dp(38)).apply { marginStart = dp(4) })
         val scroll = HorizontalScrollView(context).apply { isHorizontalScrollBarEnabled = false }
         scroll.addView(tabRow)
         bottom.addView(scroll, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
-        bottom.addView(button("⌫", 18f) { listener?.onBackspace() }, LayoutParams(dp(56), dp(38)))
+        bottom.addView(button("⌫", 18f) { listener?.onBackspace() }, LayoutParams(dp(52), dp(38)))
         addView(bottom, LayoutParams(LayoutParams.MATCH_PARENT, dp(44)))
 
         addTab(RECENT, "🕘")
-        for (c in EmojiData.CATEGORIES) addTab(c.id, c.icon)
+        for (c in data.categories) addTab(c.id, c.icon)
     }
 
     private fun dp(v: Int): Int = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics).toInt()
@@ -97,12 +99,12 @@ class EmojiPanel(context: Context, private val theme: Theme) : LinearLayout(cont
     }
 
     fun open() {
-        showTab(if (recent.isNotEmpty()) RECENT else "face")
+        showTab(if (recent.isNotEmpty()) RECENT else data.categories.first().id)
     }
 
     private fun showTab(id: String) {
         currentTab = id
-        items = if (id == RECENT) recent else EmojiData.CATEGORIES.first { it.id == id }.emoji
+        items = if (id == RECENT) recent else data.categories.first { it.id == id }.emoji
         adapter.notifyDataSetChanged()
         grid.setSelection(0)
         for ((tid, tv) in tabButtons) {

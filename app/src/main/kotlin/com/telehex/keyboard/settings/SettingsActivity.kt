@@ -102,6 +102,39 @@ class SettingsActivity : Activity() {
             })
         })
 
+        col.add(header("Emoji và clipboard"))
+        col.add(TextView(this).apply { text = "Tông da mặc định (cho emoji nhận tông da)" })
+        col.add(RadioGroup(this).apply {
+            orientation = RadioGroup.HORIZONTAL
+            isSaveEnabled = false
+            val tones = listOf("👍", "👍🏻", "👍🏼", "👍🏽", "👍🏾", "👍🏿")
+            val buttons = tones.map { label -> RadioButton(context).apply { text = label; id = View.generateViewId() }.also { addView(it) } }
+            check(buttons[prefs.skinTone.coerceIn(0, 5)].id)
+            setOnCheckedChangeListener { _, id -> prefs.skinTone = buttons.indexOfFirst { it.id == id } }
+        })
+        col.add(switch("Lưu clipboard history (mục thường hết hạn sau 1 giờ, mục ghim giữ lâu)", prefs.clipboardHistory) { prefs.clipboardHistory = it })
+
+        col.add(header("Gõ tắt"))
+        col.add(TextView(this).apply {
+            text = "Mỗi dòng một mục dạng  viết tắt = nội dung . Kích hoạt khi chạm cách. Ví dụ:\nko = không\ndc = được\n@@ = ten@email.com"
+            textSize = 13f
+        })
+        col.add(EditText(this).apply {
+            setText(prefs.shortcuts.entries.sortedBy { it.key }.joinToString("\n") { "${it.key} = ${it.value}" })
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            minLines = 3
+            addTextChangedListener(object : android.text.TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: android.text.Editable?) {
+                    prefs.shortcuts = s.toString().lines().mapNotNull { line ->
+                        val i = line.indexOf('=')
+                        if (i <= 0) null else line.substring(0, i).trim() to line.substring(i + 1).trim()
+                    }.filter { it.first.isNotEmpty() && it.second.isNotEmpty() }.toMap()
+                }
+            })
+        })
+
         col.add(header("Gợi ý (không tự sửa)"))
         col.add(TextView(this).apply {
             text = "Bàn phím không bao giờ tự đổi chữ đã gõ. Gợi ý âm tiết tiếp theo học từ chính bạn, hoàn toàn trên máy. Giữ một gợi ý để xoá nó khỏi từ điển cá nhân."

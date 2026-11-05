@@ -10,6 +10,12 @@ import android.widget.LinearLayout
 class TestInputActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Debug: am start ... --es shortcuts "ko=không;dc=được" để thử gõ tắt mà không cần gõ vào Cài đặt
+        intent.getStringExtra("shortcuts")?.let { spec ->
+            com.telehex.keyboard.data.Prefs(this).shortcuts = spec.split(';').mapNotNull { kv ->
+                val i = kv.indexOf('='); if (i <= 0) null else kv.substring(0, i) to kv.substring(i + 1)
+            }.toMap()
+        }
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 64, 32, 32) }
         val text = EditText(this).apply {
             id = 1001

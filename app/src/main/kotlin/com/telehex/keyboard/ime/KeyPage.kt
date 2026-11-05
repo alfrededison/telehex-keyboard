@@ -18,7 +18,7 @@ data class Key(
     val isLetter: Boolean get() = KeyCode.isLetter(code)
 }
 
-enum class Mode { ABC, SYMBOLS, EMOJI, DIAL }
+enum class Mode { ABC, SYMBOLS, EMOJI, DIAL, EDIT }
 
 /** Dựng danh sách phím cho một trang từ layout + chế độ + cấu hình. */
 object KeyPage {
