@@ -14,6 +14,7 @@ import android.view.WindowInsets
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.LinearLayout
+import com.telehex.keyboard.data.PredictionStore
 import com.telehex.keyboard.data.Prefs
 import com.telehex.keyboard.layout.KeyCode
 import com.telehex.keyboard.settings.SettingsActivity
@@ -35,6 +36,12 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private val history = EditHistory()
     private lateinit var spaceGestures: SpaceGestures
     private var corrector: Corrector? = null
+    private lateinit var predictions: PredictionStore
+    /** Các âm tiết vừa chốt trong ô nhập hiện tại (ngữ cảnh dự đoán), gần nhất ở cuối. */
+    private val recent = ArrayDeque<String>()
+    private var noLearning = false
+    private var personalDirty = false
+    private val savePersonal = Runnable { if (personalDirty) { personalDirty = false; predictions.savePersonal() } }
     private var touchOffsets: MutableMap<String, FloatArray> = HashMap()
     private var offsetsDirty = false
     private val saveOffsets = Runnable {
@@ -69,16 +76,54 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         engine = TelexEngine(prefs.telexConfig())
         spaceGestures = SpaceGestures(spaceHost)
         rebuildCorrector()
+        predictions = PredictionStore(this)
         touchOffsets = prefs.touchOffsets.mapValues { floatArrayOf(it.value[0] * density(), it.value[1] * density()) }.toMutableMap()
     }
 
     override fun onDestroy() {
         prefs.unregisterListener(this)
+        savePersonal.run()
         super.onDestroy()
+    }
+
+    private fun incognito(): Boolean = noLearning || prefs.incognito || !telexEnabled
+
+    /** Ngữ cảnh từ vài chục ký tự trước con trỏ, để gợi ý đúng ngay khi mở bàn phím. */
+    private fun seedContext() {
+        recent.clear()
+        val ic = currentInputConnection ?: return
+        val before = ic.getTextBeforeCursor(80, 0)?.toString() ?: return
+        val tail = before.substringAfterLast('\n').substringAfterLast('.').substringAfterLast('!').substringAfterLast('?')
+        for (tok in tail.split(Regex("\\s+")).filter { it.isNotEmpty() && it.all { c -> c.isLetter() } }.takeLast(2)) recent.addLast(tok)
+    }
+
+    private fun pushContext(syllable: String) {
+        if (syllable.isEmpty() || !syllable.all { it.isLetter() }) return
+        if (!incognito()) {
+            predictions.predictor.personal.learn(recent.toList(), syllable)
+            personalDirty = true
+            keyboardView.removeCallbacks(savePersonal); keyboardView.postDelayed(savePersonal, 5000)
+        }
+        recent.addLast(syllable)
+        while (recent.size > 2) recent.removeFirst()
+    }
+
+    /** Đầu câu: chưa có gì trước con trỏ, hoặc sau dấu kết câu. */
+    private fun atSentenceStart(): Boolean {
+        val before = currentInputConnection?.getTextBeforeCursor(3, 0)?.toString() ?: return true
+        val t = before.trimEnd()
+        return t.isEmpty() || t.last() in ".!?\n"
+    }
+
+    private fun casedPrediction(s: String): String = when {
+        atSentenceStart() || predictions.predictor.personal.usuallyCapitalized(s) ->
+            s.replaceFirstChar { it.titlecase() }
+        else -> s
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key == Prefs.KEY_RECENT_EMOJI || key == Prefs.KEY_PRESETS || key == Prefs.KEY_TOUCH_OFFSETS) return
+        if (key == Prefs.KEY_MODELS_VERSION) { personalDirty = false; predictions = PredictionStore(this); return }
         engine.config = prefs.telexConfig()
         rebuildCorrector()
         if (key == Prefs.KEY_LEARN_OFFSETS && !prefs.learnTouchOffsets) touchOffsets.clear()
@@ -220,6 +265,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                 variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
             ) || (cls == InputType.TYPE_CLASS_NUMBER && variation == InputType.TYPE_NUMBER_VARIATION_PASSWORD)
         telexEnabled = !isPassword
+        noLearning = isPassword || (attribute?.imeOptions ?: 0) and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING != 0
         numberOnly = cls == InputType.TYPE_CLASS_NUMBER
         numberSigned = inputType and InputType.TYPE_NUMBER_FLAG_SIGNED != 0
         numberDecimal = inputType and InputType.TYPE_NUMBER_FLAG_DECIMAL != 0
@@ -231,6 +277,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
+        seedContext()
         applyTheme()
         if (mode == Mode.DIAL) openDial() else { mode = Mode.ABC; showPanel(null) }
         updateBar()
@@ -275,6 +322,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                 sink.detach(ic)
                 engine.reset()
                 history.clear()
+                seedContext()
             }
         }
         updateBar()
@@ -317,18 +365,40 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             val fixes = corrector?.suggest(engine.rawText(), engine.rawCaps()) ?: emptyList()
             candidateBar.showSuggestions(typed, fixes) { replaceComposing(it) }
         } else if (!engine.isEmpty) {
-            candidateBar.show(engine.candidates())
+            val typed = engine.text()
+            val completions = if (prefs.predictions) predictions.predictor.next(recent.toList(), typed, 2).map { casedPrediction(it) } else emptyList()
+            val emoji = EmojiKeywords.forWord(typed, recent.lastOrNull())
+            candidateBar.show(engine.candidates(), completions, emoji, onPickText = { replaceComposing(it) }, onPickEmoji = { commitSyllable(it) })
+        } else if (prefs.predictions && mode == Mode.ABC && telexEnabled && afterSpace()) {
+            val next = predictions.predictor.next(recent.toList(), "", 3).map { casedPrediction(it) }
+            val emoji = recent.lastOrNull()?.let { EmojiKeywords.forWord(it, recent.getOrNull(recent.size - 2)) } ?: emptyList()
+            if (next.isEmpty() && emoji.isEmpty()) showWordAtCursorSuggestions()
+            else candidateBar.showPredictions(next, emoji, onPick = { commitSyllable("$it ") }, onPickEmoji = { commitSyllable(it) }, onForget = { forget(it) })
         } else {
             showWordAtCursorSuggestions()
         }
     }
 
-    /** Thay âm tiết đang gõ bằng gợi ý người dùng chạm. */
+    private fun afterSpace(): Boolean {
+        val before = currentInputConnection?.getTextBeforeCursor(1, 0)?.toString() ?: return false
+        return before.isEmpty() || before.last().isWhitespace()
+    }
+
+    /** Giữ một gợi ý học được để xoá khỏi từ điển cá nhân. */
+    private fun forget(text: String) {
+        predictions.predictor.personal.forget(text)
+        personalDirty = true
+        savePersonal.run()
+        updateBar()
+    }
+
+    /** Thay âm tiết đang gõ bằng gợi ý người dùng chạm, rồi thêm khoảng trắng như khi chạm cách. */
     private fun replaceComposing(text: String) {
         val ic = currentInputConnection ?: return
         engine.reset()
-        sink.commit(ic, text)
-        history.record(EditHistory.Op.Insert(text))
+        sink.commit(ic, "$text ")
+        history.record(EditHistory.Op.Insert("$text "))
+        pushContext(text) // học cả từ gợi ý người dùng đã chọn
         updateBar()
     }
 
@@ -361,13 +431,16 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     /** Chốt âm tiết đang soạn rồi chèn thêm [extra]. */
     private fun commitSyllable(extra: String = "") {
         val ic = currentInputConnection ?: return
-        val text = engine.text() + extra
+        val syllable = engine.text()
+        val text = syllable + extra
         engine.reset()
         if (text.isNotEmpty()) {
             if (hasSelection()) history.record(EditHistory.Op.Delete(ic.getSelectedText(0)?.toString() ?: ""))
             sink.commit(ic, text)
             history.record(EditHistory.Op.Insert(text))
         } else sink.detach(ic)
+        if (syllable.isNotEmpty()) pushContext(syllable)
+        if (extra.isNotEmpty() && extra.last() in ".!?\n") recent.clear()
         updateBar()
     }
 

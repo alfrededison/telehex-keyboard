@@ -102,6 +102,35 @@ class SettingsActivity : Activity() {
             })
         })
 
+        col.add(header("Gợi ý (không tự sửa)"))
+        col.add(TextView(this).apply {
+            text = "Bàn phím không bao giờ tự đổi chữ đã gõ. Gợi ý âm tiết tiếp theo học từ chính bạn, hoàn toàn trên máy. Giữ một gợi ý để xoá nó khỏi từ điển cá nhân."
+            textSize = 13f
+        })
+        col.add(switch("Gợi ý âm tiết tiếp theo", prefs.predictions) { prefs.predictions = it })
+        col.add(switch("Chế độ ẩn danh (không học)", prefs.incognito) { prefs.incognito = it })
+        val store = com.telehex.keyboard.data.PredictionStore(this)
+        val packStatus = TextView(this).apply { text = packStatusText(store) }
+        col.add(packStatus)
+        col.add(Button(this).apply {
+            text = "Nạp gói ngôn ngữ (.ngram)…"
+            setOnClickListener {
+                startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE); type = "*/*"
+                }, REQ_PACK)
+            }
+        })
+        col.add(Button(this).apply {
+            text = "Xoá gói ngôn ngữ đã nạp"
+            setOnClickListener { store.removePack(); packStatus.text = packStatusText(store) }
+        })
+        col.add(Button(this).apply {
+            text = "Xoá dữ liệu đã học"
+            setOnClickListener { store.clearPersonal(); android.widget.Toast.makeText(context, "Đã xoá từ điển cá nhân", android.widget.Toast.LENGTH_SHORT).show() }
+        })
+        packStatusView = packStatus
+        predictionStore = store
+
         col.add(header("Chống bấm nhầm"))
         col.add(switch("Học độ lệch chạm theo từng phím", prefs.learnTouchOffsets) { prefs.learnTouchOffsets = it })
         col.add(switch("Vùng chạm động: nới vùng phím hợp lệ tiếp theo (một dạng tự sửa ngầm)", prefs.dynamicHitZones) { prefs.dynamicHitZones = it })
@@ -139,6 +168,27 @@ class SettingsActivity : Activity() {
         })
     }
 
+    private var packStatusView: TextView? = null
+    private var predictionStore: com.telehex.keyboard.data.PredictionStore? = null
+
+    private fun packStatusText(store: com.telehex.keyboard.data.PredictionStore): String = when {
+        store.hasPack() -> "Gói ngôn ngữ: đã nạp từ file."
+        store.hasBase() -> "Gói ngôn ngữ: dùng bản đóng gói sẵn."
+        else -> "Gói ngôn ngữ: chưa có (chỉ dùng từ điển cá nhân). Dựng bằng tools/build_ngram.py rồi nạp ở đây."
+    }
+
+    @Deprecated("Dùng API cũ để không thêm dependency")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQ_PACK && resultCode == RESULT_OK) {
+            val uri = data?.data ?: return
+            val store = predictionStore ?: return
+            val r = store.importPack(uri)
+            android.widget.Toast.makeText(this, if (r.isSuccess) "Đã nạp gói ngôn ngữ" else "Không nạp được: ${r.exceptionOrNull()?.message}", android.widget.Toast.LENGTH_LONG).show()
+            packStatusView?.text = packStatusText(store)
+        }
+    }
+
     private fun slider(label: String, unit: String, min: Int, max: Int, value: Int, onChange: (Int) -> Unit): LinearLayout {
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val tv = TextView(this).apply { text = "$label: $value $unit" }
@@ -174,4 +224,6 @@ class SettingsActivity : Activity() {
         addView(v, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
 
     private fun dp(v: Int): Int = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics).toInt()
+
+    companion object { private const val REQ_PACK = 11 }
 }

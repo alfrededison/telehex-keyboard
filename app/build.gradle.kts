@@ -43,6 +43,10 @@ android {
         }
     }
 
+    androidResources {
+        noCompress += "ngram" // để mmap được mô hình n-gram trong assets
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

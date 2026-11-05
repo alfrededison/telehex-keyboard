@@ -33,8 +33,16 @@ class CandidateBar(context: Context) : HorizontalScrollView(context) {
 
     private fun dp(v: Int): Int = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics).toInt()
 
-    fun show(candidates: List<TelexEngine.Candidate>) {
+    fun show(
+        candidates: List<TelexEngine.Candidate>,
+        completions: List<String> = emptyList(),
+        emoji: List<String> = emptyList(),
+        onPickText: (String) -> Unit = {},
+        onPickEmoji: (String) -> Unit = {},
+    ) {
         row.removeAllViews()
+        for (c in completions) chip(c, selected = false) { onPickText(c) }
+        for (e in emoji) chip(e, selected = false) { onPickEmoji(e) }
         for (c in candidates) {
             val tv = TextView(context).apply {
                 text = c.text
@@ -59,6 +67,14 @@ class CandidateBar(context: Context) : HorizontalScrollView(context) {
 
     fun clear() = row.removeAllViews()
 
+    /** Gợi ý âm tiết tiếp theo sau khi chạm cách; giữ một ô để xoá khỏi từ điển cá nhân. */
+    fun showPredictions(next: List<String>, emoji: List<String>, onPick: (String) -> Unit, onPickEmoji: (String) -> Unit, onForget: (String) -> Unit) {
+        row.removeAllViews()
+        for (n in next) chip(n, selected = false, onLongClick = { onForget(n) }) { onPick(n) }
+        for (e in emoji) chip(e, selected = false) { onPickEmoji(e) }
+        scrollTo(0, 0)
+    }
+
     /** Chữ đang gõ (ô đầu, giữ nguyên) + các gợi ý sửa; chạm gợi ý để thay. */
     fun showSuggestions(typed: String, fixes: List<String>, onPick: (String) -> Unit) {
         row.removeAllViews()
@@ -67,7 +83,7 @@ class CandidateBar(context: Context) : HorizontalScrollView(context) {
         scrollTo(0, 0)
     }
 
-    private fun chip(text: String, selected: Boolean, onClick: () -> Unit) {
+    private fun chip(text: String, selected: Boolean, onLongClick: (() -> Unit)? = null, onClick: () -> Unit) {
         val tv = TextView(context).apply {
             this.text = text
             textSize = 17f
@@ -81,6 +97,7 @@ class CandidateBar(context: Context) : HorizontalScrollView(context) {
                 setColor(if (selected) theme.chipActiveBg else theme.chipBg)
             }
             setOnClickListener { onClick() }
+            if (onLongClick != null) setOnLongClickListener { onLongClick(); true }
         }
         val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(38))
         lp.marginEnd = dp(6)

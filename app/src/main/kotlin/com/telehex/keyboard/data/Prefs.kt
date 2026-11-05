@@ -46,6 +46,21 @@ class Prefs(context: Context) {
         get() = sp.getInt(KEY_EXTRA_BOTTOM, 0)
         set(v) = sp.edit().putInt(KEY_EXTRA_BOTTOM, v).apply()
 
+    /** Tăng mỗi khi gói ngôn ngữ / dữ liệu học đổi từ Cài đặt, để IME nạp lại. */
+    var modelsVersion: Long
+        get() = sp.getLong(KEY_MODELS_VERSION, 0)
+        set(v) = sp.edit().putLong(KEY_MODELS_VERSION, v).apply()
+
+    /** Gợi ý âm tiết tiếp theo trên thanh gợi ý. */
+    var predictions: Boolean
+        get() = sp.getBoolean(KEY_PREDICTIONS, true)
+        set(v) = sp.edit().putBoolean(KEY_PREDICTIONS, v).apply()
+
+    /** Chế độ ẩn danh: không học từ người dùng (bật thủ công). */
+    var incognito: Boolean
+        get() = sp.getBoolean(KEY_INCOGNITO, false)
+        set(v) = sp.edit().putBoolean(KEY_INCOGNITO, v).apply()
+
     /** Vùng chạm động: nới vùng phím hợp lệ tiếp theo theo ngữ pháp âm tiết (mặc định tắt). */
     var dynamicHitZones: Boolean
         get() = sp.getBoolean(KEY_DYNAMIC_ZONES, false)
@@ -156,6 +171,9 @@ class Prefs(context: Context) {
         const val KEY_CUSTOM = "custom_keys"
         const val KEY_RECENT_EMOJI = "recent_emoji"
         const val KEY_PRESETS = "layout_presets"
+        const val KEY_MODELS_VERSION = "models_version"
+        const val KEY_PREDICTIONS = "predictions"
+        const val KEY_INCOGNITO = "incognito"
         const val KEY_DYNAMIC_ZONES = "dynamic_hit_zones"
         const val KEY_LEARN_OFFSETS = "learn_touch_offsets"
         const val KEY_TOUCH_OFFSETS = "touch_offsets"
