@@ -78,11 +78,27 @@ rồi Cài đặt → "Nạp gói ngôn ngữ (.ngram)…". Dữ liệu Wikipedi
 ```
 ./gradlew :telex:test        # engine Telex thuần Kotlin + bộ test vàng ~400 ca
 ./gradlew :app:assembleDebug # APK debug (có activity "TeleHex test" để thử nhanh)
+tools/release-build.sh       # APK release đã minify ở out/TeleHex.apk + .sha256 (X.Y.Z-dev.N)
 ```
 
-Yêu cầu JDK 17+, Android SDK 36. Tag `v*` sẽ build APK release đã ký qua GitHub Actions (keystore base64 trong Secrets: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`).
+Yêu cầu JDK 17+, Android SDK 36.
 
-Thiết kế chi tiết: [plan.md](plan.md). Prototype HTML tham chiếu: [prototype/](prototype/).
+## Phát hành
+
+- **Phiên bản chỉ viết ở một nơi**: dòng `appVersion` trong `app/build.gradle.kts`. `tools/version.sh` tính versionCode cố định từ X.Y.Z: bản release là `X·10^7 + Y·10^5 + Z·10^3 + 999`, bản dev `X.Y.Z-dev.N` là `… + N` với N đếm commit từ lần đổi `appVersion`. Build từ tag ở đâu cũng ra cùng số (cần cho F-Droid).
+- **Bản dev**: mỗi push lên `main` thay prerelease `dev` trên GitHub bằng APK `TeleHex-X.Y.Z-dev.N.apk` + `.sha256`, ký bằng key dự án nên cài đè được lên nhau và lên bản release.
+- **Bản release**: tăng `appVersion`, cập nhật CHANGELOG.md, commit, rồi push tag `vX.Y.Z` khớp `appVersion`. Workflow chạy test, build, kiểm tra chứng chỉ, rồi tạo **release nháp** kèm APK + `.sha256`. Bạn đọc lại và bấm Publish.
+- **Ghim chứng chỉ**: `signing/release-cert.sha256` là SHA-256 của chứng chỉ ký. Bản release và bản dev bị chặn nếu APK không ký đúng key này, vì Android không cho cài đè một APK ký bằng key khác.
+- **Secrets**: `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. Keystore và mật khẩu nằm trong `.signing/` (không commit); `python3 .signing/upload-secrets.py` đẩy chúng lên GitHub Secrets bằng `gh`.
+
+Kiểm tra một APK tải về:
+
+```
+shasum -a 256 -c TeleHex-v0.1.0.apk.sha256
+apksigner verify --print-certs TeleHex-v0.1.0.apk   # SHA-256 phải trùng signing/release-cert.sha256
+```
+
+Thiết kế chi tiết: [plan.md](plan.md). Prototype HTML tham chiếu: [prototype/](prototype/). Lịch sử thay đổi: [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 

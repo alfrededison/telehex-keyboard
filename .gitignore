@@ -21,3 +21,7 @@ captures/
 # Python
 __pycache__/
 *.pyc
+
+# Build output và key ký (không bao giờ commit)
+out/
+.signing/

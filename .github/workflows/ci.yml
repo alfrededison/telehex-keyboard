@@ -1,25 +1,50 @@
-name: CI
+name: ci
 
 on:
-  pull_request:
   push:
     branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   test:
+    name: unit tests, lint, version and signing guards
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
-      - name: Unit tests (telex) + lint
-        run: ./gradlew :telex:test :app:lintDebug :app:testDebugUnitTest --no-daemon
-      - name: Build debug APK
-        run: ./gradlew :app:assembleDebug --no-daemon
+      - name: Telex engine, app unit tests, lint
+        run: ./gradlew --no-daemon :telex:test :app:testDebugUnitTest :app:lintDebug
+      - name: Version numbering across version changes and tags
+        run: python3 tools/test_version.py
+      - name: Signing configuration and certificate guards
+        run: python3 tools/test_signing.py
+
+  build:
+    name: release APK (debug key)
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Android SDK packages
+        run: yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" > /dev/null
+      - run: BUILD_TOOLS=36.0.0 tools/release-build.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+          name: TeleHex-apk
+          path: |
+            out/TeleHex.apk
+            out/TeleHex.apk.sha256
