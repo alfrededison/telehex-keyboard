@@ -107,6 +107,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         if (Build.VERSION.SDK_INT >= 33 && desc.extras?.getBoolean(android.content.ClipDescription.EXTRA_IS_SENSITIVE) == true) return
         val text = clip.getItemAt(0).coerceToText(this)?.toString() ?: return
         clipboardStore.add(text)
+        if (mode == Mode.EDIT) editPanel?.showClipboard(clipboardStore.all())
     }
 
     private fun openEditPanel() {
@@ -121,6 +122,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             }
             editPanel = p
         }
+        panel.pad.hapticEnabled = prefs.haptic
+        panel.pad.soundEnabled = prefs.sound
+        panel.pad.longPressMs = prefs.longPressMs.toLong()
         panel.showClipboard(clipboardStore.all())
         mode = Mode.EDIT
         showPanel(panel)

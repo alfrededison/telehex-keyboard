@@ -17,6 +17,7 @@
 - Nút ở màn Cài đặt có khoảng cách, không còn dính nhau.
 - Màn Cài đặt đổi sáng/tối theo tuỳ chọn Giao diện của bàn phím.
 - Chọn màu nhấn cho phím nguyên âm (xanh dương, xanh lá, xanh ngọc, tím, hồng); "Không màu" bỏ cả màu nguyên âm lẫn phím dấu.
+- Bảng sửa văn bản (giữ ⚙) dùng phím lục giác có icon như bàn phím chính; bốn mũi tên xếp hình thoi, nhóm chọn / cắt / chép / dán tô màu nhấn. Giữ mũi tên hoặc ⌫ để lặp. Clipboard history cập nhật ngay khi chép lúc bảng đang mở; tuỳ chọn trong Cài đặt ghi rõ giữ ⚙ để mở.
 - Thoát được tìm emoji mà không cần chọn emoji: chạm ô tìm (✕), ⌫ khi ô tìm trống, ↵ hoặc ☺ đều về bảng emoji; trước đây ⌫ xoá chữ trong ô nhập và ↵ gửi tin.
 
 ## 0.1.0 — 2026-11-05
