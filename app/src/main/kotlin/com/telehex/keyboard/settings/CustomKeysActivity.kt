@@ -3,11 +3,9 @@ package com.telehex.keyboard.settings
 import android.app.Activity
 import android.app.AlertDialog
 import android.os.Bundle
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.BaseAdapter
-import android.widget.Button
 import android.widget.EditText
 import android.widget.GridView
 import android.widget.LinearLayout
@@ -53,10 +51,7 @@ class CustomKeysActivity : Activity() {
         }
         refresh()
         col.addView(view, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(12) })
-        col.add(Button(this).apply {
-            text = "Khôi phục mặc định tất cả"
-            setOnClickListener { prefs.customKeys = emptyMap(); refresh() }
-        })
+        col.addButton("Khôi phục mặc định tất cả") { prefs.customKeys = emptyMap(); refresh() }
     }
 
     private fun refresh() {
@@ -89,12 +84,11 @@ class CustomKeysActivity : Activity() {
         }
         grid.adapter = adapter
         grid.setOnItemClickListener { _, _, pos, _ -> input.setText(items[pos]) }
-        fun tab(name: String, list: List<String>) = Button(this).apply {
-            text = name
-            setOnClickListener { items = list; adapter.notifyDataSetChanged() }
-        }
-        tabs.addView(tab("Ký hiệu", symbols), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        for (c in EmojiData.get(this).categories.take(4)) tabs.addView(tab(c.icon, c.emoji), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        fun tab(name: String, list: List<String>) = settingsButton(this, name) { items = list; adapter.notifyDataSetChanged() }
+            .apply { setPadding(0, paddingTop, 0, paddingBottom) }
+        fun tabParams() = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = dp(2); marginEnd = dp(2) }
+        tabs.addView(tab("Ký hiệu", symbols), tabParams())
+        for (c in EmojiData.get(this).categories.take(4)) tabs.addView(tab(c.icon, c.emoji), tabParams())
         box.addView(tabs)
         box.addView(grid, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(220)))
 
@@ -111,11 +105,6 @@ class CustomKeysActivity : Activity() {
             .setNegativeButton("Huỷ", null)
             .show()
     }
-
-    private fun LinearLayout.add(v: android.view.View) =
-        addView(v, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-
-    private fun dp(v: Int): Int = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics).toInt()
 
     companion object {
         const val MAX_LEN = 8

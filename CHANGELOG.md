@@ -14,6 +14,7 @@
 - Thông báo ngắn sau undo, redo, cắt, chép, dán, chọn hết.
 - Có vùng chọn thì vuốt trái dài trên phím cách cũng cắt (trước đây bỏ vùng chọn và xoá theo từ).
 - Lớp ký tự: phím chuyển trang 1/2 ra mép trái; phím ☺ thành phím 1234 mở dialpad (vẫn giữ được phím 123).
+- Nút ở màn Cài đặt có khoảng cách, không còn dính nhau.
 - Thoát được tìm emoji mà không cần chọn emoji: chạm ô tìm (✕), ⌫ khi ô tìm trống, ↵ hoặc ☺ đều về bảng emoji; trước đây ⌫ xoá chữ trong ô nhập và ↵ gửi tin.
 
 ## 0.1.0 — 2026-11-05

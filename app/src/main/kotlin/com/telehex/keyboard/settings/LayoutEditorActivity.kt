@@ -10,7 +10,6 @@ import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.ViewGroup
 import android.view.WindowInsets
-import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -129,51 +128,35 @@ class LayoutEditorActivity : Activity() {
         col.add(status)
         root.addView(editor, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
 
-        col.add(Button(this).apply {
-            text = "Lưu"
-            setOnClickListener {
-                val err = editor.layout.validate()
-                if (err != null) { Toast.makeText(context, err, Toast.LENGTH_LONG).show(); return@setOnClickListener }
-                prefs.layout = editor.layout
-                Toast.makeText(context, "Đã lưu bố cục", Toast.LENGTH_SHORT).show()
-                finish()
-            }
-        })
-        col.add(Button(this).apply {
-            text = "Khôi phục mặc định"
-            setOnClickListener { editor.layout = LayoutModel.DEFAULT }
-        })
-        col.add(Button(this).apply {
-            text = "Lưu thành preset…"
-            setOnClickListener {
-                val input = EditText(context).apply { hint = "Tên preset" }
-                AlertDialog.Builder(context).setTitle("Lưu preset").setView(input)
-                    .setPositiveButton("Lưu") { _, _ ->
-                        val name = input.text.toString().trim()
-                        if (name.isNotEmpty()) prefs.presets = prefs.presets + (name to editor.layout)
-                    }
-                    .setNegativeButton("Huỷ", null).show()
-            }
-        })
-        col.add(Button(this).apply {
-            text = "Nạp preset…"
-            setOnClickListener {
-                val names = prefs.presets.keys.sorted()
-                if (names.isEmpty()) { Toast.makeText(context, "Chưa có preset nào", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
-                AlertDialog.Builder(context).setTitle("Nạp preset")
-                    .setItems(names.toTypedArray()) { _, i -> editor.layout = prefs.presets.getValue(names[i]) }
-                    .setNeutralButton("Xoá preset…") { _, _ ->
-                        AlertDialog.Builder(context).setTitle("Xoá preset")
-                            .setItems(names.toTypedArray()) { _, i -> prefs.presets = prefs.presets - names[i] }
-                            .show()
-                    }
-                    .show()
-            }
-        })
+        col.addButton("Lưu") {
+            val err = editor.layout.validate()
+            if (err != null) { Toast.makeText(context, err, Toast.LENGTH_LONG).show(); return@addButton }
+            prefs.layout = editor.layout
+            Toast.makeText(context, "Đã lưu bố cục", Toast.LENGTH_SHORT).show()
+            finish()
+        }
+        col.addButton("Khôi phục mặc định") { editor.layout = LayoutModel.DEFAULT }
+        col.addButton("Lưu thành preset…") {
+            val input = EditText(context).apply { hint = "Tên preset" }
+            AlertDialog.Builder(context).setTitle("Lưu preset").setView(input)
+                .setPositiveButton("Lưu") { _, _ ->
+                    val name = input.text.toString().trim()
+                    if (name.isNotEmpty()) prefs.presets = prefs.presets + (name to editor.layout)
+                }
+                .setNegativeButton("Huỷ", null).show()
+        }
+        col.addButton("Nạp preset…") {
+            val names = prefs.presets.keys.sorted()
+            if (names.isEmpty()) { Toast.makeText(context, "Chưa có preset nào", Toast.LENGTH_SHORT).show(); return@addButton }
+            AlertDialog.Builder(context).setTitle("Nạp preset")
+                .setItems(names.toTypedArray()) { _, i -> editor.layout = prefs.presets.getValue(names[i]) }
+                .setNeutralButton("Xoá preset…") { _, _ ->
+                    AlertDialog.Builder(context).setTitle("Xoá preset")
+                        .setItems(names.toTypedArray()) { _, i -> prefs.presets = prefs.presets - names[i] }
+                        .show()
+                }
+                .show()
+        }
     }
 
-    private fun LinearLayout.add(v: android.view.View) =
-        addView(v, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-
-    private fun dp(v: Int): Int = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics).toInt()
 }
