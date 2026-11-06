@@ -69,8 +69,8 @@ rồi Cài đặt → "Nạp gói ngôn ngữ (.ngram)…". Dữ liệu Wikipedi
 
 ## Tuỳ biến
 
-- **Sắp xếp phím**: kéo một phím thả lên phím khác để đổi chỗ; phím cách và ↵ cố định; lưu nhiều preset, danh sách preset hiện ngay dưới nút. Có sẵn preset "Cân bằng hai ngón": chia đều tải cho hai ngón cái và tăng gõ luân phiên. Số ở lớp ký tự luôn đi theo chữ (Q→1 … P→0).
-- **Ký tự vuốt xuống** cho từng phím: số, ký hiệu, emoji hoặc đoạn văn bản ngắn (≤ 8 ký tự).
+- **Sắp xếp phím**: kéo một phím thả lên phím khác để đổi chỗ; phím cách và ↵ cố định; lưu nhiều preset, danh sách preset hiện ngay dưới nút. Có sẵn preset "Cân bằng hai ngón": chia đều tải cho hai ngón cái và tăng gõ luân phiên. Màn này có 3 chế độ: **Chữ**, **Vuốt xuống**, **123**; mỗi lớp đổi chỗ riêng, hai lớp còn lại đứng yên theo ô. Ở chế độ 123, đang kéo thì giữ ngón trên phím 1/2 để sang trang kia. Số 1…0 mặc định ở ô của Q W R Y F H U O P L (cả lớp 123 lẫn vuốt xuống) và kéo được như mọi ký tự khác.
+- **Ký tự vuốt xuống** cho từng ô phím: số, ký hiệu, emoji hoặc đoạn văn bản ngắn (≤ 8 ký tự).
 - Kiểu đặt dấu cũ/mới (hòa/hoà), "L cũng là dấu huyền" (`lal` → là), tự viết hoa đầu câu, rung, âm thanh, giao diện sáng/tối, màu nhấn, chế độ một tay, tông da emoji, gõ tắt, clipboard history, chế độ ẩn danh, vùng chạm động (tắt mặc định), học độ lệch chạm.
 - **Sao lưu / khôi phục** mọi thứ ra một file zip.
 - **Giọng nói**: nút 🎤 trong bảng sửa văn bản chuyển sang IME giọng nói đã bật (ví dụ FUTO Voice Input chạy offline).

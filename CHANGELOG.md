@@ -19,6 +19,8 @@
 - Chọn màu nhấn cho phím nguyên âm (xanh dương, xanh lá, xanh ngọc, tím, hồng); "Không màu" bỏ cả màu nguyên âm lẫn phím dấu.
 - Bảng sửa văn bản (giữ ⚙) dùng phím lục giác có icon như bàn phím chính; bốn mũi tên xếp hình thoi, nhóm chọn / cắt / chép / dán tô màu nhấn. Giữ mũi tên hoặc ⌫ để lặp. Clipboard history cập nhật ngay khi chép lúc bảng đang mở; tuỳ chọn trong Cài đặt ghi rõ giữ ⚙ để mở.
 - Preset có sẵn "Cân bằng hai ngón" (W R Y ⚙ B K 123 / Q E G F J U P / D S H V I O L / Z X C A T N M): tải hai ngón cái ~50/50, gõ luân phiên ~62% → ~68% theo mô hình Fitts hai ngón trên tần suất phím Telex. Danh sách preset hiện luôn ở màn sắp xếp phím (✓ ở preset trùng lưới đang sửa, cập nhật cả khi kéo đổi phím; nút Xoá cho preset đã lưu; không lưu được preset trùng tên preset có sẵn), thay cho nút "Nạp preset…" và "Khôi phục mặc định". Nút Lưu mờ khi lưới chưa khác bố cục đang dùng. Hộp lưu preset mở bàn phím ngay vào ô tên (trước đây bàn phím không hiện, dễ bấm nhầm vào lưới phía sau).
+- Màn sắp xếp phím có 3 chế độ: Chữ, Vuốt xuống, 123. Ký tự vuốt xuống và lớp 123 giờ gắn theo ô, không đi theo chữ nữa; mỗi lớp sắp xếp riêng. Lớp 123 kéo được sang trang kia bằng cách giữ ngón trên phím 1/2. Nút "Về mặc định (lớp này)" cho lớp vuốt xuống và 123.
+- Số 1…0 (lớp 123 và vuốt xuống) mặc định ở ô của Q W R Y F H U O P L. Dữ liệu cũ (vuốt xuống tuỳ biến theo phím, bản sao lưu cũ) được chuyển sang theo ô của bố cục đang dùng, số dời về chỗ mới; ký tự bạn đã thay vào chỗ một số được giữ nguyên.
 - Thoát được tìm emoji mà không cần chọn emoji: chạm ô tìm (✕), ⌫ khi ô tìm trống, ↵ hoặc ☺ đều về bảng emoji; trước đây ⌫ xoá chữ trong ô nhập và ↵ gửi tin.
 
 ## 0.1.0 — 2026-11-05

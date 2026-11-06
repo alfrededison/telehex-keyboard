@@ -21,6 +21,7 @@ import com.telehex.keyboard.ime.KeyboardView
 import com.telehex.keyboard.ime.Mode
 import com.telehex.keyboard.ime.Theme
 import com.telehex.keyboard.layout.KeyCode
+import com.telehex.keyboard.layout.KeyLayers
 
 /** Chạm phím → bảng chọn ký tự vuốt xuống: Số & ký hiệu / emoji, cộng ô nhập tự do. */
 class CustomKeysActivity : Activity() {
@@ -46,24 +47,26 @@ class CustomKeysActivity : Activity() {
                 override fun onKeyMove(key: Key, dx: Float, dy: Float, dt: Long) {}
                 override fun onKeyCancel(key: Key) {}
                 override fun onKeyUp(key: Key, gesture: Gesture, dx: Float, dy: Float, dt: Long) {
-                    if (key.isLetter || key.code == "," || key.code == ".") pick(key.code)
+                    if (key.isLetter || key.code == "," || key.code == ".") pick(key)
                 }
             }
         }
         refresh()
         col.addView(view, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(12) })
-        col.addButton("Khôi phục mặc định tất cả") { prefs.customKeys = emptyMap(); refresh() }
+        col.addButton("Khôi phục mặc định tất cả") { prefs.swipeGrid = KeyLayers.DEFAULT_SWIPE; refresh() }
     }
 
     private fun refresh() {
-        view.keys = KeyPage.build(prefs.layout, Mode.ABC, 1, prefs.telexConfig(), prefs::hintOf, "↵")
+        view.keys = KeyPage.build(prefs.layout, Mode.ABC, 1, prefs.telexConfig(), prefs.swipeGrid, prefs.symbolPages, "↵")
     }
 
-    private fun pick(code: String) {
+    /** Ký tự vuốt xuống gắn theo ô của phím, không theo chữ. */
+    private fun pick(key: Key) {
+        val (r, c) = key.cells.first()
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(8), dp(16), 0) }
         val input = EditText(this).apply {
             hint = "Nhập tự do"
-            setText(prefs.hintOf(code))
+            setText(key.hint)
             filters = arrayOf(android.text.InputFilter.LengthFilter(MAX_LEN))
         }
         box.addView(input)
@@ -94,15 +97,18 @@ class CustomKeysActivity : Activity() {
         box.addView(grid, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(220)))
 
         AlertDialog.Builder(this)
-            .setTitle("Vuốt xuống phím ${code.uppercase()}")
+            .setTitle("Vuốt xuống phím ${key.label.uppercase()}")
             .setView(box)
             .setPositiveButton("Lưu") { _, _ ->
                 val v = input.text.toString()
                 if (v.isEmpty()) { Toast.makeText(this, "Để trống: vuốt xuống phím này sẽ không chèn gì", Toast.LENGTH_SHORT).show() }
-                prefs.customKeys = prefs.customKeys + (code to v)
+                prefs.swipeGrid = prefs.swipeGrid.with(r, c, v)
                 refresh()
             }
-            .setNeutralButton("Mặc định") { _, _ -> prefs.customKeys = prefs.customKeys - code; refresh() }
+            .setNeutralButton("Mặc định") { _, _ ->
+                prefs.swipeGrid = prefs.swipeGrid.with(r, c, KeyLayers.DEFAULT_SWIPE[r, c])
+                refresh()
+            }
             .setNegativeButton("Huỷ", null)
             .show()
     }

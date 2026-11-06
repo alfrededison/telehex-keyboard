@@ -343,7 +343,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     private fun refreshKeys() {
         if (!::keyboardView.isInitialized) return
-        keyboardView.keys = KeyPage.build(prefs.layout, mode, symbolPage, engine.config, prefs::hintOf, enterLabel)
+        keyboardView.keys = KeyPage.build(prefs.layout, mode, symbolPage, engine.config, prefs.swipeGrid, prefs.symbolPages, enterLabel)
         updateShift()
     }
 
@@ -926,6 +926,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                 Gesture.SWIPE_UP -> typeLetter(code[0], true)
                 else -> typeLetter(code[0], false)
             }
+            code.isEmpty() -> {} // ô trống ở lớp ký tự
             else -> commitSyllable(code) // ký tự ở lớp ký tự
         }
     }

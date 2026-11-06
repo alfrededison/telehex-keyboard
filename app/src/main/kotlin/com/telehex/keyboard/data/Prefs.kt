@@ -2,8 +2,12 @@ package com.telehex.keyboard.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.telehex.keyboard.layout.CellGrid
+import com.telehex.keyboard.layout.KeyLayers
 import com.telehex.keyboard.layout.LayoutModel
+import com.telehex.keyboard.layout.SymbolPages
 import com.telehex.telex.TelexConfig
+import org.json.JSONArray
 import org.json.JSONObject
 
 /**
@@ -80,6 +84,9 @@ class Prefs(context: Context) {
                 is org.json.JSONArray -> if (expected == Set::class) e.putStringSet(k, (0 until v.length()).map { v.getString(it) }.toSet())
             }
         }
+        // Bản sao lưu cũ (lớp vuốt xuống / 123 đi theo chữ): bỏ lưới hiện tại để dựng lại từ bố cục vừa khôi phục
+        if ((o.has(KEY_LAYOUT) || o.has(KEY_CUSTOM)) && !o.has(KEY_SWIPE_GRID)) e.remove(KEY_SWIPE_GRID)
+        if (o.has(KEY_LAYOUT) && !o.has(KEY_SYMBOL_PAGES)) e.remove(KEY_SYMBOL_PAGES)
         e.apply()
     }
 
@@ -190,15 +197,57 @@ class Prefs(context: Context) {
         get() = sp.getString(KEY_LAYOUT, null)?.let { LayoutModel.fromJson(it) } ?: LayoutModel.DEFAULT
         set(v) = sp.edit().putString(KEY_LAYOUT, v.toJson()).apply()
 
-    /** Ký tự vuốt xuống do người dùng gán (phím → chuỗi). */
-    var customKeys: Map<String, String>
+    /** Dữ liệu cũ: ký tự vuốt xuống gán theo phím (phím → chuỗi). Chỉ đọc để chuyển sang [swipeGrid]. */
+    private val legacyCustomKeys: Map<String, String>
         get() = sp.getString(KEY_CUSTOM, null)?.let { json ->
             runCatching {
                 val o = JSONObject(json)
                 o.keys().asSequence().associateWith { o.getString(it) }
             }.getOrNull()
         } ?: emptyMap()
-        set(v) = sp.edit().putString(KEY_CUSTOM, JSONObject(v).toString()).apply()
+
+    /**
+     * Ký tự vuốt xuống theo ô, đã khớp với lớp chữ hiện tại. Chưa có (bản cũ lưu theo phím) thì dựng từ
+     * dữ liệu cũ trên bố cục hiện tại, đưa số về chỗ mặc định mới (Q W R Y F H U O P L), rồi lưu lại.
+     */
+    var swipeGrid: CellGrid
+        get() {
+            val l = layout
+            val raw = sp.getString(KEY_SWIPE_GRID, null)?.let { gridsFromJson(it, 1) }?.single() ?: run {
+                val custom = legacyCustomKeys
+                var g = CellGrid.fromCodes(l) { custom[it] ?: KeyLayers.DEFAULT_SWIPE_BY_CODE[it] }
+                g = KeyLayers.pinDigits(g)
+                sp.edit().putString(KEY_SWIPE_GRID, gridsToJson(listOf(g))).apply()
+                g
+            }
+            return KeyLayers.reconcile(l, listOf(raw), KeyLayers::swipeUsable).single()
+        }
+        set(v) = sp.edit().putString(KEY_SWIPE_GRID, gridsToJson(listOf(v))).apply()
+
+    /** Hai trang lớp 123 theo ô, đã khớp với lớp chữ. Chưa có thì dựng như cách cũ (theo chữ), đưa số về chỗ mặc định mới rồi lưu lại. */
+    var symbolPages: List<CellGrid>
+        get() {
+            val l = layout
+            val raw = sp.getString(KEY_SYMBOL_PAGES, null)?.let { gridsFromJson(it, 2) } ?: run {
+                var p = SymbolPages.fromLetters(l)
+                p = listOf(KeyLayers.pinDigits(p[0]), p[1])
+                sp.edit().putString(KEY_SYMBOL_PAGES, gridsToJson(p)).apply()
+                p
+            }
+            return KeyLayers.reconcile(l, raw, KeyLayers::symbolUsable)
+        }
+        set(v) = sp.edit().putString(KEY_SYMBOL_PAGES, gridsToJson(v)).apply()
+
+    private fun gridsToJson(grids: List<CellGrid>): String =
+        JSONArray(grids.map { g -> JSONArray(g.rows.map { JSONArray(it) }) }).toString()
+
+    private fun gridsFromJson(json: String, count: Int): List<CellGrid>? = runCatching {
+        val a = JSONArray(json)
+        (0 until a.length()).map { i ->
+            val g = a.getJSONArray(i)
+            CellGrid((0 until g.length()).map { r -> val row = g.getJSONArray(r); (0 until row.length()).map { row.getString(it) } })
+        }.takeIf { it.size == count }
+    }.getOrNull()
 
     /** Preset layout do người dùng lưu: tên → LayoutModel. */
     var presets: Map<String, LayoutModel>
@@ -224,9 +273,6 @@ class Prefs(context: Context) {
         englishFallback = englishFallback,
     )
 
-    /** Ký tự vuốt xuống của một phím: tuỳ biến trước, mặc định sau. */
-    fun hintOf(code: String): String = customKeys[code] ?: DEFAULT_SWIPE_DOWN[code] ?: ""
-
     companion object {
         const val KEY_NEW_TONE_STYLE = "new_tone_style"
         const val KEY_L_GRAVE = "l_as_grave"
@@ -239,6 +285,8 @@ class Prefs(context: Context) {
         const val KEY_FALLBACK_PKGS = "fallback_packages"
         const val KEY_LAYOUT = "layout_json"
         const val KEY_CUSTOM = "custom_keys"
+        const val KEY_SWIPE_GRID = "swipe_grid"
+        const val KEY_SYMBOL_PAGES = "symbol_pages"
         const val KEY_RECENT_EMOJI = "recent_emoji"
         const val KEY_PRESETS = "layout_presets"
         const val KEY_MODELS_VERSION = "models_version"
@@ -274,13 +322,7 @@ class Prefs(context: Context) {
             KEY_DYNAMIC_ZONES to Boolean::class, KEY_LEARN_OFFSETS to Boolean::class,
             KEY_ONE_HANDED to Int::class, KEY_SKIN_TONE to Int::class, KEY_CLIPBOARD to Boolean::class,
             KEY_SHORTCUTS to String::class, KEY_AUTO_CAP to Boolean::class, KEY_ENTER_SENDS to Boolean::class,
-        )
-
-        val DEFAULT_SWIPE_DOWN: Map<String, String> = mapOf(
-            "q" to "1", "w" to "2", "e" to "3", "r" to "4", "t" to "5", "y" to "6", "u" to "7", "i" to "8", "o" to "9", "p" to "0",
-            "a" to "😄", "s" to "😂", "d" to "😍", "f" to "👍", "g" to "🙏", "h" to "❤️", "j" to "😭", "k" to "🔥", "l" to "🎉",
-            "z" to "@", "x" to "#", "c" to "&", "v" to "-", "b" to "/", "n" to "(", "m" to ")",
-            "," to "?", "." to "!",
+            KEY_SWIPE_GRID to String::class, KEY_SYMBOL_PAGES to String::class,
         )
     }
 }

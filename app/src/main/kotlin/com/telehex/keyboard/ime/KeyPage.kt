@@ -1,5 +1,6 @@
 package com.telehex.keyboard.ime
 
+import com.telehex.keyboard.layout.CellGrid
 import com.telehex.keyboard.layout.KeyCode
 import com.telehex.keyboard.layout.LayoutModel
 import com.telehex.keyboard.layout.SymbolPages
@@ -20,18 +21,19 @@ data class Key(
 
 enum class Mode { ABC, SYMBOLS, EMOJI, DIAL, EDIT }
 
-/** Dựng danh sách phím cho một trang từ layout + chế độ + cấu hình. */
+/** Dựng danh sách phím cho một trang từ lớp chữ, lớp vuốt xuống, lớp 123 (đã khớp với lớp chữ) và chế độ. */
 object KeyPage {
     fun build(
         layout: LayoutModel,
         mode: Mode,
         symbolPage: Int,
         telex: TelexConfig,
-        hintOf: (String) -> String,
+        swipe: CellGrid,
+        symbols: List<CellGrid>,
         enterLabel: String,
     ): List<Key> {
         val rows: List<List<String?>> = when (mode) {
-            Mode.SYMBOLS -> if (symbolPage == 2) SymbolPages.page2(layout) else SymbolPages.page1(layout)
+            Mode.SYMBOLS -> SymbolPages.render(layout, symbols[if (symbolPage == 2) 1 else 0])
             else -> layout.rows
         }
         val keys = ArrayList<Key>(32)
@@ -50,9 +52,9 @@ object KeyPage {
                 code == KeyCode.ABC -> Key(code, cell, "ABC", kind = KeyKind.FUNCTION)
                 code == KeyCode.BACKSPACE -> Key(code, cell, "⌫", kind = KeyKind.FUNCTION)
                 code == "," || code == "." ->
-                    Key(code, cell, code, hint = if (mode == Mode.ABC) hintOf(code) else "", kind = KeyKind.FUNCTION)
+                    Key(code, cell, code, hint = if (mode == Mode.ABC) swipe[r, c] else "", kind = KeyKind.FUNCTION)
                 mode == Mode.SYMBOLS -> Key(code, cell, code, kind = KeyKind.SYMBOL)
-                else -> letterKey(code, cell, telex, hintOf(code))
+                else -> letterKey(code, cell, telex, swipe[r, c])
             }
         }
         keys += Key(KeyCode.SPACE, spaceCells, "", sub = "cách", kind = KeyKind.SPACE)
