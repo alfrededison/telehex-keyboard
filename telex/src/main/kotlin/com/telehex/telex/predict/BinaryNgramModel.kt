@@ -122,11 +122,34 @@ class BinaryNgramModel(buffer: ByteBuffer) : NgramModel {
         val c2 = if (ctx.size >= 2) ctx[ctx.size - 2] else null
         val cands = HashSet<Int>()
         if (c1 != null && c2 != null) for (i in triRange(c2, c1)) cands.add(buf.getInt(triW3 + 4 * i))
-        if (c1 != null) { val r = biRange(c1); if (!r.isEmpty()) for (i in r.first..minOf(r.last, r.first + 200)) cands.add(buf.getInt(biW2 + 4 * i)) }
+        // Ứng viên theo xác suất, không theo thứ tự từ vựng: hàng bigram sắp theo id (thứ tự chữ cái),
+        // nên lấy N hàng đầu sẽ bỏ sót "phủ", "trị" sau "chính".
+        if (c1 != null) cands.addAll(bestFollowers(biRange(c1), biW2, biQ, BIGRAM_CANDIDATES))
         if (cands.size < max * 2) cands.addAll(topUnigrams)
         return cands.map { NgramModel.Scored(vocab[it], score(ctx, it)) }
             .sortedByDescending { it.score }
             .take(max)
+    }
+
+    /** Tối đa [k] âm tiết có xác suất cao nhất (q nhỏ nhất) trong khoảng hàng [r]. */
+    private fun bestFollowers(r: IntRange, wordCol: Int, qCol: Int, k: Int): List<Int> {
+        if (r.isEmpty()) return emptyList()
+        val ids = IntArray(k)
+        val qs = IntArray(k)
+        var n = 0
+        for (i in r) {
+            val q = buf.get(qCol + i).toInt() and 0xFF
+            if (n == k && q >= qs[k - 1]) continue
+            var j = if (n < k) n++ else k - 1
+            while (j > 0 && qs[j - 1] > q) { qs[j] = qs[j - 1]; ids[j] = ids[j - 1]; j-- }
+            qs[j] = q
+            ids[j] = buf.getInt(wordCol + 4 * i)
+        }
+        return ids.asList().subList(0, n)
+    }
+
+    private companion object {
+        const val BIGRAM_CANDIDATES = 50
     }
 
     private val topUnigrams: List<Int> by lazy {

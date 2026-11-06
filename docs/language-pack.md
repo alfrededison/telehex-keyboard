@@ -133,12 +133,12 @@ Muốn bỏ thì chọn "Xoá gói ngôn ngữ đã nạp". Để đóng gói s�
 
 - **Corpus dựng:** `vie_news_2022_1M` trừ phần kiểm tra (990.045 câu) cộng `vie-vn_web_2015_1M` (1.000.000 câu). Tổng 49,6 triệu âm tiết, 153.391 loại khác nhau, từ vựng giữ 12.000.
 - **Tập kiểm tra:** 9.955 dòng tin tức chia ngẫu nhiên như bước 3, tách thành 10.723 câu và 248.079 âm tiết. Đo bằng lệnh ở bước 5, chấm toàn bộ tập.
-- **Tài nguyên:** dựng mất khoảng 1 phút 45 giây, RAM cao nhất khoảng 4,6 GB. Đo chất lượng mất khoảng 30 giây.
+- **Tài nguyên:** dựng mất khoảng 1 phút 45 giây, RAM cao nhất khoảng 4,6 GB. Đo chất lượng mất khoảng 1 phút.
 
 | `--min-bigram` / `--min-trigram` | Dung lượng | Top-1 | Top-3 | Keystroke savings |
 |---|---|---|---|---|
-| 3 / 4 (mặc định) | 29,2 MB | 26,2% | 37,2% | 30,3% |
-| 6 / 8 (khuyên dùng) | 14,6 MB | 25,7% | 36,3% | 29,6% |
-| 10 / 12 | 9,6 MB | 25,4% | 36,0% | 29,3% |
+| 3 / 4 (mặc định) | 29,2 MB | 27,0% | 38,7% | 31,6% |
+| 6 / 8 (khuyên dùng) | 14,6 MB | 26,4% | 37,9% | 30,9% |
+| 10 / 12 | 9,6 MB | 26,0% | 37,3% | 30,4% |
 
 Các con số trên chỉ đo mô hình gốc. Trên điện thoại, bàn phím còn trộn thêm mô hình cá nhân học từ chính bạn.

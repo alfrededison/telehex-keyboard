@@ -48,6 +48,22 @@ class PersonalModel : NgramModel {
         return c >= 3 && c * 10 > n * 6
     }
 
+    // ---- Số đếm cho Predictor (khoá đều là chữ thường) ----
+
+    /** Số loại âm tiết khác nhau đã học. */
+    val unigramTypes: Int get() = uni.size
+
+    fun unigramCount(w: String): Int = uni[w] ?: 0
+
+    /** Các âm tiết đứng ngay sau [prev], kèm số lần. */
+    fun bigramFollowers(prev: String): Map<String, Int> = bi[prev] ?: emptyMap()
+
+    /** Các âm tiết đứng ngay sau cặp ([prev2], [prev1]), kèm số lần. */
+    fun trigramFollowers(prev2: String, prev1: String): Map<String, Int> = tri["$prev2 $prev1"] ?: emptyMap()
+
+    /** Các âm tiết hay gõ nhất, bất kể ngữ cảnh. */
+    fun topUnigrams(n: Int): List<String> = uni.entries.sortedByDescending { it.value }.take(n).map { it.key }
+
     override fun probability(context: List<String>, next: String): Double {
         val s = next.lowercase()
         val c1 = context.lastOrNull()?.lowercase()

@@ -52,8 +52,12 @@ class Model:
         bi = {}
         if c1 is not None:
             lo, hi = bisect_left(self.bw1, c1), bisect_right(self.bw1, c1)
-            for i in range(lo, min(hi, lo + 200)):
-                cands.add(self.bw2[i]); bi[self.bw2[i]] = self.p(self.bq[i])
+            # Mọi hàng để chấm điểm; ứng viên là 50 hàng xác suất cao nhất (giống BinaryNgramModel.kt),
+            # không phải N hàng đầu theo thứ tự chữ cái.
+            for i in range(lo, hi):
+                bi[self.bw2[i]] = self.p(self.bq[i])
+            for i in sorted(range(lo, hi), key=lambda i: self.bq[i])[:50]:
+                cands.add(self.bw2[i])
         tri = {}
         if c1 is not None and c2 is not None:
             lo, hi = bisect_left(self.tkey, (c2, c1)), bisect_right(self.tkey, (c2, c1))

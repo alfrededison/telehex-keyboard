@@ -47,6 +47,99 @@ class PredictTest {
     }
 }
 
+/** Mô hình gốc giả: xác suất cố định theo âm tiết trước. */
+private class FakeBase(private val table: Map<String, Map<String, Double>>) : NgramModel {
+    override val size: Long = 1_000_000
+    override fun probability(context: List<String>, next: String): Double =
+        table[context.lastOrNull() ?: ""]?.get(next) ?: 0.0001
+    override fun predict(context: List<String>, max: Int): List<NgramModel.Scored> =
+        (table[context.lastOrNull() ?: ""] ?: emptyMap()).entries.sortedByDescending { it.value }
+            .take(max).map { NgramModel.Scored(it.key, it.value) }
+}
+
+class MixingTest {
+    // Điểm cùng cỡ với gói Leipzig thật (đo ngày 2026-11-05): sau "chính" khoảng 0,04 / 0,03 / 0,02,
+    // sau "chào" khoảng 0,05, đầu câu dưới 0,001.
+    private val base = FakeBase(
+        mapOf(
+            "" to mapOf("và" to 0.0004, "đã" to 0.0003),
+            "chính" to mapOf("phủ" to 0.041, "sách" to 0.033, "trị" to 0.018),
+            "chào" to mapOf("bạn" to 0.05, "anh" to 0.03),
+        )
+    )
+
+    private fun typed(p: PersonalModel, vararg words: String) {
+        val ctx = ArrayList<String>()
+        for (w in words) { p.learn(ctx.takeLast(2), w); ctx.add(w) }
+    }
+
+    @Test
+    fun justTypedSyllablesDoNotCrowdOutContextPredictions() {
+        // Lỗi thấy trên máy: gõ "ngân chính" rồi gợi ý sau "chính" lại là "chính", "ngân".
+        val personal = PersonalModel()
+        typed(personal, "ngân", "chính")
+        val next = Predictor(base, personal).next(listOf("ngân", "chính"))
+        assertEquals(listOf("phủ", "sách", "trị"), next)
+    }
+
+    @Test
+    fun repeatedPersonalHabitBeatsTheBaseModel() {
+        val personal = PersonalModel()
+        repeat(3) { typed(personal, "xin", "chào", "hiếu") }
+        val next = Predictor(base, personal).next(listOf("xin", "chào"))
+        assertEquals("hiếu", next.first())
+        assertTrue("vẫn còn gợi ý của mô hình gốc: $next", "bạn" in next)
+    }
+
+    @Test
+    fun aSingleOneOffDoesNotOverrideAStrongBasePrediction() {
+        val personal = PersonalModel()
+        typed(personal, "chính", "xác")
+        val next = Predictor(base, personal).next(listOf("chính"))
+        assertTrue("$next", next.indexOf("phủ") in 0..1)
+        assertTrue("$next", "xác" in next)
+    }
+
+    @Test
+    fun sentenceStartMixesPersonalFrequency() {
+        val personal = PersonalModel()
+        repeat(20) { typed(personal, "anh") }
+        assertEquals("anh", Predictor(base, personal).next(emptyList()).first())
+    }
+
+    @Test
+    fun withoutABaseModelPersonalCountsStillPredict() {
+        val personal = PersonalModel()
+        repeat(2) { typed(personal, "xin", "chào", "hiếu") }
+        assertEquals("hiếu", Predictor(null, personal, emptyMap()).next(listOf("xin", "chào")).first())
+    }
+}
+
+class CandidateSelectionTest {
+    /** Mô hình nhị phân: 260 âm tiết w000..w259 đều theo sau "x"; w250 có xác suất cao nhất. */
+    private fun manyFollowers(): BinaryNgramModel {
+        val vocab = (0 until 260).map { "w%03d".format(it) } + "x"
+        val out = ByteArrayOutputStream()
+        fun u32(v: Int) { out.write(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(v).array()) }
+        out.write("THNG".toByteArray()); out.write(1)
+        u32(vocab.size)
+        for (v in vocab) { val b = v.toByteArray(); out.write(b.size); out.write(b) }
+        out.write(ByteArray(vocab.size) { 80 })
+        val x = vocab.size - 1
+        u32(260)
+        repeat(260) { u32(x) }
+        repeat(260) { u32(it) }
+        out.write(ByteArray(260) { if (it == 250) 2 else 40 })
+        u32(0)
+        return BinaryNgramModel(ByteBuffer.wrap(out.toByteArray()))
+    }
+
+    @Test
+    fun bestFollowerIsFoundEvenFarDownTheAlphabet() {
+        assertEquals("w250", manyFollowers().predict(listOf("x"), 1).first().text)
+    }
+}
+
 class PythonModelTest {
     @Test
     fun readsModelBuiltByPythonTool() {
