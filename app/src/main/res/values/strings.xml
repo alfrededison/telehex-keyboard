@@ -3,5 +3,5 @@
     <string name="app_name">TeleHex</string>
     <string name="ime_name">TeleHex – Telex tổ ong</string>
     <string name="subtype_vi">Tiếng Việt (Telex)</string>
-    <string name="title_layout_editor">Sắp xếp phím</string>
+    <string name="title_layout_editor">Chỉnh sửa phím</string>
 </resources>

@@ -67,7 +67,7 @@ object KeyLayers {
     }
 
     /**
-     * Giá trị nằm dưới ô không dùng được (do kéo phím chức năng ở lớp chữ hoặc nạp preset có phím chức năng
+     * Giá trị nằm dưới ô không dùng được (do kéo phím chức năng ở lớp chữ hoặc chọn profile có phím chức năng
      * ở chỗ khác) chuyển sang ô dùng được còn trống, theo thứ tự đọc, ưu tiên cùng trang. Lớp chữ chỉ đổi chữ
      * với chữ thì không có gì thay đổi.
      */

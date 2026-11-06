@@ -277,7 +277,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        if (key == Prefs.KEY_RECENT_EMOJI || key == Prefs.KEY_PRESETS || key == Prefs.KEY_OFFSETS_LAYOUT) return
+        if (key == Prefs.KEY_RECENT_EMOJI || key == Prefs.KEY_PROFILES ||
+            key == Prefs.KEY_ACTIVE_PROFILE || key == Prefs.KEY_OFFSETS_LAYOUT) return
         if (key == Prefs.KEY_TOUCH_OFFSETS) {
             // Người dùng xoá dữ liệu độ lệch trong Cài đặt: bỏ bản trong bộ nhớ, đừng ghi đè lại
             if (prefs.touchOffsets.isEmpty()) { touchOffsets.clear(); offsetsDirty = false; if (::keyboardView.isInitialized) keyboardView.removeCallbacks(saveOffsets) }

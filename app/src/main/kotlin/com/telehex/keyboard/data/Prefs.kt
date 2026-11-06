@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.telehex.keyboard.layout.CellGrid
 import com.telehex.keyboard.layout.KeyLayers
 import com.telehex.keyboard.layout.LayoutModel
+import com.telehex.keyboard.layout.Profile
 import com.telehex.keyboard.layout.SymbolPages
 import com.telehex.telex.TelexConfig
 import org.json.JSONArray
@@ -66,9 +67,12 @@ class Prefs(context: Context) {
         set(v) = sp.edit().putInt(KEY_ONE_HANDED, v).apply()
 
     /** Toàn bộ tuỳ chọn dạng JSON để sao lưu (không gồm dữ liệu học, lưu riêng). */
-    fun exportJson(): String = JSONObject(sp.all.filterKeys { it != KEY_TOUCH_OFFSETS && it != KEY_OFFSETS_LAYOUT }.mapValues { (_, v) ->
-        if (v is Set<*>) org.json.JSONArray(v.toList()) else v
-    }).toString()
+    fun exportJson(): String {
+        ensureProfiles() // bản sao lưu luôn có profile, kể cả khi chưa mở màn chỉnh sửa phím lần nào
+        return JSONObject(sp.all.filterKeys { it != KEY_TOUCH_OFFSETS && it != KEY_OFFSETS_LAYOUT }.mapValues { (_, v) ->
+            if (v is Set<*>) org.json.JSONArray(v.toList()) else v
+        }).toString()
+    }
 
     /** Khôi phục tuỳ chọn từ JSON đã xuất; chỉ nhận các khoá đã biết với đúng kiểu. */
     fun importJson(json: String) {
@@ -88,6 +92,10 @@ class Prefs(context: Context) {
         if ((o.has(KEY_LAYOUT) || o.has(KEY_CUSTOM)) && !o.has(KEY_SWIPE_GRID)) e.remove(KEY_SWIPE_GRID)
         if (o.has(KEY_LAYOUT) && !o.has(KEY_SYMBOL_PAGES)) e.remove(KEY_SYMBOL_PAGES)
         e.apply()
+        // Ba lớp của bàn phím phải khớp profile đang dùng, dù bản sao lưu mang theo lớp nào: có profile thì ghi lại
+        // ba lớp theo profile đó; bản trước khi có profile thì nhận các lớp vừa khôi phục làm profile ([ensureProfiles]).
+        if (o.has(KEY_ACTIVE_PROFILE)) saveProfiles(readProfiles(), activeProfile)
+        else if (listOf(KEY_LAYOUT, KEY_CUSTOM, KEY_SWIPE_GRID, KEY_SYMBOL_PAGES).any(o::has)) sp.edit().remove(KEY_ACTIVE_PROFILE).apply()
     }
 
     /** Tông da mặc định cho emoji (0 = không, 1..5 = sáng → tối). */
@@ -188,9 +196,9 @@ class Prefs(context: Context) {
         get() = sp.getStringSet(KEY_FALLBACK_PKGS, DEFAULT_FALLBACK_PKGS) ?: DEFAULT_FALLBACK_PKGS
         set(v) = sp.edit().putStringSet(KEY_FALLBACK_PKGS, v).apply()
 
-    var layout: LayoutModel
+    /** Lớp chữ bàn phím đang dùng; ba lớp chỉ ghi qua [saveProfiles] để luôn khớp profile đang dùng. */
+    val layout: LayoutModel
         get() = sp.getString(KEY_LAYOUT, null)?.let { LayoutModel.fromJson(it) } ?: LayoutModel.DEFAULT
-        set(v) = sp.edit().putString(KEY_LAYOUT, v.toJson()).apply()
 
     /** Dữ liệu cũ: ký tự vuốt xuống gán theo phím (phím → chuỗi). Chỉ đọc để chuyển sang [swipeGrid]. */
     private val legacyCustomKeys: Map<String, String>
@@ -205,7 +213,7 @@ class Prefs(context: Context) {
      * Ký tự vuốt xuống theo ô, đã khớp với lớp chữ hiện tại. Chưa có (bản cũ lưu theo phím) thì dựng từ
      * dữ liệu cũ trên bố cục hiện tại, đưa số về chỗ mặc định mới (Q W R Y F H U O P L), rồi lưu lại.
      */
-    var swipeGrid: CellGrid
+    val swipeGrid: CellGrid
         get() {
             val l = layout
             val raw = sp.getString(KEY_SWIPE_GRID, null)?.let { gridsFromJson(it, 1) }?.single() ?: run {
@@ -217,10 +225,9 @@ class Prefs(context: Context) {
             }
             return KeyLayers.reconcile(l, listOf(raw), KeyLayers::swipeUsable).single()
         }
-        set(v) = sp.edit().putString(KEY_SWIPE_GRID, gridsToJson(listOf(v))).apply()
 
     /** Hai trang lớp 123 theo ô, đã khớp với lớp chữ. Chưa có thì dựng như cách cũ (theo chữ), đưa số về chỗ mặc định mới rồi lưu lại. */
-    var symbolPages: List<CellGrid>
+    val symbolPages: List<CellGrid>
         get() {
             val l = layout
             val raw = sp.getString(KEY_SYMBOL_PAGES, null)?.let { gridsFromJson(it, 2) } ?: run {
@@ -231,7 +238,6 @@ class Prefs(context: Context) {
             }
             return KeyLayers.reconcile(l, raw, KeyLayers::symbolUsable)
         }
-        set(v) = sp.edit().putString(KEY_SYMBOL_PAGES, gridsToJson(v)).apply()
 
     private fun gridsToJson(grids: List<CellGrid>): String =
         JSONArray(grids.map { g -> JSONArray(g.rows.map { JSONArray(it) }) }).toString()
@@ -244,19 +250,62 @@ class Prefs(context: Context) {
         }.takeIf { it.size == count }
     }.getOrNull()
 
-    /** Preset layout do người dùng lưu: tên → LayoutModel. */
-    var presets: Map<String, LayoutModel>
-        get() = sp.getString(KEY_PRESETS, null)?.let { json ->
-            runCatching {
-                val o = JSONObject(json)
-                o.keys().asSequence().mapNotNull { name -> LayoutModel.fromJson(o.getString(name))?.let { name to it } }.toMap()
-            }.getOrNull()
-        } ?: emptyMap()
-        set(v) {
-            val o = JSONObject()
-            for ((name, layout) in v) o.put(name, layout.toJson())
-            sp.edit().putString(KEY_PRESETS, o.toString()).apply()
+    /** Ba lớp bàn phím đang dùng, chưa gắn tên. */
+    private fun liveLayers() = Profile("", layout, swipeGrid, symbolPages)
+
+    /** Chưa có profile đang dùng hay profile đó không còn: nhận bố cục đang dùng làm profile ([Profile.adopt]). */
+    private fun ensureProfiles() {
+        val active = sp.getString(KEY_ACTIVE_PROFILE, null)
+        val user = readProfiles()
+        if (active != null && (Profile.BUILT_IN + user).any { it.name == active }) return
+        val (adopted, name) = Profile.adopt(liveLayers(), user)
+        // Preset bản cũ (chỉ lớp chữ) không chuyển sang profile: bỏ để khỏi đi theo bản sao lưu
+        sp.edit().putString(KEY_PROFILES, profilesToJson(adopted)).putString(KEY_ACTIVE_PROFILE, name).remove(LEGACY_PRESETS).apply()
+    }
+
+    /** Profile người dùng tạo, theo thứ tự tạo. */
+    val userProfiles: List<Profile>
+        get() { ensureProfiles(); return readProfiles() }
+
+    /** Profile bàn phím đang dùng. */
+    val activeProfile: Profile
+        get() {
+            ensureProfiles()
+            val name = sp.getString(KEY_ACTIVE_PROFILE, null)
+            return (Profile.BUILT_IN + readProfiles()).firstOrNull { it.name == name } ?: Profile.DEFAULT
         }
+
+    /**
+     * Ghi danh sách profile người dùng và dùng [active] trong một lần ghi: ba lớp của [active] thành bố cục của
+     * bàn phím. Lớp không đổi thì SharedPreferences không báo thay đổi, nên độ lệch chạm đã học được giữ.
+     */
+    fun saveProfiles(user: List<Profile>, active: Profile) {
+        sp.edit()
+            .putString(KEY_PROFILES, profilesToJson(user))
+            .putString(KEY_ACTIVE_PROFILE, active.name)
+            .putString(KEY_LAYOUT, active.letters.toJson())
+            .putString(KEY_SWIPE_GRID, gridsToJson(listOf(active.swipe)))
+            .putString(KEY_SYMBOL_PAGES, gridsToJson(active.symbols))
+            .apply()
+    }
+
+    private fun readProfiles(): List<Profile> = sp.getString(KEY_PROFILES, null)?.let { json ->
+        runCatching {
+            val a = JSONArray(json)
+            (0 until a.length()).mapNotNull { i ->
+                val o = a.getJSONObject(i)
+                val letters = LayoutModel.fromJson(o.getString("letters"))?.takeIf { it.validate() == null } ?: return@mapNotNull null
+                val swipe = gridsFromJson(o.getString("swipe"), 1)?.single() ?: return@mapNotNull null
+                val symbols = gridsFromJson(o.getString("symbols"), 2) ?: return@mapNotNull null
+                Profile(o.getString("name"), letters, swipe, symbols).reconciled()
+            }
+        }.getOrNull()
+    } ?: emptyList()
+
+    private fun profilesToJson(list: List<Profile>): String = JSONArray(list.map { p ->
+        JSONObject().put("name", p.name).put("letters", p.letters.toJson())
+            .put("swipe", gridsToJson(listOf(p.swipe))).put("symbols", gridsToJson(p.symbols))
+    }).toString()
 
     var recentEmoji: List<String>
         get() = sp.getString(KEY_RECENT_EMOJI, "")!!.split('\u001F').filter { it.isNotEmpty() }
@@ -283,7 +332,9 @@ class Prefs(context: Context) {
         const val KEY_SWIPE_GRID = "swipe_grid"
         const val KEY_SYMBOL_PAGES = "symbol_pages"
         const val KEY_RECENT_EMOJI = "recent_emoji"
-        const val KEY_PRESETS = "layout_presets"
+        private const val LEGACY_PRESETS = "layout_presets"
+        const val KEY_PROFILES = "profiles"
+        const val KEY_ACTIVE_PROFILE = "active_profile"
         const val KEY_MODELS_VERSION = "models_version"
         const val KEY_ONE_HANDED = "one_handed"
         const val KEY_SKIN_TONE = "skin_tone"
@@ -309,7 +360,7 @@ class Prefs(context: Context) {
             KEY_NEW_TONE_STYLE to Boolean::class, KEY_L_GRAVE to Boolean::class, KEY_EN_FALLBACK to Boolean::class,
             KEY_HAPTIC to Boolean::class, KEY_SOUND to Boolean::class, KEY_THEME to String::class, KEY_ACCENT to String::class,
             KEY_EXTRA_BOTTOM to Int::class, KEY_FALLBACK_PKGS to Set::class, KEY_LAYOUT to String::class,
-            KEY_CUSTOM to String::class, KEY_RECENT_EMOJI to String::class, KEY_PRESETS to String::class,
+            KEY_CUSTOM to String::class, KEY_RECENT_EMOJI to String::class,
             KEY_SWIPE_DP to Int::class, KEY_HOLD_MS to Int::class, KEY_LONG_PRESS_MS to Int::class,
             KEY_STEP_DP to Int::class, KEY_DOUBLE_TAP_MS to Int::class,
             KEY_PREDICTIONS to Boolean::class, KEY_INCOGNITO to Boolean::class,
@@ -317,6 +368,7 @@ class Prefs(context: Context) {
             KEY_ONE_HANDED to Int::class, KEY_SKIN_TONE to Int::class, KEY_CLIPBOARD to Boolean::class,
             KEY_SHORTCUTS to String::class, KEY_AUTO_CAP to Boolean::class,
             KEY_SWIPE_GRID to String::class, KEY_SYMBOL_PAGES to String::class,
+            KEY_PROFILES to String::class, KEY_ACTIVE_PROFILE to String::class,
         )
     }
 }

@@ -120,12 +120,6 @@ class LayoutModel(val rows: List<List<String?>>) {
             )
         )
 
-        /** Preset có sẵn, hiện trước preset người dùng lưu. */
-        val BUILT_IN: List<Pair<String, LayoutModel>> = listOf(
-            "Mặc định" to DEFAULT,
-            "Cân bằng hai ngón" to BALANCED,
-        )
-
         fun fromJson(json: String): LayoutModel? = runCatching {
             val arr = JSONArray(json)
             val rows = (0 until arr.length()).map { r ->

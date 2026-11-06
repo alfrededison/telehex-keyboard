@@ -2,18 +2,23 @@ package com.telehex.keyboard.layout
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LayoutModelTest {
     @Test
-    fun builtInPresetsAreValid() {
-        for ((name, l) in LayoutModel.BUILT_IN) assertNull(name, l.validate())
+    fun builtInProfilesAreValid() {
+        for (p in Profile.BUILT_IN) {
+            assertNull(p.name, p.letters.validate())
+            // Lớp vuốt xuống / 123 không có giá trị nằm dưới phím chức năng
+            assertTrue(p.name, p.sameLayers(p.reconciled()))
+        }
     }
 
     @Test
-    fun builtInPresetsKeepFunctionKeysAndPageKeyInPlace() {
+    fun builtInProfilesKeepFunctionKeysAndPageKeyInPlace() {
         val fixed = listOf(KeyCode.SETTINGS, KeyCode.NUMBERS, KeyCode.EMOJI, KeyCode.ENTER, ",", ".", "z")
-        for ((name, l) in LayoutModel.BUILT_IN) for (code in fixed)
-            assertEquals("$name: $code", LayoutModel.DEFAULT.find(code), l.find(code))
+        for (p in Profile.BUILT_IN) for (code in fixed)
+            assertEquals("${p.name}: $code", LayoutModel.DEFAULT.find(code), p.letters.find(code))
     }
 }

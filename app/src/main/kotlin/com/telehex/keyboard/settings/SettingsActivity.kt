@@ -16,6 +16,7 @@ import android.text.InputType
 import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.RadioButton
@@ -27,12 +28,14 @@ import android.widget.TextView
 import com.telehex.keyboard.R
 import com.telehex.keyboard.data.Prefs
 import com.telehex.keyboard.ime.Accent
+import com.telehex.keyboard.layout.Profile
 
 /** Màn hình Cài đặt (View thuần, không thêm dependency). */
 class SettingsActivity : Activity() {
     private lateinit var prefs: Prefs
     private lateinit var accentLabel: TextView
     private lateinit var swatchRow: LinearLayout
+    private lateinit var profileButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prefs = Prefs(this)
@@ -80,10 +83,14 @@ class SettingsActivity : Activity() {
         sec.add(switch("Tự khôi phục từ tiếng Anh (windows không thành ưindows)", prefs.englishFallback) { prefs.englishFallback = it })
 
         sec = section("Bàn phím")
-        sec.addButton("Sắp xếp phím") { startActivity(Intent(context, LayoutEditorActivity::class.java)) }
-        sec.addButton("Ký tự vuốt xuống") {
-            startActivity(Intent(context, LayoutEditorActivity::class.java).putExtra(LayoutEditorActivity.EXTRA_LAYER, EditLayer.SWIPE.name))
+        // Đổi nhanh profile (bố cục đủ ba lớp chữ / vuốt xuống / 123); nhãn cập nhật ở onResume
+        profileButton = sec.addButton("") {
+            showProfilePicker(context, Profile.BUILT_IN + prefs.userProfiles, prefs.activeProfile.name) { p ->
+                prefs.saveProfiles(prefs.userProfiles, p)
+                showActiveProfile()
+            }
         }
+        sec.addButton("Chỉnh sửa phím") { startActivity(Intent(context, LayoutEditorActivity::class.java)) }
         sec.add(label("Chế độ một tay (lưới thu còn ~80%, lục giác vẫn đều)"))
         sec.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
@@ -419,6 +426,13 @@ class SettingsActivity : Activity() {
         content.add(body)
         return body
     }
+
+    override fun onResume() {
+        super.onResume()
+        showActiveProfile() // có thể vừa đổi ở màn Chỉnh sửa phím
+    }
+
+    private fun showActiveProfile() { profileButton.text = "Profile: ${prefs.activeProfile.name}  ▾" }
 
     private fun isCurrentIme(): Boolean =
         Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)?.startsWith("$packageName/") == true
