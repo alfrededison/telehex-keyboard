@@ -276,11 +276,10 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         }
         engine.config = prefs.telexConfig()
         rebuildCorrector()
-        enterLabel = enterLabelFor(currentInputEditorInfo)
         if (key == Prefs.KEY_LEARN_OFFSETS && !prefs.learnTouchOffsets) touchOffsets.clear()
         if (::keyboardView.isInitialized) applyTheme()
         refreshKeys()
-        if (mode == Mode.DIAL && ::keyboardView.isInitialized) openDial() // dựng lại dialpad đang hiện: nhãn ↵, theme
+        if (mode == Mode.DIAL && ::keyboardView.isInitialized) openDial() // dựng lại dialpad đang hiện theo theme mới
     }
 
     // ---- View ----
@@ -465,22 +464,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         if (::candidateBar.isInitialized) candidateBar.clear()
     }
 
-    /**
-     * Khung chat thường khai hành động "Gửi" kèm IME_FLAG_NO_ENTER_ACTION (↵ xuống dòng, gửi bằng nút
-     * của app). Bật "↵ gửi tin" thì bỏ qua cờ đó và gửi hành động cho app.
-     */
-    private fun enterSendsHere(info: EditorInfo?): Boolean =
-        prefs.enterSends && info != null &&
-            info.imeOptions and EditorInfo.IME_MASK_ACTION == EditorInfo.IME_ACTION_SEND &&
-            info.imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION != 0
-
-    private fun isMultiLine(info: EditorInfo?): Boolean = info != null &&
-        info.inputType and InputType.TYPE_MASK_CLASS == InputType.TYPE_CLASS_TEXT &&
-        info.inputType and InputType.TYPE_TEXT_FLAG_MULTI_LINE != 0
-
     private fun enterLabelFor(info: EditorInfo?): String {
         info ?: return "↵"
-        if (enterSendsHere(info)) return "Gửi"
         if (info.imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION != 0) return "↵"
         return when (info.imeOptions and EditorInfo.IME_MASK_ACTION) {
             EditorInfo.IME_ACTION_SEARCH -> "Tìm"
@@ -753,19 +738,11 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     /**
      * Ô có hành động (Gửi, Tìm…) thì làm hành động đó; ngược lại chèn "\n" như Gboard.
-     * Không gửi phím ENTER: Messenger và nhiều app chat coi phím ENTER cứng là "gửi".
-     * Chỉ ô TYPE_NULL (terminal) mới cần phím thật.
+     * Chỉ ô TYPE_NULL (terminal) mới cần phím ENTER thật.
      */
-    /** @param longPress giữ ↵ khi ↵ đang là "Gửi" nhờ tuỳ chọn "↵ gửi tin": xuống dòng thay vì gửi. */
-    private fun pressEnter(longPress: Boolean = false) {
+    private fun pressEnter() {
         if (emojiSearch) { cancelEmojiSearch(); return } // không gửi / xuống dòng trong ô nhập
         commitSyllable()
-        val info = currentInputEditorInfo
-        if (enterSendsHere(info)) {
-            if (longPress && isMultiLine(info)) commitSyllable("\n")
-            else currentInputConnection?.performEditorAction(EditorInfo.IME_ACTION_SEND)
-            return
-        }
         if (sendDefaultEditorAction(true)) return
         if ((currentInputEditorInfo?.inputType ?: InputType.TYPE_NULL) == InputType.TYPE_NULL) sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
         else commitSyllable("\n")
@@ -905,7 +882,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         val code = key.code
         when {
             code == KeyCode.SPACE -> spaceGestures.onUp(gesture, android.os.SystemClock.uptimeMillis())
-            code == KeyCode.ENTER -> pressEnter(longPress = gesture == Gesture.LONG_PRESS)
+            code == KeyCode.ENTER -> pressEnter()
             code == KeyCode.NUMBERS -> {
                 if (gesture == Gesture.LONG_PRESS) { commitSyllable(); openDial(); return }
                 mode = if (mode == Mode.SYMBOLS) Mode.ABC else Mode.SYMBOLS

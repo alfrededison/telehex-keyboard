@@ -4,7 +4,6 @@
 
 - Tự viết hoa chữ đầu câu (tắt được trong Cài đặt). Nhãn phím hiện hoa/thường theo chữ sắp gõ; vuốt lên đảo hoa/thường như Gboard. Chữ hoa tự thêm không bị học thành "hay viết hoa"; gõ tắt ở đầu câu cũng viết hoa.
 - ↵ chèn xuống dòng bằng văn bản (như Gboard) thay vì phát phím ENTER.
-- Tuỳ chọn "↵ gửi tin ở khung chat": ↵ gửi tin ở các khung chat khai hành động Gửi (Messenger, Zalo…); giữ ↵ để xuống dòng.
 - Vuốt trái dài trên phím cách kéo tiếp được qua các dòng.
 - `uaw` ra `ưa` (vuaw → vưa).
 - Bỏ chữ dấu (á, ả…) dưới phím, chỉ dùng màu; ký tự vuốt xuống hiện dưới chữ cái.

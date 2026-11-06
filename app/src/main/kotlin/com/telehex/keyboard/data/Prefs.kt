@@ -112,11 +112,6 @@ class Prefs(context: Context) {
         get() = sp.getBoolean(KEY_PREDICTIONS, true)
         set(v) = sp.edit().putBoolean(KEY_PREDICTIONS, v).apply()
 
-    /** ↵ gửi tin ở khung chat (ô khai "Gửi" nhưng không muốn gắn vào Enter); giữ ↵ để xuống dòng. */
-    var enterSends: Boolean
-        get() = sp.getBoolean(KEY_ENTER_SENDS, false)
-        set(v) = sp.edit().putBoolean(KEY_ENTER_SENDS, v).apply()
-
     /** Tự viết hoa chữ đầu câu. */
     var autoCapitalize: Boolean
         get() = sp.getBoolean(KEY_AUTO_CAP, true)
@@ -297,7 +292,6 @@ class Prefs(context: Context) {
         const val KEY_PREDICTIONS = "predictions"
         const val KEY_INCOGNITO = "incognito"
         const val KEY_AUTO_CAP = "auto_capitalize"
-        const val KEY_ENTER_SENDS = "enter_sends"
         const val KEY_DYNAMIC_ZONES = "dynamic_hit_zones"
         const val KEY_LEARN_OFFSETS = "learn_touch_offsets"
         const val KEY_TOUCH_OFFSETS = "touch_offsets"
@@ -321,7 +315,7 @@ class Prefs(context: Context) {
             KEY_PREDICTIONS to Boolean::class, KEY_INCOGNITO to Boolean::class,
             KEY_DYNAMIC_ZONES to Boolean::class, KEY_LEARN_OFFSETS to Boolean::class,
             KEY_ONE_HANDED to Int::class, KEY_SKIN_TONE to Int::class, KEY_CLIPBOARD to Boolean::class,
-            KEY_SHORTCUTS to String::class, KEY_AUTO_CAP to Boolean::class, KEY_ENTER_SENDS to Boolean::class,
+            KEY_SHORTCUTS to String::class, KEY_AUTO_CAP to Boolean::class,
             KEY_SWIPE_GRID to String::class, KEY_SYMBOL_PAGES to String::class,
         )
     }

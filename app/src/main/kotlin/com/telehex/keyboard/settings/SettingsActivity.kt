@@ -72,7 +72,6 @@ class SettingsActivity : Activity() {
         })
         col.add(switch("L cũng là dấu huyền (lal → là)", prefs.lAsGrave) { prefs.lAsGrave = it })
         col.add(switch("Tự viết hoa chữ đầu câu", prefs.autoCapitalize) { prefs.autoCapitalize = it })
-        col.add(switch("↵ gửi tin ở khung chat (giữ ↵ để xuống dòng)", prefs.enterSends) { prefs.enterSends = it })
         col.add(switch("Tự khôi phục từ tiếng Anh (windows không thành ưindows)", prefs.englishFallback) { prefs.englishFallback = it })
 
         col.add(header("Bàn phím"))

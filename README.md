@@ -27,8 +27,7 @@ Z   X   C   V   B   M   N
 | Chạm phím chữ | Gõ Telex (`tieengs vieetj` → tiếng việt) |
 | Vuốt **lên** phím chữ | Đảo hoa/thường như Gboard: nhãn phím đang thường thì ra chữ hoa (giữ hoa khi biến đổi: vuốt lên D rồi gõ d → Đ), đang hoa (đầu câu) thì ra chữ thường |
 | Vuốt **xuống** phím chữ / `,` / `.` | Ký tự phụ hiện nhỏ phía dưới chữ (số, emoji, ký hiệu; tuỳ biến từng phím trong Cài đặt) |
-| Chạm phím ↵ | Ô có hành động (Tìm, Đi…) thì làm hành động đó, ngược lại xuống dòng. Khung chat (Messenger, Zalo…) xuống dòng; bật "↵ gửi tin ở khung chat" trong Cài đặt để ↵ gửi tin |
-| Giữ phím ↵ | Khi ↵ đang là "Gửi" nhờ tuỳ chọn "↵ gửi tin ở khung chat": xuống dòng thay vì gửi |
+| Chạm phím ↵ | Ô có hành động (Tìm, Gửi…) thì làm hành động đó, ngược lại xuống dòng |
 | Chạm phím cách | Chốt âm tiết + khoảng trắng; áp dụng gõ tắt nếu khớp |
 | Vuốt **trái ngắn** trên phím cách | Xoá 1 ký tự (xoá theo grapheme, emoji ghép xoá một lần) |
 | Vuốt **trái dài** trên phím cách | Chọn-để-xoá theo từ: bôi đen xem trước, mỗi ~1 phím thêm 1 từ, kéo ngược để bớt, nhả để xoá; mỗi dấu xuống dòng là một bước nên kéo tiếp được lên dòng trên; kéo quá mép trái = tới đầu dòng |
