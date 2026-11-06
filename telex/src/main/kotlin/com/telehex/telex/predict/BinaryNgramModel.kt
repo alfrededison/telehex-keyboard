@@ -26,8 +26,6 @@ class BinaryNgramModel(buffer: ByteBuffer) : NgramModel {
     private val triN: Int
     private val triW1: Int; private val triW2: Int; private val triW3: Int; private val triQ: Int
 
-    override val size: Long
-
     init {
         require(buf.get(0) == 'T'.code.toByte() && buf.get(1) == 'H'.code.toByte() && buf.get(2) == 'N'.code.toByte() && buf.get(3) == 'G'.code.toByte()) { "Không phải file n-gram TeleHex" }
         require(buf.get(4).toInt() == 1) { "Phiên bản mô hình không hỗ trợ" }
@@ -60,11 +58,12 @@ class BinaryNgramModel(buffer: ByteBuffer) : NgramModel {
         for (i in 0 until triN) require(
             buf.getInt(triW1 + 4 * i) in 0 until n && buf.getInt(triW2 + 4 * i) in 0 until n && buf.getInt(triW3 + 4 * i) in 0 until n
         ) { "Mô hình hỏng (trigram)" }
-        size = 1_000_000L // mô hình gốc coi như "rất nhiều dữ liệu"
     }
 
-    private fun q2p(q: Int): Double = Math.pow(2.0, -q / 8.0)
-    private fun uniP(w: Int): Double = q2p(buf.get(uniQ + w).toInt() and 0xFF)
+    /** Từ vựng (cho test). */
+    internal val vocabulary: List<String> get() = vocab.asList()
+
+    private fun uniP(w: Int): Double = Q2P[buf.get(uniQ + w).toInt() and 0xFF]
 
     /** Khoảng [lo, hi) các bigram có w1 = [w]. */
     private fun biRange(w: Int): IntRange {
@@ -86,49 +85,60 @@ class BinaryNgramModel(buffer: ByteBuffer) : NgramModel {
         return lo
     }
 
-    private fun biP(w1: Int, w2: Int): Double? {
-        val r = biRange(w1)
-        if (r.isEmpty()) return null
+    /** Hàng có cột từ [wordCol] bằng [w] trong khoảng [r] (sắp theo từ), hoặc -1. */
+    private fun rowOf(r: IntRange, wordCol: Int, w: Int): Int {
+        if (r.isEmpty()) return -1
         var lo = r.first; var hi = r.last + 1
-        while (lo < hi) { val mid = (lo + hi) ushr 1; if (buf.getInt(biW2 + 4 * mid) < w2) lo = mid + 1 else hi = mid }
-        return if (lo < r.last + 1 && buf.getInt(biW2 + 4 * lo) == w2) q2p(buf.get(biQ + lo).toInt() and 0xFF) else null
+        while (lo < hi) { val mid = (lo + hi) ushr 1; if (buf.getInt(wordCol + 4 * mid) < w) lo = mid + 1 else hi = mid }
+        return if (lo <= r.last && buf.getInt(wordCol + 4 * lo) == w) lo else -1
     }
 
-    private fun triP(w1: Int, w2: Int, w3: Int): Double? {
-        val r = triRange(w1, w2)
-        if (r.isEmpty()) return null
-        var lo = r.first; var hi = r.last + 1
-        while (lo < hi) { val mid = (lo + hi) ushr 1; if (buf.getInt(triW3 + 4 * mid) < w3) lo = mid + 1 else hi = mid }
-        return if (lo < r.last + 1 && buf.getInt(triW3 + 4 * lo) == w3) q2p(buf.get(triQ + lo).toInt() and 0xFF) else null
+    /**
+     * Chấm điểm cho một ngữ cảnh: tìm khoảng hàng bigram/trigram một lần, mỗi ứng viên chỉ còn một
+     * phép tìm nhị phân trong khoảng đó.
+     *
+     * Điểm = (0,1·P₁ + 0,3·P₂ + 0,6·P₃) / tổng trọng số của các bậc có dữ liệu cho ngữ cảnh này. Chia
+     * như vậy để tổng xác suất trên từ vựng xấp xỉ 1 ở mọi ngữ cảnh (đầu câu chỉ có P₁), nên trộn được
+     * công bằng với mô hình cá nhân; nếu không chia, đầu câu tổng chỉ khoảng 0,1.
+     */
+    private inner class ContextScorer(context: List<String>) : NgramModel.Scorer {
+        private val c1: Int? = context.lastOrNull()?.let { index[it.lowercase()] }
+        private val c2: Int? = if (context.size >= 2) index[context[context.size - 2].lowercase()] else null
+        private val bi: IntRange = if (c1 != null) biRange(c1) else IntRange.EMPTY
+        private val tri: IntRange = if (c1 != null && c2 != null) triRange(c2, c1) else IntRange.EMPTY
+        private val norm: Double = 0.1 + (if (bi.isEmpty()) 0.0 else 0.3) + (if (tri.isEmpty()) 0.0 else 0.6)
+
+        fun score(w: Int): Double {
+            var p = 0.1 * uniP(w)
+            val b = rowOf(bi, biW2, w)
+            if (b >= 0) p += 0.3 * Q2P[buf.get(biQ + b).toInt() and 0xFF]
+            val t = rowOf(tri, triW3, w)
+            if (t >= 0) p += 0.6 * Q2P[buf.get(triQ + t).toInt() and 0xFF]
+            return p / norm
+        }
+
+        override fun probability(next: String): Double = index[next]?.let { score(it) } ?: 0.0
+
+        override fun candidates(max: Int): List<String> {
+            val ids = LinkedHashSet<Int>()
+            // Theo xác suất, không theo thứ tự từ vựng: hàng sắp theo id (thứ tự chữ cái), nên lấy N
+            // hàng đầu sẽ bỏ sót "phủ", "trị" sau "chính". Bộ ba cũng giới hạn ("có thể" có 867 từ theo sau).
+            ids.addAll(bestFollowers(tri, triW3, triQ, FOLLOWER_CANDIDATES))
+            ids.addAll(bestFollowers(bi, biW2, biQ, FOLLOWER_CANDIDATES))
+            if (ids.size < max * 2) ids.addAll(topUnigrams)
+            val scored = ids.map { it to score(it) }.sortedByDescending { it.second }
+            return scored.take(max).map { vocab[it.first] }
+        }
     }
 
-    override fun probability(context: List<String>, next: String): Double {
-        val w = index[next.lowercase()] ?: return 0.0
-        return score(context.map { index[it.lowercase()] }, w)
-    }
+    override fun scorer(context: List<String>): NgramModel.Scorer = ContextScorer(context)
 
-    private fun score(ctx: List<Int?>, w: Int): Double {
-        val c1 = ctx.lastOrNull()
-        val c2 = if (ctx.size >= 2) ctx[ctx.size - 2] else null
-        var p = 0.1 * uniP(w)
-        if (c1 != null) biP(c1, w)?.let { p += 0.3 * it }
-        if (c1 != null && c2 != null) triP(c2, c1, w)?.let { p += 0.6 * it }
-        return p
-    }
+    override fun probability(context: List<String>, next: String): Double =
+        ContextScorer(context).probability(next.lowercase())
 
     override fun predict(context: List<String>, max: Int): List<NgramModel.Scored> {
-        val ctx = context.map { index[it.lowercase()] }
-        val c1 = ctx.lastOrNull()
-        val c2 = if (ctx.size >= 2) ctx[ctx.size - 2] else null
-        val cands = HashSet<Int>()
-        if (c1 != null && c2 != null) for (i in triRange(c2, c1)) cands.add(buf.getInt(triW3 + 4 * i))
-        // Ứng viên theo xác suất, không theo thứ tự từ vựng: hàng bigram sắp theo id (thứ tự chữ cái),
-        // nên lấy N hàng đầu sẽ bỏ sót "phủ", "trị" sau "chính".
-        if (c1 != null) cands.addAll(bestFollowers(biRange(c1), biW2, biQ, BIGRAM_CANDIDATES))
-        if (cands.size < max * 2) cands.addAll(topUnigrams)
-        return cands.map { NgramModel.Scored(vocab[it], score(ctx, it)) }
-            .sortedByDescending { it.score }
-            .take(max)
+        val s = ContextScorer(context)
+        return s.candidates(max).map { NgramModel.Scored(it, s.probability(it)) }
     }
 
     /** Tối đa [k] âm tiết có xác suất cao nhất (q nhỏ nhất) trong khoảng hàng [r]. */
@@ -149,7 +159,9 @@ class BinaryNgramModel(buffer: ByteBuffer) : NgramModel {
     }
 
     private companion object {
-        const val BIGRAM_CANDIDATES = 50
+        const val FOLLOWER_CANDIDATES = 50
+        /** q (8 bit) → xác suất 2^(−q/8), tra bảng thay vì gọi Math.pow mỗi lần. */
+        val Q2P = DoubleArray(256) { Math.pow(2.0, -it / 8.0) }
     }
 
     private val topUnigrams: List<Int> by lazy {

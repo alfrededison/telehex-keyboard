@@ -12,9 +12,17 @@ import com.telehex.telex.ToneRules
  * n là số lần người dùng đã gõ, T là số âm tiết khác nhau từng theo sau ngữ cảnh đó. Ngữ cảnh người
  * dùng chưa từng gõ (n = 0) thì lùi hẳn về P₀; ngữ cảnh gõ lặp lại nhiều lần thì thói quen cá nhân thắng.
  *
- * P₀ là mô hình gốc, vốn đã xét ngữ cảnh. Tần suất âm tiết của người dùng bất kể ngữ cảnh chỉ được
- * dùng ở đầu câu hoặc khi chưa có mô hình gốc: trộn nó vào mọi ngữ cảnh sẽ làm những âm tiết vừa gõ
- * (vốn chiếm tỉ lệ lớn khi mới học) chen lên trên gợi ý đúng ngữ cảnh.
+ * P₀ là mô hình gốc, vốn đã xét ngữ cảnh và được chuẩn hoá theo ngữ cảnh (xem BinaryNgramModel). Tần
+ * suất âm tiết của người dùng bất kể ngữ cảnh không được trộn vào giữa câu: những âm tiết vừa gõ (vốn
+ * chiếm tỉ lệ lớn khi mới học) sẽ chen lên trên gợi ý đúng ngữ cảnh. Ở đầu câu chỉ trộn các âm tiết
+ * đã gõ ít nhất [PersonalModel.FREQUENT] lần. Khi chưa có mô hình gốc thì tần suất cá nhân là P₀.
+ *
+ * Âm tiết chỉ có trong dữ liệu cá nhân (tên riêng, từ ngoài từ vựng của gói) nhận P₀ sàn bằng
+ * [OOV_FLOOR] × tần suất cá nhân, để vẫn hoàn thành được khi đang gõ dở ở ngữ cảnh mới.
+ *
+ * Mỗi lần gõ phím đều gọi [next], nên phần chung của ngữ cảnh (khoảng hàng trong gói, các âm tiết
+ * theo sau trong mô hình cá nhân) tính một lần, ứng viên giới hạn vài chục và lọc theo tiền tố trước
+ * khi chấm điểm.
  *
  * Có thêm bảng cụm từ cố định để ưu tiên hoàn thành từ ghép.
  */
@@ -29,43 +37,58 @@ class Predictor(
      */
     fun next(context: List<String>, prefix: String = "", max: Int = 3): List<String> {
         val ctx = context.takeLast(2).map { it.lowercase() }
-        val b = base
+        val typed = prefix.lowercase()
+        val key = stripTones(typed)
+        val scorer = base?.scorer(ctx)
+        val tri = if (ctx.size >= 2) personal.trigram(ctx[0], ctx[1]) else null
+        val bi = ctx.lastOrNull()?.let { personal.bigram(it) }
+        val phraseList = ctx.lastOrNull()?.let { phrases[it] }.orEmpty()
+
         val candidates = LinkedHashSet<String>()
-        if (b != null) b.predict(ctx, CANDIDATES).forEach { candidates += it.text }
-        if (ctx.size >= 2) candidates += personal.trigramFollowers(ctx[0], ctx[1]).keys
-        ctx.lastOrNull()?.let { candidates += personal.bigramFollowers(it).keys }
-        if (b == null || ctx.isEmpty()) candidates += personal.topUnigrams(CANDIDATES)
+        // Đang gõ dở thì lấy rộng hơn từ gói: ứng viên theo ngữ cảnh chưa chắc khớp tiền tố.
+        scorer?.let { candidates += it.candidates(if (key.isEmpty()) BASE_CANDIDATES else BASE_CANDIDATES_TYPING) }
+        tri?.let { candidates += it.top(PERSONAL_CANDIDATES) }
+        bi?.let { candidates += it.top(PERSONAL_CANDIDATES) }
+        when {
+            scorer == null -> candidates += personal.topUnigrams(PERSONAL_CANDIDATES)
+            ctx.isEmpty() -> candidates += personal.topFrequent(PERSONAL_CANDIDATES)
+        }
+        if (key.isNotEmpty()) candidates += personal.wordsWithPrefix(key, PERSONAL_CANDIDATES)
+        candidates += phraseList
 
-        val scores = HashMap<String, Double>(candidates.size * 2)
-        for (w in candidates) scores[w] = probability(ctx, w)
-        // Cụm từ cố định: âm tiết trước gợi ý âm tiết sau với điểm cao
-        ctx.lastOrNull()?.let { prev -> phrases[prev]?.forEachIndexed { i, s -> scores.merge(s, 0.5 - i * 0.05, Double::plus) } }
-
-        val p = stripTones(prefix.lowercase())
-        return scores.entries
-            .asSequence()
-            .filter { it.value > 0.0 }
-            .filter { p.isEmpty() || stripTones(it.key).startsWith(p) }
-            .filter { it.key != prefix.lowercase() }
-            .sortedByDescending { it.value }
-            .map { it.key }
-            .take(max)
-            .toList()
+        val scores = ArrayList<Pair<String, Double>>(candidates.size)
+        for (w in candidates) {
+            if (w == typed || (key.isNotEmpty() && !stripTones(w).startsWith(key))) continue
+            var p = mixed(w, ctx.isEmpty(), scorer, bi, tri)
+            // Cụm từ cố định: âm tiết trước gợi ý âm tiết sau với điểm cao
+            val phrase = phraseList.indexOf(w)
+            if (phrase >= 0) p += 0.5 - phrase * 0.05
+            if (p > 0.0) scores += w to p
+        }
+        return scores.sortedByDescending { it.second }.take(max).map { it.first }
     }
 
-    /** Xác suất đã trộn của [w] sau [ctx] (tối đa 2 âm tiết, chữ thường). */
-    internal fun probability(ctx: List<String>, w: String): Double {
-        val b = base
-        // P₀: mô hình gốc theo ngữ cảnh; không có thì tần suất cá nhân bất kể ngữ cảnh.
-        var p = if (b != null) b.probability(ctx, w) else unigramMle(w)
-        if (ctx.isEmpty()) {
-            // Đầu câu: không có ngữ cảnh nào để lệch, nên trộn cả tần suất cá nhân.
-            if (b != null) p = wittenBell(personal.unigramCount(w), personal.size.toInt(), personal.unigramTypes, p)
+    /** Xác suất đã trộn của [w], với phần chung của ngữ cảnh đã tính sẵn. */
+    private fun mixed(
+        w: String,
+        sentenceStart: Boolean,
+        scorer: NgramModel.Scorer?,
+        bi: PersonalModel.Followers?,
+        tri: PersonalModel.Followers?,
+    ): Double {
+        var p = if (scorer != null) scorer.probability(w) else unigramMle(w)
+        if (scorer != null && p == 0.0) p = OOV_FLOOR * unigramMle(w)
+        if (sentenceStart) {
+            if (scorer != null) {
+                // Đầu câu: chỉ những âm tiết gõ đủ nhiều lần mới được trộn tần suất cá nhân.
+                val (total, types) = personal.frequent
+                val n = personal.unigramCount(w).takeIf { it >= PersonalModel.FREQUENT } ?: 0
+                p = wittenBell(n.toLong(), total, types, p)
+            }
             return p
         }
-        val c1 = ctx.last()
-        p = wittenBell(personal.bigramFollowers(c1), w, p)
-        if (ctx.size >= 2) p = wittenBell(personal.trigramFollowers(ctx[0], c1), w, p)
+        if (bi != null) p = wittenBell(bi.count(w).toLong(), bi.total.toLong(), bi.types, p)
+        if (tri != null) p = wittenBell(tri.count(w).toLong(), tri.total.toLong(), tri.types, p)
         return p
     }
 
@@ -74,10 +97,7 @@ class Predictor(
         return if (total == 0L) 0.0 else personal.unigramCount(w).toDouble() / total
     }
 
-    private fun wittenBell(followers: Map<String, Int>, w: String, backoff: Double): Double =
-        wittenBell(followers[w] ?: 0, followers.values.sum(), followers.size, backoff)
-
-    private fun wittenBell(count: Int, total: Int, types: Int, backoff: Double): Double =
+    private fun wittenBell(count: Long, total: Long, types: Int, backoff: Double): Double =
         if (total <= 0) backoff else (count + types * backoff) / (total + types)
 
     private fun stripTones(s: String): String {
@@ -87,7 +107,11 @@ class Predictor(
     }
 
     private companion object {
-        const val CANDIDATES = 20
+        const val BASE_CANDIDATES = 20
+        const val BASE_CANDIDATES_TYPING = 50
+        const val PERSONAL_CANDIDATES = 20
+        /** P₀ cho âm tiết ngoài từ vựng của gói = hệ số này × tần suất cá nhân. */
+        const val OOV_FLOOR = 0.1
     }
 }
 

@@ -62,8 +62,13 @@ class Model:
         if c1 is not None and c2 is not None:
             lo, hi = bisect_left(self.tkey, (c2, c1)), bisect_right(self.tkey, (c2, c1))
             for i in range(lo, hi):
-                cands.add(self.tw3[i]); tri[self.tw3[i]] = self.p(self.tq[i])
-        cands.update(self.top)
+                tri[self.tw3[i]] = self.p(self.tq[i])
+            for i in sorted(range(lo, hi), key=lambda i: self.tq[i])[:50]:
+                cands.add(self.tw3[i])
+        # Như BinaryNgramModel.kt: unigram phổ biến chỉ bù khi ứng viên theo ngữ cảnh còn ít. Điểm ở đó
+        # còn được chia theo các bậc có dữ liệu, nhưng phép chia đó không đổi thứ hạng trong một ngữ cảnh.
+        if len(cands) < 2 * k:
+            cands.update(self.top)
         scored = [(0.1 * self.p(self.uni[w]) + 0.3 * bi.get(w, 0) + 0.6 * tri.get(w, 0), w) for w in cands]
         scored.sort(reverse=True)
         return [self.vocab[w] for _, w in scored[:k]]
