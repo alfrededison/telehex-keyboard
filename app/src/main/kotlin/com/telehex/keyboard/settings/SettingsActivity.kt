@@ -133,7 +133,7 @@ class SettingsActivity : Activity() {
             check(buttons[prefs.skinTone.coerceIn(0, 5)].id)
             setOnCheckedChangeListener { _, id -> prefs.skinTone = buttons.indexOfFirst { it.id == id } }
         })
-        col.add(switch("Lưu clipboard history (mục thường hết hạn sau 1 giờ, mục ghim giữ lâu)", prefs.clipboardHistory) { prefs.clipboardHistory = it })
+        col.add(switch("Lưu clipboard history (giữ phím ⚙ để mở; mục thường hết hạn sau 1 giờ, mục ghim giữ lâu)", prefs.clipboardHistory) { prefs.clipboardHistory = it })
 
         col.add(header("Gõ tắt"))
         col.add(TextView(this).apply {
