@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.2.1 — unreleased
+
 ## 0.2.0 — 2026-11-06
 
 - Tự viết hoa chữ đầu câu (tắt được trong Cài đặt). Nhãn phím hiện hoa/thường theo chữ sắp gõ; vuốt lên đảo hoa/thường như Gboard. Chữ hoa tự thêm không bị học thành "hay viết hoa"; gõ tắt ở đầu câu cũng viết hoa.
