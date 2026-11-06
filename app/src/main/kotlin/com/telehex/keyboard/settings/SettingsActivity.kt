@@ -67,21 +67,6 @@ class SettingsActivity : Activity() {
         sec.addButton("1. Bật TeleHex trong Cài đặt hệ thống") { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }
         sec.addButton("2. Chọn TeleHex làm bàn phím hiện tại") { (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker() }
 
-        sec = section("Telex")
-        sec.add(label("Kiểu đặt dấu"))
-        sec.add(RadioGroup(this).apply {
-            orientation = RadioGroup.HORIZONTAL
-            isSaveEnabled = false
-            val old = RadioButton(context).apply { text = "Cũ (hòa, thúy)"; id = View.generateViewId() }
-            val new = RadioButton(context).apply { text = "Mới (hoà, thuý)"; id = View.generateViewId() }
-            addView(old); addView(new)
-            check(if (prefs.newToneStyle) new.id else old.id)
-            setOnCheckedChangeListener { _, id -> prefs.newToneStyle = id == new.id }
-        })
-        sec.add(switch("L cũng là dấu huyền (lal → là)", prefs.lAsGrave) { prefs.lAsGrave = it })
-        sec.add(switch("Tự viết hoa chữ đầu câu", prefs.autoCapitalize) { prefs.autoCapitalize = it })
-        sec.add(switch("Tự khôi phục từ tiếng Anh (windows không thành ưindows)", prefs.englishFallback) { prefs.englishFallback = it })
-
         sec = section("Bàn phím")
         // Đổi nhanh profile (bố cục đủ ba lớp chữ / vuốt xuống / 123); nhãn cập nhật ở onResume
         profileButton = sec.addButton("") {
@@ -147,6 +132,21 @@ class SettingsActivity : Activity() {
             setOnCheckedChangeListener { _, id -> prefs.skinTone = buttons.indexOfFirst { it.id == id } }
         })
         sec.add(switch("Lưu clipboard history (giữ phím ⚙ để mở; mục thường hết hạn sau 1 giờ, mục ghim giữ lâu)", prefs.clipboardHistory) { prefs.clipboardHistory = it })
+
+        sec = section("Telex")
+        sec.add(label("Kiểu đặt dấu"))
+        sec.add(RadioGroup(this).apply {
+            orientation = RadioGroup.HORIZONTAL
+            isSaveEnabled = false
+            val old = RadioButton(context).apply { text = "Cũ (hòa, thúy)"; id = View.generateViewId() }
+            val new = RadioButton(context).apply { text = "Mới (hoà, thuý)"; id = View.generateViewId() }
+            addView(old); addView(new)
+            check(if (prefs.newToneStyle) new.id else old.id)
+            setOnCheckedChangeListener { _, id -> prefs.newToneStyle = id == new.id }
+        })
+        sec.add(switch("L cũng là dấu huyền (lal → là)", prefs.lAsGrave) { prefs.lAsGrave = it })
+        sec.add(switch("Tự viết hoa chữ đầu câu", prefs.autoCapitalize) { prefs.autoCapitalize = it })
+        sec.add(switch("Tự khôi phục từ tiếng Anh (windows không thành ưindows)", prefs.englishFallback) { prefs.englishFallback = it })
 
         sec = section("Gõ tắt")
         sec.add(TextView(this).apply {
