@@ -66,14 +66,13 @@ data class Theme(
             isDark = true,
         )
 
-        /** "system" | "light" | "dark" */
-        fun resolve(context: Context, pref: String): Theme = when (pref) {
-            "light" -> LIGHT
-            "dark" -> DARK
-            else -> {
-                val night = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-                if (night == Configuration.UI_MODE_NIGHT_YES) DARK else LIGHT
-            }
+        /** [mode]: "system" | "light" | "dark" */
+        fun resolve(context: Context, mode: String): Theme = if (isDark(context, mode)) DARK else LIGHT
+
+        fun isDark(context: Context, mode: String): Boolean = when (mode) {
+            "light" -> false
+            "dark" -> true
+            else -> context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
         }
     }
 }

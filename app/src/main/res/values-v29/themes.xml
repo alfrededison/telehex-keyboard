@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.TeleHex" parent="@android:style/Theme.DeviceDefault.DayNight" />
+    <style name="Theme.TeleHex" parent="@android:style/Theme.DeviceDefault.DayNight">
+        <item name="android:windowDisablePreview">true</item>
+    </style>
 </resources>

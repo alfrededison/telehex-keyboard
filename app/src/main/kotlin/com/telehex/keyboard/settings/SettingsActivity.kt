@@ -16,6 +16,7 @@ import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
+import com.telehex.keyboard.R
 import com.telehex.keyboard.data.Prefs
 
 /** Màn hình Cài đặt (View thuần, không thêm dependency). */
@@ -23,13 +24,15 @@ class SettingsActivity : Activity() {
     private lateinit var prefs: Prefs
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         prefs = Prefs(this)
+        SettingsUi.applyTheme(this, prefs)
+        super.onCreate(savedInstanceState)
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(16), dp(20), dp(32))
         }
-        setContentView(ScrollView(this).apply { addView(col) })
+        // Có id để giữ vị trí cuộn khi recreate() sau khi đổi giao diện
+        setContentView(ScrollView(this).apply { id = R.id.settings_scroll; addView(col) })
 
         col.add(TextView(this).apply {
             text = "TeleHex không xin quyền INTERNET. Không gửi dữ liệu gõ đi đâu; mọi xử lý nằm trên máy."
@@ -82,7 +85,10 @@ class SettingsActivity : Activity() {
             val modes = listOf("system" to "Theo hệ thống", "light" to "Sáng", "dark" to "Tối")
             val buttons = modes.map { (_, label) -> RadioButton(context).apply { text = label; id = View.generateViewId() }.also { addView(it) } }
             check(buttons[modes.indexOfFirst { it.first == prefs.themeMode }.coerceAtLeast(0)].id)
-            setOnCheckedChangeListener { _, id -> prefs.themeMode = modes[buttons.indexOfFirst { it.id == id }].first }
+            setOnCheckedChangeListener { _, id ->
+                prefs.themeMode = modes[buttons.indexOfFirst { it.id == id }].first
+                recreate() // Cài đặt đổi sáng/tối theo bàn phím
+            }
         })
         val heightLabel = label("Khoảng trống dưới bàn phím: ${prefs.extraBottomDp} dp")
         col.add(heightLabel)

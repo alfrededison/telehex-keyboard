@@ -30,8 +30,9 @@ class CustomKeysActivity : Activity() {
     private val symbols = ("1 2 3 4 5 6 7 8 9 0 @ # & * - + = ( ) _ $ % \" ' : ; / \\ ! ? ~ ^ | < > [ ] { } € ₫ £ ¥ … • ° × ÷").split(' ')
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         prefs = Prefs(this)
+        SettingsUi.applyTheme(this, prefs)
+        super.onCreate(savedInstanceState)
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12), dp(12), dp(12), dp(24)) }
         setContentView(ScrollView(this).apply { addView(col) })
         col.add(TextView(this).apply {

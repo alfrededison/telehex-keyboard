@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.TeleHex" parent="@android:style/Theme.DeviceDefault.Light" />
+    <!-- Theme của manifest chỉ dùng cho cửa sổ chờ lúc mở app; bỏ nó để không loé màu sai khi Giao diện khác hệ thống. -->
+    <style name="Theme.TeleHex" parent="@android:style/Theme.DeviceDefault.Light">
+        <item name="android:windowDisablePreview">true</item>
+    </style>
+
+    <!-- Màn hình Cài đặt theo tuỳ chọn Giao diện của bàn phím (SettingsUi.applyTheme), không chỉ theo hệ thống. -->
+    <style name="Theme.TeleHex.Light" parent="@android:style/Theme.DeviceDefault.Light" />
+    <style name="Theme.TeleHex.Dark" parent="@android:style/Theme.DeviceDefault" />
 </resources>

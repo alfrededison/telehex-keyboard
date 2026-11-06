@@ -92,8 +92,9 @@ class LayoutEditorActivity : Activity() {
     private lateinit var status: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         prefs = Prefs(this)
+        SettingsUi.applyTheme(this, prefs)
+        super.onCreate(savedInstanceState)
         // Nút ở trên, lưới phím ở đáy màn hình đúng chỗ bàn phím thật sẽ hiện
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12), dp(12), dp(12), dp(12)) }
         val root = LinearLayout(this).apply {
