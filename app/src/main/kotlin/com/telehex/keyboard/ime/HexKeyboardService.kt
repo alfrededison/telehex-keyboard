@@ -48,7 +48,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private val recent = ArrayDeque<String>()
     private var noLearning = false
     private var personalDirty = false
-    private val savePersonal = Runnable { if (personalDirty) { personalDirty = false; predictions.savePersonal() } }
+    // Chỉ xoá cờ khi đã thật sự lên lịch ghi (đang nạp thì store tự ghi khi nạp xong)
+    private val savePersonal = Runnable { if (personalDirty && predictions.saveAsync()) personalDirty = false }
     private var touchOffsets: MutableMap<String, FloatArray> = HashMap()
     private var offsetsDirty = false
     private val saveOffsets = Runnable {
@@ -85,7 +86,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         engine = TelexEngine(prefs.telexConfig())
         spaceGestures = SpaceGestures(spaceHost)
         rebuildCorrector()
-        predictions = PredictionStore(this)
+        predictions = PredictionStore(this).also { it.loadAsync() }
         clipboardStore = ClipboardStore(this)
         clipboard().addPrimaryClipChangedListener(clipListener)
         touchOffsets = prefs.touchOffsets.mapValues { floatArrayOf(it.value[0] * density(), it.value[1] * density()) }.toMutableMap()
@@ -94,7 +95,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     override fun onDestroy() {
         prefs.unregisterListener(this)
         clipboard().removePrimaryClipChangedListener(clipListener)
-        savePersonal.run()
+        if (::keyboardView.isInitialized) keyboardView.removeCallbacks(savePersonal)
+        predictions.close(save = personalDirty)
         super.onDestroy()
     }
 
@@ -235,7 +237,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         if (raw.isEmpty() || !raw.all { it.isLetter() }) return
         val syllable = if (autoCapped) raw.replaceFirstChar { it.lowercaseChar() } else raw
         if (!incognito()) {
-            predictions.predictor.personal.learn(recent.toList(), syllable)
+            predictions.learn(recent.toList(), syllable)
             personalDirty = true
             keyboardView.removeCallbacks(savePersonal); keyboardView.postDelayed(savePersonal, 5000)
         }
@@ -264,8 +266,11 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             return
         }
         if (key == Prefs.KEY_MODELS_VERSION) {
+            // Dữ liệu trên đĩa vừa đổi (khôi phục, xoá, nạp gói): bỏ store cũ mà không ghi đè, nạp lại.
             personalDirty = false
-            predictions = PredictionStore(this)
+            if (::keyboardView.isInitialized) keyboardView.removeCallbacks(savePersonal)
+            predictions.discard()
+            predictions = PredictionStore(this).also { it.loadAsync() }
             clipboardStore = ClipboardStore(this)
             return
         }
@@ -577,7 +582,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     /** Giữ một gợi ý học được để xoá khỏi từ điển cá nhân. */
     private fun forget(text: String) {
-        predictions.predictor.personal.forget(text)
+        predictions.forget(text)
         personalDirty = true
         savePersonal.run()
         updateBar()

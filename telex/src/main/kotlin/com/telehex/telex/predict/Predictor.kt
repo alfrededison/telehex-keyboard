@@ -28,7 +28,7 @@ import com.telehex.telex.ToneRules
  */
 class Predictor(
     var base: NgramModel? = null,
-    val personal: PersonalModel = PersonalModel(),
+    var personal: PersonalModel = PersonalModel(),
     private val phrases: Map<String, List<String>> = Phrases.TABLE,
 ) {
     /**
