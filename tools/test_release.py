@@ -45,9 +45,9 @@ class ReleaseTest(unittest.TestCase):
         subprocess.run(["git", "clone", "-q", str(self.origin), str(other)], check=True)
         return other
 
-    def assert_untouched(self, start):
+    def assert_untouched(self, start, tag="v0.1.0"):
         self.assertEqual(start, self.git("rev-parse", "HEAD"))
-        self.assertEqual("", self.git("tag", "-l", "v0.1.0"))
+        self.assertEqual("", self.git("tag", "-l", tag))
         self.assertEqual("", self.git("status", "--porcelain"))
 
     def release(self, *args):
@@ -101,11 +101,17 @@ class ReleaseTest(unittest.TestCase):
         self.assertEqual(("0.2.1-dev.1", 201001), self.version(release=False))
         self.assertIn("git push --atomic origin main v0.2.0", result.stdout)
 
+    def add_change(self):
+        log = self.repo / "CHANGELOG.md"
+        log.write_text(log.read_text().replace(" — unreleased\n", " — unreleased\n\n- More.\n", 1))
+        self.git("commit", "-q", "-am", "More")
+
     def test_patch_and_major(self):
         self.assertEqual(0, self.release("patch").returncode)  # 0.1.0 -> v0.1.1
         self.assertNotEqual("", self.git("tag", "-l", "v0.1.1"))
         self.assertEqual(("0.1.2-dev.1", 102001), self.version(release=False))
-        self.assertEqual(0, self.release("major").returncode)  # needs "## 0.1.2 — unreleased", added above
+        self.add_change()  # into "## 0.1.2 — unreleased", opened above
+        self.assertEqual(0, self.release("major").returncode)
         self.assertNotEqual("", self.git("tag", "-l", "v1.0.0"))
         self.assertEqual(("1.0.1-dev.1", 10001001), self.version(release=False))
 
@@ -197,19 +203,48 @@ class ReleaseTest(unittest.TestCase):
         self.assertIn("# Changelog", result.stderr)
         self.assert_untouched(start)
 
-    def test_failure_after_tagging_rolls_back_and_can_be_rerun(self):
+    def rolls_back_and_can_be_rerun(self, args, tag, after):
         start = self.git("rev-parse", "HEAD")
         hook = self.repo / ".git/hooks/commit-msg"
         hook.write_text('#!/bin/sh\ngrep -q "^Start " "$1" && exit 1\nexit 0\n')
         hook.chmod(0o755)
-        result = self.release()
+        result = self.release(*args)
         self.assertNotEqual(0, result.returncode)
         self.assertIn("resetting", result.stderr)
-        self.assert_untouched(start)
+        self.assert_untouched(start, tag)
+        self.assertIn('val appVersion = "0.1.0"', (self.repo / "app/build.gradle.kts").read_text())
         hook.unlink()
-        result = self.release()
+        result = self.release(*args)
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual(("0.1.1-dev.1", 101001), self.version(release=False))
+        self.assertNotEqual("", self.git("tag", "-l", tag))
+        self.assertEqual(after, self.version(release=False))
+
+    def test_failure_after_tagging_rolls_back_and_can_be_rerun(self):
+        self.rolls_back_and_can_be_rerun((), "v0.1.0", ("0.1.1-dev.1", 101001))
+
+    def test_failure_after_a_bumped_release_rolls_back_the_bump_too(self):
+        self.rolls_back_and_can_be_rerun(("minor",), "v0.2.0", ("0.2.1-dev.1", 201001))
+
+    def test_running_twice_does_not_tag_an_empty_release(self):
+        self.assertEqual(0, self.release().returncode)
+        start = self.git("rev-parse", "HEAD")
+        result = self.release()
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("nothing to release", result.stderr)
+        self.assert_untouched(start, "v0.1.1")
+        self.add_change()
+        self.assertEqual(0, self.release().returncode)  # once a change is listed, it releases
+
+    def test_refuses_a_section_already_named_after_the_release_or_next_version(self):
+        for old in ("0.2.0", "0.2.1"):
+            (self.repo / "CHANGELOG.md").write_text(
+                "# Changelog\n\n## 0.1.0 — unreleased\n\n- First.\n\n## %s — 2026-01-01\n\n- Old.\n" % old)
+            self.git("commit", "-q", "-am", "Old " + old)
+            start = self.git("rev-parse", "HEAD")
+            result = self.release("minor")
+            self.assertNotEqual(0, result.returncode, old)
+            self.assertIn("already has a '## %s' section" % old, result.stderr)
+            self.assert_untouched(start, "v0.2.0")
 
 
 if __name__ == "__main__":

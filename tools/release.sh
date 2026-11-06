@@ -89,8 +89,9 @@ fi
 
 TODAY="${RELEASE_DATE:-$(date +%Y-%m-%d)}"
 
-# Both file edits, checked up front: exactly one unreleased section, the changelog header, the
-# appVersion line. "check" validates only; "release" and "bump" write.
+# Both file edits, checked up front: the changelog header, exactly one unreleased section that lists
+# changes, no section already named after the release or the next version, the appVersion line.
+# "check" validates only; "release" and "bump" write.
 edit() {
   python3 - "$1" "$GRADLE" "$CHANGELOG" "$CURRENT" "$TARGET" "$NEXT" "$TODAY" <<'PY'
 import re, sys
@@ -107,6 +108,17 @@ if mode == "check":
         problems.append("%s must start with '# Changelog' and a blank line" % changelog)
     if log.count(section) != 1:
         problems.append("%s needs exactly one '%s' section" % (changelog, section))
+    else:
+        # Running the script again right after a release would otherwise tag an empty release.
+        body = log[log.index(section) + len(section):].split("\n## ", 1)[0]
+        if not body.strip():
+            problems.append("%s: '%s' lists no changes: nothing to release" % (changelog, section))
+    def headings(version):
+        return len(re.findall(r'^## %s(?= |$)' % re.escape(version), log, re.M))
+    if headings(target) > (1 if target == current else 0):
+        problems.append("%s already has a '## %s' section" % (changelog, target))
+    if headings(nxt):
+        problems.append("%s already has a '## %s' section" % (changelog, nxt))
     if len(line(current).findall(build)) != 1:
         problems.append("%s needs exactly one 'val appVersion = \"%s\"' line" % (gradle, current))
     if problems:
