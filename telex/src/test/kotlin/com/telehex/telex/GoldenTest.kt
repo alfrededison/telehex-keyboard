@@ -47,6 +47,19 @@ class GoldenTest {
     }
 
     @Test
+    fun candidatesSkipTonesAStopFinalCannotTake() {
+        val e = TelexEngine()
+        for (k in "cach") e.press(k)
+        assertEquals(listOf("cách", "cạch", "cach"), e.candidates().map { it.text })
+        e.reset()
+        for (k in "tap") e.press(k)
+        assertEquals(listOf("táp", "tạp", "tap"), e.candidates().map { it.text })
+        e.reset()
+        for (k in "ca") e.press(k) // còn gõ tiếp được (cam, can…) nên giữ đủ 6 dấu
+        assertEquals(6, e.candidates().size)
+    }
+
+    @Test
     fun backspaceKeepsToneWhileVowelRemains() {
         val e = TelexEngine()
         for (k in "tieengs") e.press(k)

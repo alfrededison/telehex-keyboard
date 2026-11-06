@@ -4,6 +4,7 @@
 
 - Bảng emoji, tìm emoji và gợi ý emoji chỉ hiện emoji mà font của máy vẽ được; emoji Unicode mới mà máy chưa hỗ trợ (hiện ô trống hoặc tách thành nhiều hình) được ẩn. Tông da không vẽ được thì chèn bản không tông.
 - Ô gõ tắt trong Cài đặt không tự viết hoa đầu dòng (trước đây lưu thành "Ko = không", gõ "ko" không khớp).
+- Thanh gợi ý chỉ hiện dấu mà âm tiết mang được: tận cùng p/t/c/ch chỉ có sắc, nặng ("cach" không còn ra "cảch"); gợi ý hoàn thành trùng biến thể dấu chỉ hiện một lần.
 - Chạm biến thể dấu trên thanh gợi ý thì chốt luôn âm tiết kèm khoảng trắng (trước đây chỉ đổi dấu). Gõ dấu câu ngay sau khi chọn gợi ý thì xoá khoảng trắng tự thêm.
 - Chọn ký tự vuốt xuống ngay trong chế độ Vuốt xuống của màn sắp xếp phím: chạm phím để chọn, kéo để đổi chỗ, bấm Lưu một lần cho cả hai; thoát khi còn thay đổi chưa lưu thì được hỏi Lưu / Bỏ thay đổi / Ở lại. Màn "Ký tự vuốt xuống" riêng bị bỏ; nút cùng tên trong Cài đặt mở thẳng chế độ này.
 - Gợi ý âm tiết đầu câu chỉ viết hoa khi ô nhập có tự viết hoa (theo tuỳ chọn và cờ của ô), như phím chữ; trước đây luôn viết hoa, kể cả ô gõ tắt hay khi tắt "Tự viết hoa". Gợi ý hoàn thành âm tiết đang gõ theo hoa/thường của phần đã gõ như biến thể dấu ("Yêu" → "Yếu", trước đây ra "yếu").

@@ -571,9 +571,12 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             candidateBar.showSuggestions(typed, fixes) { replaceComposing(it) }
         } else if (!engine.isEmpty) {
             val typed = engine.text()
-            val completions = if (prefs.predictions) predictions.predictor.next(recent.toList(), typed, 2).map { casedCompletion(it, typed) } else emptyList()
+            val variants = engine.candidates()
+            // Gợi ý hoàn thành trùng một biến thể dấu thì chỉ hiện một lần (ở biến thể dấu)
+            val completions = if (prefs.predictions) predictions.predictor.next(recent.toList(), typed, 2)
+                .map { casedCompletion(it, typed) }.filter { c -> variants.none { it.text == c } } else emptyList()
             val emoji = emojiFor(typed)
-            candidateBar.show(engine.candidates(), completions, emoji, onPickText = { replaceComposing(it) }, onPickEmoji = { commitSyllable(it) })
+            candidateBar.show(variants, completions, emoji, onPickText = { replaceComposing(it) }, onPickEmoji = { commitSyllable(it) })
         } else if (prefs.predictions && mode == Mode.ABC && telexEnabled && afterSpace()) {
             val next = predictions.predictor.next(recent.toList(), "", 3).map { casedPrediction(it) }
             val emoji = recent.lastOrNull()?.let { emojiFor(it) } ?: emptyList()

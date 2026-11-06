@@ -83,10 +83,15 @@ class TelexEngine(config: TelexConfig = TelexConfig()) {
         return sb.toString()
     }
 
-    /** 6 biến thể dấu cho thanh gợi ý; rỗng nếu chưa có nguyên âm hoặc đang ở chế độ phím gốc. */
+    /**
+     * Biến thể dấu cho thanh gợi ý (tối đa 6), chỉ những dấu âm tiết này mang được: tận cùng
+     * p/t/c/ch chỉ còn sắc, nặng, không dấu ("cach" → cách, cạch, cach; không có "cảch").
+     * Dấu đang chọn luôn được giữ. Rỗng nếu chưa có nguyên âm hoặc đang ở chế độ phím gốc.
+     */
     fun candidates(): List<Candidate> {
         if (isFallback() || !hasVowel()) return emptyList()
-        return Tone.CANDIDATE_ORDER.map { t ->
+        val base = baseString()
+        return Tone.CANDIDATE_ORDER.filter { t -> t == tone || SyllableValidator.couldBecomeValid(base, t) }.map { t ->
             Candidate(t, ToneRules.spell(chars, t, caps, config.newToneStyle), t == tone)
         }
     }
