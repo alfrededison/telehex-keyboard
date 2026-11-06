@@ -1,5 +1,6 @@
 package com.telehex.keyboard.settings
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
@@ -40,6 +41,7 @@ enum class EditLayer { LETTERS, SWIPE, SYMBOLS }
 
 /**
  * Editor vẽ đúng lưới thật; kéo một phím thả lên phím khác để đổi chỗ trong lớp đang chọn.
+ * Lớp vuốt xuống: chạm một phím (không kéo đi) để đổi ký tự của ô đó ([onTapSwipe]).
  * Lớp 123: giữ ngón trên phím 1/2 lúc đang kéo để sang trang kia; chạm 1/2 để xem trang kia.
  */
 class LayoutEditorView(context: Context) : KeyboardView(context) {
@@ -52,6 +54,8 @@ class LayoutEditorView(context: Context) : KeyboardView(context) {
     var layer: EditLayer = EditLayer.LETTERS
         set(value) { field = value; symbolPage = 1; rebuildKeys() }
     var onChanged: (() -> Unit)? = null
+    /** Chạm (không kéo) một phím ở lớp vuốt xuống: nhận phím và ô của nó. */
+    var onTapSwipe: ((Key, Int, Int) -> Unit)? = null
 
     private var symbolPage = 1
     private var dragging: Key? = null
@@ -70,6 +74,8 @@ class LayoutEditorView(context: Context) : KeyboardView(context) {
     fun setLetters(l: LayoutModel) { layout = l; reconcileLayers(); changed() }
 
     fun setSwipe(g: CellGrid) { swipe = g; reconcileLayers(); changed() }
+
+    fun setSwipeAt(r: Int, c: Int, value: String) = setSwipe(swipe.with(r, c, value))
 
     fun setSymbols(p: List<CellGrid>) { symbols = p; reconcileLayers(); changed() }
 
@@ -152,7 +158,10 @@ class LayoutEditorView(context: Context) : KeyboardView(context) {
                 if (event.actionMasked == MotionEvent.ACTION_UP) {
                     val to = keyAt(event.x, event.y)
                     if (from != null && fromCell != null) {
-                        if (movable(to)) drop(from, fromCell, to!!)
+                        if (layer == EditLayer.SWIPE && to != null && gridCell(to) == fromCell) {
+                            val (r, c) = to.cells.first()
+                            onTapSwipe?.invoke(to, r, c)
+                        } else if (movable(to)) drop(from, fromCell, to!!)
                     } else if (layer == EditLayer.SYMBOLS && to?.code == KeyCode.PAGE && downKey?.code == KeyCode.PAGE) {
                         togglePage()
                     }
@@ -228,11 +237,12 @@ class LayoutEditorActivity : Activity() {
             load(savedLayout, savedSwipe, savedSymbols)
         }
 
+        val startLayer = runCatching { EditLayer.valueOf(intent.getStringExtra(EXTRA_LAYER) ?: "") }.getOrDefault(EditLayer.LETTERS)
         val layers = listOf(EditLayer.LETTERS to "Chữ", EditLayer.SWIPE to "Vuốt xuống", EditLayer.SYMBOLS to "123")
         col.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
-            for ((i, pair) in layers.withIndex()) addView(RadioButton(context).apply {
-                id = View.generateViewId(); text = pair.second; isChecked = i == 0
+            for (pair in layers) addView(RadioButton(context).apply {
+                id = View.generateViewId(); text = pair.second; isChecked = pair.first == startLayer
                 setOnCheckedChangeListener { _, on -> if (on) showLayer(pair.first) }
             }, RadioGroup.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         })
@@ -274,15 +284,21 @@ class LayoutEditorActivity : Activity() {
 
         showPresets()
         editor.onChanged = ::onEditorChanged
+        editor.onTapSwipe = { key, r, c ->
+            // Ở lớp này nhãn phụ (sub) là chữ của phím
+            SwipeCharPicker.show(this, key.sub.ifEmpty { key.code }, editor.swipe[r, c], KeyLayers.DEFAULT_SWIPE[r, c]) { v ->
+                editor.setSwipeAt(r, c, v)
+            }
+        }
         onEditorChanged()
-        showLayer(EditLayer.LETTERS)
+        showLayer(startLayer)
     }
 
     private fun showLayer(l: EditLayer) {
         editor.layer = l
         help.text = when (l) {
             EditLayer.LETTERS -> "Kéo một phím thả lên phím khác để đổi chỗ. Phím cách và ↵ cố định. Ký tự vuốt xuống và lớp 123 đứng yên theo ô."
-            EditLayer.SWIPE -> "Chữ to là ký tự vuốt xuống, chữ nhỏ là phím. Kéo ký tự vuốt xuống sang phím khác để đổi chỗ."
+            EditLayer.SWIPE -> "Chữ to là ký tự vuốt xuống, chữ nhỏ là phím. Chạm một phím để chọn ký tự, ký hiệu, emoji hoặc đoạn văn bản ngắn (tối đa ${SwipeCharPicker.MAX_LEN} ký tự); kéo sang phím khác để đổi chỗ."
             EditLayer.SYMBOLS -> "Kéo ký tự thả lên ký tự khác để đổi chỗ. Đang kéo thì giữ ngón trên phím 1/2 để sang trang kia; chạm 1/2 để xem trang kia."
         }
         presetSection.visibility = if (l == EditLayer.LETTERS) View.VISIBLE else View.GONE
@@ -297,6 +313,53 @@ class LayoutEditorActivity : Activity() {
         saveButton.isEnabled = changed
         saveButton.alpha = if (changed) 1f else 0.4f
         markChecked(l)
+        guardBack(changed)
+    }
+
+    private fun hasUnsaved() = saveButton.isEnabled
+
+    /**
+     * Back đi qua OnBackInvokedDispatcher khi có predictive back (Android 16+ vì targetSdk 36); khi đó
+     * onBackPressed không được gọi. Chỉ đăng ký khi có thay đổi chưa lưu, để back thường vẫn có hiệu ứng.
+     */
+    private var backCallback: Any? = null
+
+    private fun guardBack(on: Boolean) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        val registered = backCallback as? android.window.OnBackInvokedCallback
+        if (on && registered == null) {
+            val cb = android.window.OnBackInvokedCallback { confirmDiscard() }
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, cb)
+            backCallback = cb
+        } else if (!on && registered != null) {
+            onBackInvokedDispatcher.unregisterOnBackInvokedCallback(registered)
+            backCallback = null
+        }
+    }
+
+    /**
+     * Back khi chưa có predictive back (Android ≤ 15): hệ thống vẫn gọi hàm này. Lint báo GestureBackNavigation
+     * cho mọi override, nhưng Android 16+ đã có [guardBack]; app không dùng AndroidX nên không có OnBackPressedDispatcher.
+     */
+    @SuppressLint("GestureBackNavigation")
+    @Deprecated("Chỉ cho Android ≤ 15; Android 16+ dùng guardBack")
+    override fun onBackPressed() {
+        if (hasUnsaved()) confirmDiscard() else @Suppress("DEPRECATION") super.onBackPressed()
+    }
+
+    /** Mũi tên ← trên thanh tiêu đề. */
+    override fun onNavigateUp(): Boolean {
+        if (hasUnsaved()) { confirmDiscard(); return true }
+        return super.onNavigateUp()
+    }
+
+    private fun confirmDiscard() {
+        AlertDialog.Builder(this)
+            .setMessage("Bố cục có thay đổi chưa lưu.")
+            .setPositiveButton("Lưu") { _, _ -> saveButton.performClick() }
+            .setNegativeButton("Bỏ thay đổi") { _, _ -> finish() }
+            .setNeutralButton("Ở lại", null)
+            .show()
     }
 
     private fun askPresetName() {
@@ -354,4 +417,9 @@ class LayoutEditorActivity : Activity() {
             })
             setPadding(0, dp(4), 0, dp(4))
         }
+
+    companion object {
+        /** Tên [EditLayer] mở sẵn khi vào màn. */
+        const val EXTRA_LAYER = "layer"
+    }
 }

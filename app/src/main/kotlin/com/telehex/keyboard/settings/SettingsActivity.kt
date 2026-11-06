@@ -76,7 +76,9 @@ class SettingsActivity : Activity() {
 
         col.add(header("Bàn phím"))
         col.addButton("Sắp xếp phím") { startActivity(Intent(context, LayoutEditorActivity::class.java)) }
-        col.addButton("Ký tự vuốt xuống") { startActivity(Intent(context, CustomKeysActivity::class.java)) }
+        col.addButton("Ký tự vuốt xuống") {
+            startActivity(Intent(context, LayoutEditorActivity::class.java).putExtra(LayoutEditorActivity.EXTRA_LAYER, EditLayer.SWIPE.name))
+        }
         col.add(label("Chế độ một tay (lưới thu còn ~80%, lục giác vẫn đều)"))
         col.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL

@@ -32,11 +32,6 @@
             android:exported="false"
             android:label="@string/title_layout_editor"
             android:parentActivityName=".settings.SettingsActivity" />
-        <activity
-            android:name=".settings.CustomKeysActivity"
-            android:exported="false"
-            android:label="@string/title_custom_keys"
-            android:parentActivityName=".settings.SettingsActivity" />
 
         <service
             android:name=".ime.HexKeyboardService"
