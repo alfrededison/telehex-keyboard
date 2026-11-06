@@ -6,6 +6,7 @@
 - Ô gõ tắt trong Cài đặt không tự viết hoa đầu dòng (trước đây lưu thành "Ko = không", gõ "ko" không khớp).
 - Chạm biến thể dấu trên thanh gợi ý thì chốt luôn âm tiết kèm khoảng trắng (trước đây chỉ đổi dấu). Gõ dấu câu ngay sau khi chọn gợi ý thì xoá khoảng trắng tự thêm.
 - Chọn ký tự vuốt xuống ngay trong chế độ Vuốt xuống của màn sắp xếp phím: chạm phím để chọn, kéo để đổi chỗ, bấm Lưu một lần cho cả hai; thoát khi còn thay đổi chưa lưu thì được hỏi Lưu / Bỏ thay đổi / Ở lại. Màn "Ký tự vuốt xuống" riêng bị bỏ; nút cùng tên trong Cài đặt mở thẳng chế độ này.
+- Gợi ý âm tiết đầu câu chỉ viết hoa khi ô nhập có tự viết hoa (theo tuỳ chọn và cờ của ô), như phím chữ; trước đây luôn viết hoa, kể cả ô gõ tắt hay khi tắt "Tự viết hoa". Gợi ý hoàn thành âm tiết đang gõ theo hoa/thường của phần đã gõ như biến thể dấu ("Yêu" → "Yếu", trước đây ra "yếu").
 
 ## 0.2.0 — 2026-11-06
 

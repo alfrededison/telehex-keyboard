@@ -257,8 +257,21 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         return t.isEmpty() || t.last() in ".!?\n"
     }
 
+    /** Đầu câu ở ô có tự viết hoa: gợi ý cũng viết hoa như chữ sắp gõ. */
+    private fun capsSentenceStart(): Boolean = capRequest() != 0 && atSentenceStart()
+
+    /**
+     * Gợi ý hoàn thành âm tiết đang gõ theo hoa/thường của phần đã gõ, như biến thể dấu:
+     * "Yêu" → "Yếu", "KH" → "KHÔNG". Gõ thường thì chỉ viết hoa tên riêng đã học.
+     */
+    private fun casedCompletion(s: String, typed: String): String = when {
+        typed.length > 1 && typed.none { it.isLowerCase() } -> s.uppercase()
+        typed.first().isUpperCase() || predictions.predictor.personal.usuallyCapitalized(s) -> s.replaceFirstChar { it.titlecase() }
+        else -> s
+    }
+
     private fun casedPrediction(s: String): String = when {
-        atSentenceStart() || predictions.predictor.personal.usuallyCapitalized(s) ->
+        capsSentenceStart() || predictions.predictor.personal.usuallyCapitalized(s) ->
             s.replaceFirstChar { it.titlecase() }
         else -> s
     }
@@ -558,7 +571,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             candidateBar.showSuggestions(typed, fixes) { replaceComposing(it) }
         } else if (!engine.isEmpty) {
             val typed = engine.text()
-            val completions = if (prefs.predictions) predictions.predictor.next(recent.toList(), typed, 2).map { casedPrediction(it) } else emptyList()
+            val completions = if (prefs.predictions) predictions.predictor.next(recent.toList(), typed, 2).map { casedCompletion(it, typed) } else emptyList()
             val emoji = emojiFor(typed)
             candidateBar.show(engine.candidates(), completions, emoji, onPickText = { replaceComposing(it) }, onPickEmoji = { commitSyllable(it) })
         } else if (prefs.predictions && mode == Mode.ABC && telexEnabled && afterSpace()) {
@@ -567,7 +580,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             if (next.isEmpty() && emoji.isEmpty()) showWordAtCursorSuggestions()
             else candidateBar.showPredictions(next, emoji, onPick = { pick ->
                 // Gợi ý được viết hoa vì đầu câu (không phải tên riêng đã học) thì học như chữ thường
-                val auto = atSentenceStart() && !predictions.predictor.personal.usuallyCapitalized(pick)
+                val auto = capsSentenceStart() && !predictions.predictor.personal.usuallyCapitalized(pick)
                 commitSyllable("$pick "); pushContext(pick, auto)
                 suggestionSpace = "$pick "
             }, onPickEmoji = { commitSyllable(it) }, onForget = { forget(it) })
@@ -701,24 +714,30 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
      * cố ý (username, tìm kiếm, mã), nên chỉ coi như viết hoa đầu câu khi là ô tin nhắn / nhiều dòng.
      */
     private fun autoCaps(): Boolean {
-        if (!prefs.autoCapitalize || !telexEnabled || emojiSearch || mode != Mode.ABC) return false
-        val info = currentInputEditorInfo ?: return false
-        if (info.privateImeOptions?.split(',')?.any { it.trim() == NO_AUTO_CAP } == true) return false
+        var req = capRequest()
+        // Đang giữa âm tiết: chỉ CAP_CHARACTERS mới viết hoa tiếp
+        if (!engine.isEmpty) req = req and InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS
+        if (req == 0) return false
+        return (currentInputConnection?.getCursorCapsMode(req) ?: 0) != 0
+    }
+
+    /** Cờ CAP_* áp cho ô nhập hiện tại (0 = không tự viết hoa). */
+    private fun capRequest(): Int {
+        if (!prefs.autoCapitalize || !telexEnabled || emojiSearch || mode != Mode.ABC) return 0
+        val info = currentInputEditorInfo ?: return 0
+        if (info.privateImeOptions?.split(',')?.any { it.trim() == NO_AUTO_CAP } == true) return 0
         val type = info.inputType
-        if (type and InputType.TYPE_MASK_CLASS != InputType.TYPE_CLASS_TEXT) return false
+        if (type and InputType.TYPE_MASK_CLASS != InputType.TYPE_CLASS_TEXT) return 0
         val capFlags = InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS or InputType.TYPE_TEXT_FLAG_CAP_WORDS or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         var req = type and capFlags
         if (req == 0) {
             val v = type and InputType.TYPE_MASK_VARIATION
             val message = v == InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE || v == InputType.TYPE_TEXT_VARIATION_LONG_MESSAGE ||
                 (v == InputType.TYPE_TEXT_VARIATION_NORMAL && type and InputType.TYPE_TEXT_FLAG_MULTI_LINE != 0)
-            if (!message) return false
+            if (!message) return 0
             req = InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         }
-        // Đang giữa âm tiết: chỉ CAP_CHARACTERS mới viết hoa tiếp
-        if (!engine.isEmpty) req = req and InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS
-        if (req == 0) return false
-        return (currentInputConnection?.getCursorCapsMode(req) ?: 0) != 0
+        return req
     }
 
     private fun deleteBackward() {
