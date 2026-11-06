@@ -88,14 +88,15 @@ Yêu cầu JDK 17+, Android SDK 36.
 
 - **Phiên bản chỉ viết ở một nơi**: dòng `appVersion` trong `app/build.gradle.kts`. `tools/version.sh` tính versionCode cố định từ X.Y.Z: bản release là `X·10^7 + Y·10^5 + Z·10^3 + 999`, bản dev `X.Y.Z-dev.N` là `… + N` với N đếm commit từ lần đổi `appVersion`. Build từ tag ở đâu cũng ra cùng số (cần cho F-Droid).
 - **Bản dev**: mỗi push lên `main` có đổi mã thay prerelease `dev` trên GitHub bằng APK `TeleHex-X.Y.Z-dev.N.apk` + `.sha256`, ký bằng key dự án nên các bản dev cài đè được lên nhau. Bản dev chỉ cài đè được lên bản release khi `appVersion` đã được tăng sau release (versionCode của `X.Y.Z-dev.N` luôn thấp hơn của `X.Y.Z`); workflow dev dừng nếu tag `v<appVersion>` đã tồn tại để nhắc việc này. Push chỉ sửa tài liệu (`*.md`, `prototype/`, LICENSE, NOTICE) không chạy gì. Commit "Start … development" ngay sau tag release chỉ đổi số phiên bản nên không build, mà xoá prerelease `dev` cũ (bản đó thấp hơn bản release); commit mã tiếp theo sẽ phát hành lại `dev`. Workflow `ci` chỉ chạy cho pull request, vì trên `main` workflow dev đã chạy đủ test và lint.
-- **Bản release**: ghi thay đổi vào mục `## X.Y.Z — unreleased` của CHANGELOG.md, rồi chạy
+- **Bản release**: ghi thay đổi vào mục `## <appVersion> — unreleased` của CHANGELOG.md, rồi chạy
 
   ```
-  tools/release.sh            # hoặc: tools/release.sh minor | major
+  tools/release.sh            # không tham số: phát hành đúng appVersion hiện tại
+  tools/release.sh minor      # có tham số: bump appVersion trước rồi mới phát hành
   git push --atomic origin main vX.Y.Z
   ```
 
-  Script đóng ngày cho mục CHANGELOG, commit "Release X.Y.Z", gắn tag `vX.Y.Z`, rồi tạo ngay commit "Start X.Y.(Z+1) development" tăng `appVersion` và mở mục CHANGELOG mới. Trước khi ghi gì, script fetch `origin` và dừng nếu `main` đang tụt sau GitHub hoặc tag đã có trên GitHub; nếu lỗi giữa chừng (hook, GPG) thì tự quay về commit ban đầu và xoá tag để chạy lại được. Script không tự push; `--atomic` đảm bảo tag và `main` cùng lên hoặc cùng không. Push tag thì workflow chạy test, build, kiểm tra chứng chỉ, rồi tạo **release nháp** kèm APK + `.sha256` để bạn đọc lại và bấm Publish; push `main` thì prerelease `dev` cũ bị xoá, và commit mã tiếp theo phát hành `X.Y.(Z+1)-dev.N`, cao hơn bản release.
+  **Không tham số** thì phát hành đúng `appVersion` hiện tại. **Thêm tham số để bump** `appVersion` trước khi tag; với `appVersion` 0.1.1: `patch` → 0.1.2 (bỏ qua 0.1.1), `minor` → 0.2.0, `major` → 1.0.0. Khi bump, mục `unreleased` của CHANGELOG cũng đổi sang số mới. `tools/release.sh -h` in hướng dẫn này. Script đóng ngày cho mục CHANGELOG, commit "Release X.Y.Z", gắn tag `vX.Y.Z`, rồi tạo ngay commit "Start X.Y.(Z+1) development" tăng `appVersion` và mở mục CHANGELOG mới. Trước khi ghi gì, script fetch `origin` và dừng nếu `main` đang tụt sau GitHub hoặc tag đã có trên GitHub; nếu lỗi giữa chừng (hook, GPG) thì tự quay về commit ban đầu và xoá tag để chạy lại được. Script không tự push; `--atomic` đảm bảo tag và `main` cùng lên hoặc cùng không. Push tag thì workflow chạy test, build, kiểm tra chứng chỉ, rồi tạo **release nháp** kèm APK + `.sha256` để bạn đọc lại và bấm Publish; push `main` thì prerelease `dev` cũ bị xoá, và commit mã tiếp theo phát hành `X.Y.(Z+1)-dev.N`, cao hơn bản release.
 - **Ghim chứng chỉ**: `signing/release-cert.sha256` là SHA-256 của chứng chỉ ký. Bản release và bản dev bị chặn nếu APK không ký đúng key này, vì Android không cho cài đè một APK ký bằng key khác.
 - **Secrets**: `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. Keystore và mật khẩu nằm trong `.signing/` (không commit); `python3 .signing/upload-secrets.py` đẩy chúng lên GitHub Secrets bằng `gh`.
 

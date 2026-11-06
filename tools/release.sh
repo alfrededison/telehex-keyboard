@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
-# Cuts release X.Y.Z (the current appVersion) and starts the next version in one go:
+# Cuts release X.Y.Z and starts the next version in one go:
 #
-#   tools/release.sh [patch|minor|major]      (default: patch)
+#   tools/release.sh                    no argument: X.Y.Z is the current appVersion, unchanged
+#   tools/release.sh patch|minor|major  bump appVersion first; with appVersion 0.1.1:
+#                                       patch 0.1.2 (0.1.1 is never released), minor 0.2.0, major 1.0.0
+#   tools/release.sh -h                 print this usage
 #
-#   1. CHANGELOG.md "## X.Y.Z — unreleased" becomes "## X.Y.Z — YYYY-MM-DD"; commit "Release X.Y.Z".
+#   1. appVersion becomes X.Y.Z and CHANGELOG.md "## <appVersion> — unreleased" becomes
+#      "## X.Y.Z — YYYY-MM-DD"; commit "Release X.Y.Z".
 #   2. Tag vX.Y.Z on that commit.
-#   3. Bump appVersion to the next version, open "## <next> — unreleased" in CHANGELOG.md;
-#      commit "Start <next> development".
+#   3. Bump appVersion to the next patch X.Y.(Z+1), open "## X.Y.(Z+1) — unreleased" in
+#      CHANGELOG.md; commit "Start X.Y.(Z+1) development".
 #
 # Every check runs before the first write, and a failure after that (a commit hook, GPG) resets the
 # branch to where it started and deletes the tag, so the script can simply be run again.
@@ -23,8 +27,24 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-KIND="${1:-patch}"
-case "$KIND" in patch|minor|major) ;; *) echo "usage: tools/release.sh [patch|minor|major]" >&2; exit 2 ;; esac
+usage() {
+  cat <<'USAGE'
+usage: tools/release.sh [patch|minor|major]
+
+  (no argument)  release the current appVersion as it is
+  patch          bump appVersion first, then release: 0.1.1 -> 0.1.2 (0.1.1 is never released)
+  minor          bump appVersion first, then release: 0.1.1 -> 0.2.0
+  major          bump appVersion first, then release: 0.1.1 -> 1.0.0
+
+Then appVersion moves on to the next patch (0.2.0 -> 0.2.1). Nothing is pushed.
+USAGE
+}
+KIND="${1:-}"
+case "$KIND" in
+  ""|patch|minor|major) ;;
+  -h|--help) usage; exit 0 ;;
+  *) usage >&2; exit 2 ;;
+esac
 
 GRADLE=app/build.gradle.kts
 CHANGELOG=CHANGELOG.md
@@ -40,7 +60,16 @@ fail() { echo "$*" >&2; exit 1; }
 
 RELEASE=1 . tools/version.sh
 CURRENT="$VERSION_NAME"
-TAG="v$CURRENT"
+IFS=. read -r MAJOR MINOR PATCH <<< "$CURRENT"
+case "$KIND" in
+  "") TARGET="$CURRENT" ;;
+  patch) TARGET="$MAJOR.$MINOR.$((PATCH + 1))" ;;
+  minor) TARGET="$MAJOR.$((MINOR + 1)).0" ;;
+  major) TARGET="$((MAJOR + 1)).0.0" ;;
+esac
+TAG="v$TARGET"
+IFS=. read -r T_MAJOR T_MINOR T_PATCH <<< "$TARGET"
+NEXT="$T_MAJOR.$T_MINOR.$((T_PATCH + 1))"
 
 git remote get-url "$REMOTE" >/dev/null 2>&1 || fail "no remote '$REMOTE' (set RELEASE_REMOTE)"
 # Only the branch: tags are checked with ls-remote below. Fetching all tags would fail whenever the
@@ -52,29 +81,24 @@ if git rev-parse -q --verify "refs/remotes/$REMOTE/$BRANCH" >/dev/null; then
     fail "$BRANCH is behind or has diverged from $REMOTE/$BRANCH: pull first"
 fi
 if git ls-remote --exit-code --tags "$REMOTE" "refs/tags/$TAG" >/dev/null 2>&1; then
-  fail "$TAG already exists on $REMOTE: bump appVersion first"
+  fail "$TAG already exists on $REMOTE: release with patch, minor or major"
 fi
 if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-  fail "$TAG already exists locally: bump appVersion first"
+  fail "$TAG already exists locally: release with patch, minor or major"
 fi
 
-IFS=. read -r MAJOR MINOR PATCH <<< "$CURRENT"
-case "$KIND" in
-  patch) NEXT="$MAJOR.$MINOR.$((PATCH + 1))" ;;
-  minor) NEXT="$MAJOR.$((MINOR + 1)).0" ;;
-  major) NEXT="$((MAJOR + 1)).0.0" ;;
-esac
 TODAY="${RELEASE_DATE:-$(date +%Y-%m-%d)}"
 
 # Both file edits, checked up front: exactly one unreleased section, the changelog header, the
 # appVersion line. "check" validates only; "release" and "bump" write.
 edit() {
-  python3 - "$1" "$GRADLE" "$CHANGELOG" "$CURRENT" "$NEXT" "$TODAY" <<'PY'
+  python3 - "$1" "$GRADLE" "$CHANGELOG" "$CURRENT" "$TARGET" "$NEXT" "$TODAY" <<'PY'
 import re, sys
-mode, gradle, changelog, current, nxt, today = sys.argv[1:]
+mode, gradle, changelog, current, target, nxt, today = sys.argv[1:]
 head = "# Changelog\n\n"
 section = "## %s — unreleased" % current
-line = re.compile(r'^val appVersion = "%s"' % re.escape(current), re.M)
+def line(version):
+    return re.compile(r'^val appVersion = "%s"' % re.escape(version), re.M)
 log = open(changelog, encoding="utf-8").read()
 build = open(gradle, encoding="utf-8").read()
 if mode == "check":
@@ -83,14 +107,15 @@ if mode == "check":
         problems.append("%s must start with '# Changelog' and a blank line" % changelog)
     if log.count(section) != 1:
         problems.append("%s needs exactly one '%s' section" % (changelog, section))
-    if len(line.findall(build)) != 1:
+    if len(line(current).findall(build)) != 1:
         problems.append("%s needs exactly one 'val appVersion = \"%s\"' line" % (gradle, current))
     if problems:
         sys.exit("\n".join(problems))
 elif mode == "release":
-    open(changelog, "w", encoding="utf-8").write(log.replace(section, "## %s — %s" % (current, today)))
+    open(changelog, "w", encoding="utf-8").write(log.replace(section, "## %s — %s" % (target, today)))
+    open(gradle, "w", encoding="utf-8").write(line(current).sub('val appVersion = "%s"' % target, build, count=1))
 elif mode == "bump":
-    open(gradle, "w", encoding="utf-8").write(line.sub('val appVersion = "%s"' % nxt, build, count=1))
+    open(gradle, "w", encoding="utf-8").write(line(target).sub('val appVersion = "%s"' % nxt, build, count=1))
     open(changelog, "w", encoding="utf-8").write(head + "## %s — unreleased\n\n" % nxt + log[len(head):])
 PY
 }
@@ -112,11 +137,11 @@ trap rollback EXIT
 
 # 1. Release commit
 edit release
-git add "$CHANGELOG"
-git commit -q -m "Release $CURRENT"
+git add "$GRADLE" "$CHANGELOG"
+git commit -q -m "Release $TARGET"
 
 # 2. Tag
-git tag -a "$TAG" -m "TeleHex $CURRENT"
+git tag -a "$TAG" -m "TeleHex $TARGET"
 TAGGED=1
 
 # 3. Start the next version

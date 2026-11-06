@@ -87,11 +87,42 @@ class ReleaseTest(unittest.TestCase):
         self.assertEqual(0, self.release().returncode)
         self.assertGreater(self.version(release=False)[1], released[1])
 
-    def test_minor_and_major(self):
-        self.assertEqual(0, self.release("minor").returncode)
-        self.assertEqual(("0.2.0-dev.1", 200001), self.version(release=False))
-        self.assertEqual(0, self.release("major").returncode)  # needs "## 0.2.0 — unreleased", added above
-        self.assertEqual(("1.0.0-dev.1", 10000001), self.version(release=False))
+    def test_bumps_app_version_before_tagging(self):
+        result = self.release("minor")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(["Start 0.2.1 development", "Release 0.2.0", "Initial"],
+                         self.git("log", "--format=%s").splitlines())
+        self.assertEqual("", self.git("tag", "-l", "v0.1.0"))
+        self.assertIn('val appVersion = "0.2.0"', self.show("v0.2.0", "app/build.gradle.kts"))
+        self.assertIn("## 0.2.0 — 2026-11-05\n\n- First.", self.show("v0.2.0", "CHANGELOG.md"))
+        self.assertNotIn("0.1.0", self.show("v0.2.0", "CHANGELOG.md"))
+        changelog = (self.repo / "CHANGELOG.md").read_text()
+        self.assertTrue(changelog.startswith("# Changelog\n\n## 0.2.1 — unreleased\n\n## 0.2.0 — 2026-11-05"))
+        self.assertEqual(("0.2.1-dev.1", 201001), self.version(release=False))
+        self.assertIn("git push --atomic origin main v0.2.0", result.stdout)
+
+    def test_patch_and_major(self):
+        self.assertEqual(0, self.release("patch").returncode)  # 0.1.0 -> v0.1.1
+        self.assertNotEqual("", self.git("tag", "-l", "v0.1.1"))
+        self.assertEqual(("0.1.2-dev.1", 102001), self.version(release=False))
+        self.assertEqual(0, self.release("major").returncode)  # needs "## 0.1.2 — unreleased", added above
+        self.assertNotEqual("", self.git("tag", "-l", "v1.0.0"))
+        self.assertEqual(("1.0.1-dev.1", 10001001), self.version(release=False))
+
+    def test_help_explains_no_argument_and_bumps_without_writing(self):
+        start = self.git("rev-parse", "HEAD")
+        result = self.release("-h")
+        self.assertEqual(0, result.returncode)
+        self.assertIn("release the current appVersion", result.stdout)
+        self.assertIn("bump appVersion first", result.stdout)
+        self.assert_untouched(start)
+
+    def test_refuses_an_unknown_bump(self):
+        start = self.git("rev-parse", "HEAD")
+        result = self.release("0.2.0")
+        self.assertEqual(2, result.returncode)
+        self.assertIn("usage", result.stderr)
+        self.assert_untouched(start)
 
     def test_refuses_dirty_tree_missing_changelog_section_and_existing_tag(self):
         (self.repo / "dirty.txt").write_text("x")
