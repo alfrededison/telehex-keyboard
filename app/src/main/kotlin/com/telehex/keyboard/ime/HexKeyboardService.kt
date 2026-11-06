@@ -111,7 +111,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     private fun openEditPanel() {
         commitSyllable()
-        val t = Theme.resolve(this, prefs.themeMode)
+        val t = Theme.resolve(this, prefs.themeMode, prefs.accent)
         val panel = editPanel ?: EditPanel(this, t).also { p ->
             p.listener = object : EditPanel.Listener {
                 override fun onAction(action: String) = editAction(action)
@@ -317,7 +317,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private fun dpF(v: Int): Float = v * resources.displayMetrics.density
 
     private fun applyTheme() {
-        val t = Theme.resolve(this, prefs.themeMode)
+        val t = Theme.resolve(this, prefs.themeMode, prefs.accent)
         keyboardView.theme = t
         keyboardView.hapticEnabled = prefs.haptic
         keyboardView.soundEnabled = prefs.sound
@@ -380,7 +380,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     private fun openEmoji() {
         if (emojiSearch) stopEmojiSearch()
-        val panel = emojiPanel ?: EmojiPanel(this, Theme.resolve(this, prefs.themeMode), EmojiData.get(this)).also { p ->
+        val panel = emojiPanel ?: EmojiPanel(this, Theme.resolve(this, prefs.themeMode, prefs.accent), EmojiData.get(this)).also { p ->
             p.listener = object : EmojiPanel.Listener {
                 override fun onEmoji(emoji: String) { insertEmoji(emoji) }
                 override fun onAbc() { openAbc() }
@@ -396,7 +396,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     }
 
     private fun openDial() {
-        val t = Theme.resolve(this, prefs.themeMode)
+        val t = Theme.resolve(this, prefs.themeMode, prefs.accent)
         val h = panelHeight()
         val panel = dialpad?.takeIf { it.heightPx == h } ?: DialpadView(this, t, h).also { d ->
             d.listener = this

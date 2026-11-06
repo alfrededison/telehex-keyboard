@@ -71,7 +71,7 @@ rồi Cài đặt → "Nạp gói ngôn ngữ (.ngram)…". Dữ liệu Wikipedi
 
 - **Sắp xếp phím**: kéo một phím thả lên phím khác để đổi chỗ; phím cách và ↵ cố định; lưu nhiều preset. Số ở lớp ký tự luôn đi theo chữ (Q→1 … P→0).
 - **Ký tự vuốt xuống** cho từng phím: số, ký hiệu, emoji hoặc đoạn văn bản ngắn (≤ 8 ký tự).
-- Kiểu đặt dấu cũ/mới (hòa/hoà), "L cũng là dấu huyền" (`lal` → là), tự viết hoa đầu câu, rung, âm thanh, giao diện sáng/tối, chế độ một tay, tông da emoji, gõ tắt, clipboard history, chế độ ẩn danh, vùng chạm động (tắt mặc định), học độ lệch chạm.
+- Kiểu đặt dấu cũ/mới (hòa/hoà), "L cũng là dấu huyền" (`lal` → là), tự viết hoa đầu câu, rung, âm thanh, giao diện sáng/tối, màu nhấn, chế độ một tay, tông da emoji, gõ tắt, clipboard history, chế độ ẩn danh, vùng chạm động (tắt mặc định), học độ lệch chạm.
 - **Sao lưu / khôi phục** mọi thứ ra một file zip.
 - **Giọng nói**: nút 🎤 trong bảng sửa văn bản chuyển sang IME giọng nói đã bật (ví dụ FUTO Voice Input chạy offline).
 

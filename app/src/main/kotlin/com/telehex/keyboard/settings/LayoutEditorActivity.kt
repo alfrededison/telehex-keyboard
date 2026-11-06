@@ -119,7 +119,7 @@ class LayoutEditorActivity : Activity() {
             text = "Kéo một phím thả lên phím khác để đổi chỗ. Phím cách và ↵ cố định. Số ở lớp ký tự tự đi theo chữ (Q→1 … P→0)."
         })
         status = TextView(this)
-        val t = Theme.resolve(this, prefs.themeMode)
+        val t = Theme.resolve(this, prefs.themeMode, prefs.accent)
         editor = LayoutEditorView(this).apply {
             theme = t
             hintOf = prefs::hintOf

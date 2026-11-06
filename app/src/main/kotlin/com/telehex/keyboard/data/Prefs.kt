@@ -41,6 +41,11 @@ class Prefs(context: Context) {
         get() = sp.getString(KEY_THEME, "system") ?: "system"
         set(v) = sp.edit().putString(KEY_THEME, v).apply()
 
+    /** Màu nhấn, xem [com.telehex.keyboard.ime.Accent]. */
+    var accent: String
+        get() = sp.getString(KEY_ACCENT, "blue") ?: "blue"
+        set(v) = sp.edit().putString(KEY_ACCENT, v).apply()
+
     /** Padding thêm phía dưới (dp), vì lục giác đều nên chiều cao chỉ đổi qua padding. */
     var extraBottomDp: Int
         get() = sp.getInt(KEY_EXTRA_BOTTOM, 0)
@@ -229,6 +234,7 @@ class Prefs(context: Context) {
         const val KEY_HAPTIC = "haptic"
         const val KEY_SOUND = "sound"
         const val KEY_THEME = "theme"
+        const val KEY_ACCENT = "accent"
         const val KEY_EXTRA_BOTTOM = "extra_bottom_dp"
         const val KEY_FALLBACK_PKGS = "fallback_packages"
         const val KEY_LAYOUT = "layout_json"
@@ -259,7 +265,7 @@ class Prefs(context: Context) {
         /** Khoá → kiểu được phép khi khôi phục (sai kiểu sẽ làm getter ném ClassCastException). */
         val KNOWN_TYPES: Map<String, kotlin.reflect.KClass<*>> = mapOf(
             KEY_NEW_TONE_STYLE to Boolean::class, KEY_L_GRAVE to Boolean::class, KEY_EN_FALLBACK to Boolean::class,
-            KEY_HAPTIC to Boolean::class, KEY_SOUND to Boolean::class, KEY_THEME to String::class,
+            KEY_HAPTIC to Boolean::class, KEY_SOUND to Boolean::class, KEY_THEME to String::class, KEY_ACCENT to String::class,
             KEY_EXTRA_BOTTOM to Int::class, KEY_FALLBACK_PKGS to Set::class, KEY_LAYOUT to String::class,
             KEY_CUSTOM to String::class, KEY_RECENT_EMOJI to String::class, KEY_PRESETS to String::class,
             KEY_SWIPE_DP to Int::class, KEY_HOLD_MS to Int::class, KEY_LONG_PRESS_MS to Int::class,

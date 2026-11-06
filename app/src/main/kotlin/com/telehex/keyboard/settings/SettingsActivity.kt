@@ -3,9 +3,17 @@ package com.telehex.keyboard.settings
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.ColorFilter
+import android.graphics.Paint
+import android.graphics.PixelFormat
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.provider.Settings
 import android.text.InputType
+import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
@@ -18,10 +26,13 @@ import android.widget.Switch
 import android.widget.TextView
 import com.telehex.keyboard.R
 import com.telehex.keyboard.data.Prefs
+import com.telehex.keyboard.ime.Accent
 
 /** Màn hình Cài đặt (View thuần, không thêm dependency). */
 class SettingsActivity : Activity() {
     private lateinit var prefs: Prefs
+    private lateinit var accentLabel: TextView
+    private lateinit var swatchRow: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prefs = Prefs(this)
@@ -90,6 +101,14 @@ class SettingsActivity : Activity() {
                 recreate() // Cài đặt đổi sáng/tối theo bàn phím
             }
         })
+        accentLabel = label("")
+        col.add(accentLabel)
+        swatchRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, dp(8), 0, dp(8))
+        }
+        col.add(swatchRow)
+        refreshSwatches()
         val heightLabel = label("Khoảng trống dưới bàn phím: ${prefs.extraBottomDp} dp")
         col.add(heightLabel)
         col.add(SeekBar(this).apply {
@@ -266,6 +285,62 @@ class SettingsActivity : Activity() {
             })
         })
         return box
+    }
+
+    private fun refreshSwatches() {
+        val current = Accent.of(prefs.accent)
+        accentLabel.text = "Màu nhấn: ${current.label}"
+        swatchRow.removeAllViews()
+        for (a in Accent.entries) swatchRow.addView(swatch(a, a == current), LinearLayout.LayoutParams(dp(40), dp(40)).apply { marginEnd = dp(14) })
+    }
+
+    /** Ô tròn chọn màu nhấn; ô đang chọn có viền và dấu ✓. "Không màu" là vòng tròn có gạch chéo. */
+    private fun swatch(a: Accent, selected: Boolean) = TextView(this).apply {
+        gravity = Gravity.CENTER
+        textSize = 18f
+        setTextColor(Color.WHITE)
+        contentDescription = a.label
+        val ring = currentTextColor(android.R.attr.textColorPrimary)
+        if (a == Accent.NONE) {
+            background = NoAccentSwatch(if (selected) ring else a.swatch, dp(if (selected) 3 else 2).toFloat(), a.swatch)
+        } else {
+            text = if (selected) "✓" else ""
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(a.swatch)
+                if (selected) setStroke(dp(3), ring)
+            }
+        }
+        setOnClickListener {
+            if (selected) return@setOnClickListener
+            prefs.accent = a.id // chỉ đổi màu bàn phím; không recreate() nên bàn phím đang mở không bị đóng
+            refreshSwatches()
+        }
+    }
+
+    /** Vòng tròn có gạch chéo cho "Không màu". */
+    private class NoAccentSwatch(private val ringColor: Int, private val ringWidth: Float, private val slashColor: Int) : Drawable() {
+        private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
+
+        override fun draw(canvas: Canvas) {
+            val b = bounds
+            val r = minOf(b.width(), b.height()) / 2f - ringWidth / 2
+            val cx = b.exactCenterX(); val cy = b.exactCenterY()
+            paint.color = ringColor; paint.strokeWidth = ringWidth
+            canvas.drawCircle(cx, cy, r, paint)
+            val d = r * 0.7071f // gạch từ góc dưới trái lên góc trên phải, chạm vòng tròn
+            paint.color = slashColor; paint.strokeWidth = ringWidth.coerceAtMost(r / 6)
+            canvas.drawLine(cx - d, cy + d, cx + d, cy - d, paint)
+        }
+
+        override fun setAlpha(alpha: Int) { paint.alpha = alpha }
+        override fun setColorFilter(colorFilter: ColorFilter?) { paint.colorFilter = colorFilter }
+        @Deprecated("Bắt buộc override") override fun getOpacity() = PixelFormat.TRANSLUCENT
+    }
+
+    private fun currentTextColor(attr: Int): Int {
+        val ta = obtainStyledAttributes(intArrayOf(attr))
+        try { return ta.getColor(0, Color.GRAY) } finally { ta.recycle() }
     }
 
     /** Nhãn cho nhóm tuỳ chọn, cách phần phía trên để không dính vào nút. */

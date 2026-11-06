@@ -39,7 +39,7 @@ class CustomKeysActivity : Activity() {
             text = "Chạm một phím để chọn ký tự, ký hiệu, emoji hoặc đoạn văn bản ngắn (tối đa $MAX_LEN ký tự) sẽ chèn khi vuốt xuống."
         })
         view = KeyboardView(this).apply {
-            theme = Theme.resolve(context, prefs.themeMode)
+            theme = Theme.resolve(context, prefs.themeMode, prefs.accent)
             hapticEnabled = false
             listener = object : KeyboardView.Listener {
                 override fun onKeyDown(key: Key) {}
