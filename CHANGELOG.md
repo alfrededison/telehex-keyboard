@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.2.2 — unreleased
+
 ## 0.2.1 — 2026-11-06
 
 - Bảng emoji, tìm emoji và gợi ý emoji chỉ hiện emoji mà font của máy vẽ được; emoji Unicode mới mà máy chưa hỗ trợ (hiện ô trống hoặc tách thành nhiều hình) được ẩn. Tông da không vẽ được thì chèn bản không tông.
