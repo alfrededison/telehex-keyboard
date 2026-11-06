@@ -69,7 +69,7 @@ rồi Cài đặt → "Nạp gói ngôn ngữ (.ngram)…". Dữ liệu Wikipedi
 
 ## Tuỳ biến
 
-- **Sắp xếp phím**: kéo một phím thả lên phím khác để đổi chỗ; phím cách và ↵ cố định; lưu nhiều preset. Số ở lớp ký tự luôn đi theo chữ (Q→1 … P→0).
+- **Sắp xếp phím**: kéo một phím thả lên phím khác để đổi chỗ; phím cách và ↵ cố định; lưu nhiều preset, danh sách preset hiện ngay dưới nút. Có sẵn preset "Cân bằng hai ngón": chia đều tải cho hai ngón cái và tăng gõ luân phiên. Số ở lớp ký tự luôn đi theo chữ (Q→1 … P→0).
 - **Ký tự vuốt xuống** cho từng phím: số, ký hiệu, emoji hoặc đoạn văn bản ngắn (≤ 8 ký tự).
 - Kiểu đặt dấu cũ/mới (hòa/hoà), "L cũng là dấu huyền" (`lal` → là), tự viết hoa đầu câu, rung, âm thanh, giao diện sáng/tối, màu nhấn, chế độ một tay, tông da emoji, gõ tắt, clipboard history, chế độ ẩn danh, vùng chạm động (tắt mặc định), học độ lệch chạm.
 - **Sao lưu / khôi phục** mọi thứ ra một file zip.

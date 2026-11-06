@@ -105,6 +105,27 @@ class LayoutModel(val rows: List<List<String?>>) {
             )
         )
 
+        /**
+         * Chia đều tải cho hai ngón cái (~50/50) và tăng gõ luân phiên (~62% → ~68%), tối ưu bằng
+         * mô hình Fitts hai ngón trên tần suất phím Telex. Giữ 12 chữ ở chỗ cũ (W R Y Q E F P S L Z X C);
+         * A (phím nhiều nhất) ở cột giữa cho ngón nào rảnh gõ; E bên trái, U I O bên phải.
+         */
+        val BALANCED: LayoutModel = LayoutModel(
+            listOf(
+                listOf("w", "r", "y", KeyCode.SETTINGS, "b", "k", KeyCode.NUMBERS),
+                listOf("q", "e", "g", "f", "j", "u", "p"),
+                listOf("d", "s", "h", "v", "i", "o", "l"),
+                listOf("z", "x", "c", "a", "t", "n", "m"),
+                listOf(KeyCode.EMOJI, ",", null, null, null, ".", KeyCode.ENTER),
+            )
+        )
+
+        /** Preset có sẵn, hiện trước preset người dùng lưu. */
+        val BUILT_IN: List<Pair<String, LayoutModel>> = listOf(
+            "Mặc định" to DEFAULT,
+            "Cân bằng hai ngón" to BALANCED,
+        )
+
         fun fromJson(json: String): LayoutModel? = runCatching {
             val arr = JSONArray(json)
             val rows = (0 until arr.length()).map { r ->
