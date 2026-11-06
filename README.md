@@ -6,7 +6,7 @@ Bàn phím tiếng Việt gõ **Telex** trên lưới **lục giác đều 7 c�
   W   R   Y   ⚙   U   O  123
 Q   E   T   F   H   I   P
   A   S   D   G   J   K   L
-Z   X   C   V   B   M   N
+Z   X   C   V   B   N   M
   ☺   ,  \___cách___/  .   ↵
 ```
 
