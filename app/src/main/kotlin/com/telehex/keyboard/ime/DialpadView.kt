@@ -58,6 +58,12 @@ class DialpadView(context: Context, private val theme: Theme, val heightPx: Int)
     private val pressed = HashMap<Int, Key>()
     private val gestures = GestureDetector(threshold = dp(24f))
 
+    /** Ngưỡng vuốt (px) và long-press (ms) từ Cài đặt, giống lưới phím chữ. */
+    fun setThresholds(swipePx: Float, longPressMs: Long) {
+        gestures.threshold = swipePx
+        gestures.longPressMs = longPressMs
+    }
+
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER

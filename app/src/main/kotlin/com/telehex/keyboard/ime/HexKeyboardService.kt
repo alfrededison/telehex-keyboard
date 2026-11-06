@@ -405,6 +405,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         }
         panel.hapticEnabled = prefs.haptic
         panel.soundEnabled = prefs.sound
+        panel.setThresholds(dpF(prefs.swipeThresholdDp), prefs.longPressMs.toLong())
         panel.enterLabel = enterLabel
         panel.allowMinus = !numberOnly || numberSigned
         panel.allowDot = !numberOnly || numberDecimal
