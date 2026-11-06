@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.2 — unreleased
+## 0.3.0 — 2026-11-06
 
 - Preset thành **profile** gồm đủ ba lớp Chữ, Vuốt xuống, 123. Màn chỉnh sửa luôn sửa profile đang dùng: thanh trên cùng hiện tên profile (● khi có thay đổi chưa lưu, 🔒 ở profile có sẵn), chạm để chuyển profile và áp ngay cho bàn phím; Lưu ghi vào profile đang dùng; menu ⋮ có Tạo mới, Nhân bản, Đổi tên, Xoá, Bỏ thay đổi. Profile có sẵn ("Mặc định", "Cân bằng hai ngón") không sửa được, Lưu sẽ tạo profile mới. Bố cục đang dùng thành profile "Của tôi" nếu không trùng profile có sẵn; preset đã lưu ở bản cũ không được chuyển sang.
 - Gộp "Sắp xếp phím" và "Ký tự vuốt xuống" thành nút "Chỉnh sửa phím"; Cài đặt › Bàn phím có thêm nút đổi nhanh profile. Lưu không còn đóng màn chỉnh sửa. Nút "Về mặc định (lớp này)" có ở cả lớp Chữ.
