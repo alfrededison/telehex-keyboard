@@ -142,6 +142,8 @@ class SettingsActivity : Activity() {
         col.add(EditText(this).apply {
             setText(prefs.shortcuts.entries.sortedBy { it.key }.joinToString("\n") { "${it.key} = ${it.value}" })
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            // Đầu dòng tự viết hoa sẽ lưu "Ko" thay vì "ko"
+            privateImeOptions = com.telehex.keyboard.ime.HexKeyboardService.NO_AUTO_CAP
             minLines = 3
             addTextChangedListener(object : android.text.TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}

@@ -694,7 +694,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
      */
     private fun autoCaps(): Boolean {
         if (!prefs.autoCapitalize || !telexEnabled || emojiSearch || mode != Mode.ABC) return false
-        val type = currentInputEditorInfo?.inputType ?: return false
+        val info = currentInputEditorInfo ?: return false
+        if (info.privateImeOptions?.split(',')?.any { it.trim() == NO_AUTO_CAP } == true) return false
+        val type = info.inputType
         if (type and InputType.TYPE_MASK_CLASS != InputType.TYPE_CLASS_TEXT) return false
         val capFlags = InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS or InputType.TYPE_TEXT_FLAG_CAP_WORDS or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         var req = type and capFlags
@@ -923,4 +925,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     @Suppress("unused")
     private fun ic(): InputConnection? = currentInputConnection
+
+    companion object {
+        /** Đặt vào `privateImeOptions` của ô nhập để không tự viết hoa (ô gõ tắt: viết tắt so khớp theo chữ thường). */
+        const val NO_AUTO_CAP = "com.telehex.keyboard.noAutoCap"
+    }
 }
