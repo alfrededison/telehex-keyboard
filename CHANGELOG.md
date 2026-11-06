@@ -2,6 +2,8 @@
 
 ## 0.2.1 — unreleased
 
+- Bảng emoji, tìm emoji và gợi ý emoji chỉ hiện emoji mà font của máy vẽ được; emoji Unicode mới mà máy chưa hỗ trợ (hiện ô trống hoặc tách thành nhiều hình) được ẩn. Tông da không vẽ được thì chèn bản không tông.
+
 ## 0.2.0 — 2026-11-06
 
 - Tự viết hoa chữ đầu câu (tắt được trong Cài đặt). Nhãn phím hiện hoa/thường theo chữ sắp gõ; vuốt lên đảo hoa/thường như Gboard. Chữ hoa tự thêm không bị học thành "hay viết hoa"; gõ tắt ở đầu câu cũng viết hoa.

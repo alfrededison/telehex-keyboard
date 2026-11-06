@@ -571,8 +571,11 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     private fun emojiFor(word: String): List<String> {
         val curated = EmojiKeywords.forWord(word, recent.lastOrNull()?.takeIf { it != word })
-        if (curated.isNotEmpty()) return curated
-        return if (word.length >= 3) EmojiData.get(this).exactKeyword(word, 2) else emptyList()
+        if (curated.isEmpty() && word.length < 3) return emptyList() // khỏi nạp EmojiData
+        val data = EmojiData.get(this)
+        val drawable = curated.filter { data.canDraw(it) }
+        if (drawable.isNotEmpty()) return drawable
+        return if (word.length >= 3) data.exactKeyword(word, 2) else emptyList()
     }
 
     private fun afterSpace(): Boolean {

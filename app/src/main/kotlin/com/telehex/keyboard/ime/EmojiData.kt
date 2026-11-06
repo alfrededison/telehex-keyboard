@@ -1,24 +1,31 @@
 package com.telehex.keyboard.ime
 
 import android.content.Context
+import android.graphics.Paint
 import com.telehex.telex.ToneRules
 
 /**
  * Danh mục emoji và chỉ mục tìm kiếm tiếng Việt, nạp từ `assets/emoji.tsv`
  * (sinh bởi `tools/build_emoji.py` từ Unicode emoji-test + chú thích CLDR tiếng Việt).
+ * Chỉ giữ emoji mà font của máy vẽ được thành một hình: dữ liệu theo Unicode mới nhất, còn font
+ * trên máy cũ hoặc của hãng (Samsung…) thiếu emoji mới, vẽ ra ô trống hoặc tách chuỗi ZWJ thành nhiều hình.
  */
 class EmojiData private constructor(
     val categories: List<Category>,
     private val entries: List<Entry>,
     private val modifierBases: Set<String>,
+    private val paint: Paint,
 ) {
     class Category(val id: String, val name: String, val icon: String, val emoji: List<String>)
     class Entry(val emoji: String, val name: String, val keywords: List<String>, val searchText: String)
 
+    /** Font của máy vẽ được [emoji] thành một hình (cho emoji không lấy từ danh mục, như gợi ý có sẵn). */
+    fun canDraw(emoji: String): Boolean = synchronized(paint) { paint.hasGlyph(emoji) }
+
     /** Emoji nhận tông da (Emoji_Modifier_Base). */
     fun acceptsSkinTone(emoji: String): Boolean = emoji in modifierBases
 
-    /** Áp tông da (1..5) vào emoji nếu nhận; 0 = giữ nguyên. */
+    /** Áp tông da (1..5) vào emoji nếu nhận và font vẽ được bản có tông da; 0 = giữ nguyên. */
     fun withSkinTone(emoji: String, tone: Int): String {
         if (tone !in 1..5 || !acceptsSkinTone(emoji)) return emoji
         val modifier = String(Character.toChars(0x1F3FA + tone))
@@ -26,7 +33,8 @@ class EmojiData private constructor(
         val first = emoji.offsetByCodePoints(0, 1)
         var rest = emoji.substring(first)
         if (rest.startsWith("️")) rest = rest.substring(1)
-        return emoji.substring(0, first) + modifier + rest
+        val toned = emoji.substring(0, first) + modifier + rest
+        return if (canDraw(toned)) toned else emoji
     }
 
     /** Tìm theo tên / từ khoá tiếng Việt; bỏ dấu thanh khi so để gõ dở vẫn ra. */
@@ -71,11 +79,13 @@ class EmojiData private constructor(
             val byGroup = LinkedHashMap<String, ArrayList<String>>()
             val entries = ArrayList<Entry>(2000)
             val bases = HashSet<String>()
+            val paint = Paint()
             context.assets.open("emoji.tsv").bufferedReader().useLines { lines ->
                 for (line in lines) {
                     val p = line.split('\t')
                     if (p.size < 5) continue
                     val emoji = p[0]
+                    if (!paint.hasGlyph(emoji)) continue
                     byGroup.getOrPut(p[1]) { ArrayList() }.add(emoji)
                     val kws = p[3].split('|').filter { it.isNotEmpty() }
                     val search = (listOf(p[2]) + kws).joinToString("|") { normalize(it) }
@@ -84,7 +94,7 @@ class EmojiData private constructor(
                 }
             }
             val cats = ORDER.mapNotNull { name -> byGroup[name]?.let { Category(name, name, ICON[name] ?: "•", it) } }
-            return EmojiData(cats, entries, bases)
+            return EmojiData(cats, entries, bases, paint)
         }
 
         fun normalize(s: String): String {
