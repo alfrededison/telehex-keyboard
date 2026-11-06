@@ -75,6 +75,11 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private var numberOnly = false
     /** Chữ đầu của âm tiết đang soạn được viết hoa chỉ vì đầu câu. */
     private var autoCappedFirst = false
+    /**
+     * Văn bản vừa chèn từ một gợi ý trên thanh, kết thúc bằng khoảng trắng tự thêm. Dấu câu gõ ngay
+     * sau đó (phím kế tiếp) xoá khoảng trắng này: chọn "không" rồi gõ "," ra "không,".
+     */
+    private var suggestionSpace: String? = null
     private var numberSigned = true
     private var numberDecimal = true
     private var autoDial = false
@@ -290,7 +295,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     // ---- View ----
 
     override fun onCreateInputView(): View {
-        candidateBar = CandidateBar(this).apply { onPick = { tone -> engine.setTone(tone); updateComposing() } }
+        candidateBar = CandidateBar(this).apply { onPick = { tone -> engine.setTone(tone); replaceComposing(engine.text()) } }
         keyboardView = KeyboardView(this).apply { listener = this@HexKeyboardService }
         root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -425,6 +430,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
+        suggestionSpace = null
         engine.reset()
         history.clear()
         emojiSearch = false
@@ -563,6 +569,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                 // Gợi ý được viết hoa vì đầu câu (không phải tên riêng đã học) thì học như chữ thường
                 val auto = atSentenceStart() && !predictions.predictor.personal.usuallyCapitalized(pick)
                 commitSyllable("$pick "); pushContext(pick, auto)
+                suggestionSpace = "$pick "
             }, onPickEmoji = { commitSyllable(it) }, onForget = { forget(it) })
         } else {
             showWordAtCursorSuggestions()
@@ -598,6 +605,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         engine.reset()
         sink.commit(ic, "$text ")
         history.record(EditHistory.Op.Insert("$text "))
+        suggestionSpace = "$text "
         pushContext(text, auto) // học cả từ gợi ý người dùng đã chọn
         updateBar()
     }
@@ -890,6 +898,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     override fun onKeyUp(key: Key, gesture: Gesture, dx: Float, dy: Float, dt: Long) {
         val code = key.code
+        // Chỉ phím ngay sau lần chọn gợi ý mới được xoá khoảng trắng tự thêm
+        val autoSpace = suggestionSpace
+        suggestionSpace = null
         when {
             code == KeyCode.SPACE -> spaceGestures.onUp(gesture, android.os.SystemClock.uptimeMillis())
             code == KeyCode.ENTER -> pressEnter()
@@ -906,16 +917,31 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             code == KeyCode.ABC -> openAbc()
             code == KeyCode.BACKSPACE -> deleteBackward()
             code == "," || code == "." ->
-                commitSyllable(if (gesture == Gesture.SWIPE_DOWN && key.hint.isNotEmpty()) key.hint else code)
+                insertChar(if (gesture == Gesture.SWIPE_DOWN && key.hint.isNotEmpty()) key.hint else code, autoSpace)
             mode == Mode.DIAL -> commitSyllable(if (gesture == Gesture.SWIPE_DOWN && key.hint.isNotEmpty()) key.hint else code)
             key.isLetter && mode == Mode.ABC -> when (gesture) {
-                Gesture.SWIPE_DOWN -> if (key.hint.isNotEmpty()) commitSyllable(key.hint) // hint rỗng: không chèn gì
+                Gesture.SWIPE_DOWN -> if (key.hint.isNotEmpty()) insertChar(key.hint, autoSpace) // hint rỗng: không chèn gì
                 Gesture.SWIPE_UP -> typeLetter(code[0], true)
                 else -> typeLetter(code[0], false)
             }
             code.isEmpty() -> {} // ô trống ở lớp ký tự
-            else -> commitSyllable(code) // ký tự ở lớp ký tự
+            else -> insertChar(code, autoSpace) // ký tự ở lớp ký tự
         }
+    }
+
+    /**
+     * Chèn ký tự từ phím. Dấu câu gõ ngay sau gợi ý vừa chọn thì xoá khoảng trắng tự thêm trước nó,
+     * nếu văn bản trước con trỏ vẫn đúng là gợi ý đó (con trỏ chưa bị dời đi).
+     */
+    private fun insertChar(text: String, autoSpace: String?) {
+        val ic = currentInputConnection
+        if (autoSpace != null && ic != null && engine.isEmpty && !hasSelection() &&
+            text.length == 1 && text[0] in NO_SPACE_BEFORE &&
+            ic.getTextBeforeCursor(autoSpace.length, 0)?.toString() == autoSpace) {
+            ic.deleteSurroundingText(1, 0)
+            history.trimLastInsert(1)
+        }
+        commitSyllable(text)
     }
 
     override fun onComputeInsets(outInsets: Insets) {
@@ -929,5 +955,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     companion object {
         /** Đặt vào `privateImeOptions` của ô nhập để không tự viết hoa (ô gõ tắt: viết tắt so khớp theo chữ thường). */
         const val NO_AUTO_CAP = "com.telehex.keyboard.noAutoCap"
+
+        /** Dấu câu đứng sát chữ phía trước. */
+        private const val NO_SPACE_BEFORE = ".,!?:;…)]}"
     }
 }

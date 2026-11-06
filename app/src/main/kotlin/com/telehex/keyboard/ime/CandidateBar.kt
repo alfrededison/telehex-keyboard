@@ -10,7 +10,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.telehex.telex.TelexEngine
 
-/** Thanh trên bàn phím (~52dp): 6 biến thể dấu của âm tiết đang soạn. Chạm để đổi dấu. */
+/** Thanh trên bàn phím (~52dp): 6 biến thể dấu của âm tiết đang soạn. Chạm để chốt âm tiết với dấu đó. */
 class CandidateBar(context: Context) : HorizontalScrollView(context) {
     private val row = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL

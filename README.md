@@ -47,11 +47,13 @@ Mọi ngưỡng (vuốt, giữ, bước xoá từ, chạm đúp) chỉnh đượ
 
 Bàn phím **không bao giờ tự đổi chữ** đã gõ. Thanh trên bàn phím hiện:
 
-- 6 biến thể dấu của âm tiết đang soạn (mới / mởi / mời / mỡi / mợi / mơi), chạm để đổi dấu;
+- 6 biến thể dấu của âm tiết đang soạn (mới / mởi / mời / mỡi / mợi / mơi), chạm để chốt âm tiết với dấu đó kèm khoảng trắng;
 - gợi ý sửa khi âm tiết chưa hợp lệ (phím lân cận trên lưới lục giác, thiếu/thừa/đảo phím, quên phím Telex), chữ đang gõ luôn giữ nguyên ở ô đầu;
 - gợi ý âm tiết tiếp theo sau khi chạm cách (học từ chính bạn; giữ một gợi ý để xoá khỏi từ điển cá nhân);
 - phương án sửa cho từ đã gõ khi đặt con trỏ vào từ;
 - emoji theo từ khoá (gõ "cười" → 😂).
+
+Chạm một gợi ý thì chèn luôn kèm khoảng trắng; gõ dấu câu (`. , ! ? : ; … ) ] }`) ngay sau đó thì khoảng trắng này bị xoá ("Tối" rồi `,` → "Tối,").
 
 Chuỗi phím không thể là tiếng Việt thì hiện đúng phím đã gõ (`windows` không thành `ưindows`) và được tô nhạt.
 
