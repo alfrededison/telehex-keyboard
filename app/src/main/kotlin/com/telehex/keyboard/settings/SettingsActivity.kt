@@ -216,20 +216,38 @@ class SettingsActivity : Activity() {
 
         col.add(header("Tương thích"))
         col.add(TextView(this).apply {
-            text = "Các app xử lý composing không ổn (Zalo, Messenger…) dùng chế độ dự phòng. Mỗi dòng một tên package."
+            text = "Các app xử lý composing không ổn (Zalo, Messenger…) dùng chế độ dự phòng: chữ được ghi thẳng thay vì gạch chân. Chọn app nếu thấy gõ bị lặp hoặc mất chữ."
             textSize = 13f
         })
-        col.add(EditText(this).apply {
-            setText(prefs.fallbackPackages.sorted().joinToString("\n"))
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
-            addTextChangedListener(object : android.text.TextWatcher {
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-                override fun afterTextChanged(s: android.text.Editable?) {
-                    prefs.fallbackPackages = s.toString().split('\n').map { it.trim() }.filter { it.isNotEmpty() }.toSet()
-                }
-            })
+        val fallbackSummary = TextView(this).apply { setPadding(0, dp(6), 0, dp(6)) }
+        fun refreshFallback() {
+            val names = AppPicker.labels(this, prefs.fallbackPackages)
+            fallbackSummary.text = if (names.isEmpty()) "Chưa chọn app nào" else names.joinToString(", ")
+        }
+        refreshFallback()
+        col.add(fallbackSummary)
+        val picker = AppPicker(this, "Chế độ dự phòng") {
+            prefs.fallbackPackages = it
+            refreshFallback()
+        }
+        fallbackPicker = picker
+        col.add(Button(this).apply {
+            text = "Chọn app dùng chế độ dự phòng…"
+            setOnClickListener { picker.show(prefs.fallbackPackages) }
         })
+        picker.restoreState(savedInstanceState)
+    }
+
+    private var fallbackPicker: AppPicker? = null
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        fallbackPicker?.saveState(outState)
+    }
+
+    override fun onDestroy() {
+        fallbackPicker?.dismiss()
+        super.onDestroy()
     }
 
     private var packStatusView: TextView? = null

@@ -3,6 +3,14 @@
 
     <!-- Không xin quyền INTERNET: mọi xử lý nằm trên máy. -->
 
+    <!-- Thấy được các app có biểu tượng launcher, để chọn app cho chế độ dự phòng (Android 11+). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
