@@ -111,7 +111,8 @@ if mode == "check":
     else:
         # Running the script again right after a release would otherwise tag an empty release.
         body = log[log.index(section) + len(section):].split("\n## ", 1)[0]
-        if not body.strip():
+        # Subheadings such as "### Added" alone are not changes.
+        if not any(l.strip() and not l.lstrip().startswith("#") for l in body.splitlines()):
             problems.append("%s: '%s' lists no changes: nothing to release" % (changelog, section))
     def headings(version):
         return len(re.findall(r'^## %s(?= |$)' % re.escape(version), log, re.M))

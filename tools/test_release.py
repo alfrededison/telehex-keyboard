@@ -139,7 +139,7 @@ class ReleaseTest(unittest.TestCase):
         result = self.release()
         self.assertNotEqual(0, result.returncode)
         self.assertIn("unreleased", result.stderr)
-        (self.repo / "CHANGELOG.md").write_text("# Changelog\n\n## 0.1.0 — unreleased\n")
+        (self.repo / "CHANGELOG.md").write_text("# Changelog\n\n## 0.1.0 — unreleased\n\n- First.\n")
         self.git("commit", "-q", "-am", "Restore section")
         self.git("tag", "v0.1.0")
         result = self.release()
@@ -194,7 +194,7 @@ class ReleaseTest(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
 
     def test_bad_changelog_header_is_caught_before_any_write(self):
-        (self.repo / "CHANGELOG.md").write_text("# TeleHex changelog\n\n## 0.1.0 — unreleased\n")
+        (self.repo / "CHANGELOG.md").write_text("# TeleHex changelog\n\n## 0.1.0 — unreleased\n\n- First.\n")
         self.git("commit", "-q", "-am", "Rename header")
         self.git("push", "-q", "origin", "main")
         start = self.git("rev-parse", "HEAD")
@@ -236,15 +236,30 @@ class ReleaseTest(unittest.TestCase):
         self.assertEqual(0, self.release().returncode)  # once a change is listed, it releases
 
     def test_refuses_a_section_already_named_after_the_release_or_next_version(self):
-        for old in ("0.2.0", "0.2.1"):
+        # (arguments, stale section, tag that must not appear)
+        for args, old, tag in ((("minor",), "0.2.0", "v0.2.0"), (("minor",), "0.2.1", "v0.2.0"),
+                               ((), "0.1.0", "v0.1.0"), ((), "0.1.1", "v0.1.0")):
             (self.repo / "CHANGELOG.md").write_text(
                 "# Changelog\n\n## 0.1.0 — unreleased\n\n- First.\n\n## %s — 2026-01-01\n\n- Old.\n" % old)
             self.git("commit", "-q", "-am", "Old " + old)
             start = self.git("rev-parse", "HEAD")
-            result = self.release("minor")
-            self.assertNotEqual(0, result.returncode, old)
+            result = self.release(*args)
+            self.assertNotEqual(0, result.returncode, (args, old))
             self.assertIn("already has a '## %s' section" % old, result.stderr)
-            self.assert_untouched(start, "v0.2.0")
+            self.assert_untouched(start, tag)
+
+    def test_subheadings_alone_are_nothing_to_release(self):
+        (self.repo / "CHANGELOG.md").write_text("# Changelog\n\n## 0.1.0 — unreleased\n\n### Added\n\n### Fixed\n")
+        self.git("commit", "-q", "-am", "Only subheadings")
+        start = self.git("rev-parse", "HEAD")
+        result = self.release()
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("nothing to release", result.stderr)
+        self.assert_untouched(start)
+        (self.repo / "CHANGELOG.md").write_text("# Changelog\n\n## 0.1.0 — unreleased\n\n### Added\n\n- Thing.\n")
+        self.git("commit", "-q", "-am", "A change under a subheading")
+        result = self.release()
+        self.assertEqual(0, result.returncode, result.stderr)
 
 
 if __name__ == "__main__":
