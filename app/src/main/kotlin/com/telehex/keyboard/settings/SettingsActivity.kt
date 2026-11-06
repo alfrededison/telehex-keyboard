@@ -224,6 +224,24 @@ class SettingsActivity : Activity() {
         fallbackPicker = picker
         col.addButton("Chọn app dùng chế độ dự phòng…") { picker.show(prefs.fallbackPackages) }
         picker.restoreState(savedInstanceState)
+
+        col.add(TextView(this).apply {
+            text = versionText()
+            textSize = 12f
+            gravity = Gravity.CENTER
+            setTextIsSelectable(true) // để chép khi báo lỗi
+            alpha = 0.6f
+            setPadding(0, dp(28), 0, 0)
+        })
+    }
+
+    /** "TeleHex 0.1.1-dev.3 (build 10100003)": bản dev có hậu tố -dev.N do tools/version.sh đặt. */
+    private fun versionText(): String {
+        @Suppress("DEPRECATION")
+        val info = packageManager.getPackageInfo(packageName, 0)
+        @Suppress("DEPRECATION")
+        val code = if (android.os.Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
+        return "TeleHex ${info.versionName} (build $code)"
     }
 
     private var fallbackPicker: AppPicker? = null
