@@ -42,6 +42,8 @@ class SettingsActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(16), dp(20), dp(32))
         }
+        content = col
+        savedInstanceState?.getStringArrayList(STATE_EXPANDED)?.let { expanded.addAll(it) }
         // Có id để giữ vị trí cuộn khi recreate() sau khi đổi giao diện
         setContentView(ScrollView(this).apply { id = R.id.settings_scroll; addView(col) })
 
@@ -49,19 +51,22 @@ class SettingsActivity : Activity() {
             text = "TeleHex không xin quyền INTERNET. Không gửi dữ liệu gõ đi đâu; mọi xử lý nằm trên máy."
             textSize = 14f
         })
-
-        col.add(header("Bật bàn phím"))
-        col.addButton("1. Bật TeleHex trong Cài đặt hệ thống") { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }
-        col.addButton("2. Chọn TeleHex làm bàn phím hiện tại") { (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker() }
+        // Luôn hiện, để thử ngay tuỳ chọn vừa đổi
         col.add(EditText(this).apply {
             hint = "Thử gõ ở đây"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
             minLines = 2
         })
 
-        col.add(header("Telex"))
-        col.add(label("Kiểu đặt dấu"))
-        col.add(RadioGroup(this).apply {
+        // Chưa dùng TeleHex thì mở sẵn hướng dẫn bật
+        if (savedInstanceState == null && !isCurrentIme()) expanded.add("Bật bàn phím")
+        var sec = section("Bật bàn phím")
+        sec.addButton("1. Bật TeleHex trong Cài đặt hệ thống") { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }
+        sec.addButton("2. Chọn TeleHex làm bàn phím hiện tại") { (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker() }
+
+        sec = section("Telex")
+        sec.add(label("Kiểu đặt dấu"))
+        sec.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
             isSaveEnabled = false
             val old = RadioButton(context).apply { text = "Cũ (hòa, thúy)"; id = View.generateViewId() }
@@ -70,17 +75,17 @@ class SettingsActivity : Activity() {
             check(if (prefs.newToneStyle) new.id else old.id)
             setOnCheckedChangeListener { _, id -> prefs.newToneStyle = id == new.id }
         })
-        col.add(switch("L cũng là dấu huyền (lal → là)", prefs.lAsGrave) { prefs.lAsGrave = it })
-        col.add(switch("Tự viết hoa chữ đầu câu", prefs.autoCapitalize) { prefs.autoCapitalize = it })
-        col.add(switch("Tự khôi phục từ tiếng Anh (windows không thành ưindows)", prefs.englishFallback) { prefs.englishFallback = it })
+        sec.add(switch("L cũng là dấu huyền (lal → là)", prefs.lAsGrave) { prefs.lAsGrave = it })
+        sec.add(switch("Tự viết hoa chữ đầu câu", prefs.autoCapitalize) { prefs.autoCapitalize = it })
+        sec.add(switch("Tự khôi phục từ tiếng Anh (windows không thành ưindows)", prefs.englishFallback) { prefs.englishFallback = it })
 
-        col.add(header("Bàn phím"))
-        col.addButton("Sắp xếp phím") { startActivity(Intent(context, LayoutEditorActivity::class.java)) }
-        col.addButton("Ký tự vuốt xuống") {
+        sec = section("Bàn phím")
+        sec.addButton("Sắp xếp phím") { startActivity(Intent(context, LayoutEditorActivity::class.java)) }
+        sec.addButton("Ký tự vuốt xuống") {
             startActivity(Intent(context, LayoutEditorActivity::class.java).putExtra(LayoutEditorActivity.EXTRA_LAYER, EditLayer.SWIPE.name))
         }
-        col.add(label("Chế độ một tay (lưới thu còn ~80%, lục giác vẫn đều)"))
-        col.add(RadioGroup(this).apply {
+        sec.add(label("Chế độ một tay (lưới thu còn ~80%, lục giác vẫn đều)"))
+        sec.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
             isSaveEnabled = false
             val opts = listOf("Tắt", "Dồn trái", "Dồn phải")
@@ -88,10 +93,10 @@ class SettingsActivity : Activity() {
             check(buttons[prefs.oneHanded.coerceIn(0, 2)].id)
             setOnCheckedChangeListener { _, id -> prefs.oneHanded = buttons.indexOfFirst { it.id == id } }
         })
-        col.add(switch("Rung khi chạm", prefs.haptic) { prefs.haptic = it })
-        col.add(switch("Âm thanh khi chạm", prefs.sound) { prefs.sound = it })
-        col.add(label("Giao diện"))
-        col.add(RadioGroup(this).apply {
+        sec.add(switch("Rung khi chạm", prefs.haptic) { prefs.haptic = it })
+        sec.add(switch("Âm thanh khi chạm", prefs.sound) { prefs.sound = it })
+        sec.add(label("Giao diện"))
+        sec.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
             isSaveEnabled = false
             val modes = listOf("system" to "Theo hệ thống", "light" to "Sáng", "dark" to "Tối")
@@ -103,16 +108,16 @@ class SettingsActivity : Activity() {
             }
         })
         accentLabel = label("")
-        col.add(accentLabel)
+        sec.add(accentLabel)
         swatchRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(0, dp(8), 0, dp(8))
         }
-        col.add(swatchRow)
+        sec.add(swatchRow)
         refreshSwatches()
         val heightLabel = label("Khoảng trống dưới bàn phím: ${prefs.extraBottomDp} dp")
-        col.add(heightLabel)
-        col.add(SeekBar(this).apply {
+        sec.add(heightLabel)
+        sec.add(SeekBar(this).apply {
             max = 80
             progress = prefs.extraBottomDp
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -124,9 +129,9 @@ class SettingsActivity : Activity() {
             })
         })
 
-        col.add(header("Emoji và clipboard"))
-        col.add(label("Tông da mặc định (cho emoji nhận tông da)"))
-        col.add(RadioGroup(this).apply {
+        sec = section("Emoji và clipboard")
+        sec.add(label("Tông da mặc định (cho emoji nhận tông da)"))
+        sec.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
             isSaveEnabled = false
             val tones = listOf("👍", "👍🏻", "👍🏼", "👍🏽", "👍🏾", "👍🏿")
@@ -134,14 +139,14 @@ class SettingsActivity : Activity() {
             check(buttons[prefs.skinTone.coerceIn(0, 5)].id)
             setOnCheckedChangeListener { _, id -> prefs.skinTone = buttons.indexOfFirst { it.id == id } }
         })
-        col.add(switch("Lưu clipboard history (giữ phím ⚙ để mở; mục thường hết hạn sau 1 giờ, mục ghim giữ lâu)", prefs.clipboardHistory) { prefs.clipboardHistory = it })
+        sec.add(switch("Lưu clipboard history (giữ phím ⚙ để mở; mục thường hết hạn sau 1 giờ, mục ghim giữ lâu)", prefs.clipboardHistory) { prefs.clipboardHistory = it })
 
-        col.add(header("Gõ tắt"))
-        col.add(TextView(this).apply {
+        sec = section("Gõ tắt")
+        sec.add(TextView(this).apply {
             text = "Mỗi dòng một mục dạng  viết tắt = nội dung . Kích hoạt khi chạm cách. Ví dụ:\nko = không\ndc = được\n@@ = ten@email.com"
             textSize = 13f
         })
-        col.add(EditText(this).apply {
+        sec.add(EditText(this).apply {
             setText(prefs.shortcuts.entries.sortedBy { it.key }.joinToString("\n") { "${it.key} = ${it.value}" })
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
             // Đầu dòng tự viết hoa sẽ lưu "Ko" thay vì "ko"
@@ -159,58 +164,58 @@ class SettingsActivity : Activity() {
             })
         })
 
-        col.add(header("Gợi ý (không tự sửa)"))
-        col.add(TextView(this).apply {
+        sec = section("Gợi ý (không tự sửa)")
+        sec.add(TextView(this).apply {
             text = "Bàn phím không bao giờ tự đổi chữ đã gõ. Gợi ý âm tiết tiếp theo học từ chính bạn, hoàn toàn trên máy. Giữ một gợi ý để xoá nó khỏi từ điển cá nhân."
             textSize = 13f
         })
-        col.add(switch("Gợi ý âm tiết tiếp theo", prefs.predictions) { prefs.predictions = it })
-        col.add(switch("Chế độ ẩn danh (không học)", prefs.incognito) { prefs.incognito = it })
+        sec.add(switch("Gợi ý âm tiết tiếp theo", prefs.predictions) { prefs.predictions = it })
+        sec.add(switch("Chế độ ẩn danh (không học)", prefs.incognito) { prefs.incognito = it })
         val store = com.telehex.keyboard.data.PredictionStore(this)
         val packStatus = TextView(this).apply { text = packStatusText(store) }
-        col.add(packStatus)
-        col.addButton("Nạp gói ngôn ngữ (.ngram)…") {
+        sec.add(packStatus)
+        sec.addButton("Nạp gói ngôn ngữ (.ngram)…") {
             startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE); type = "*/*"
             }, REQ_PACK)
         }
-        col.addButton("Xoá gói ngôn ngữ đã nạp") { store.removePack(); packStatus.text = packStatusText(store) }
-        col.addButton("Xoá dữ liệu đã học") { store.clearPersonal(); android.widget.Toast.makeText(context, "Đã xoá từ điển cá nhân", android.widget.Toast.LENGTH_SHORT).show() }
+        sec.addButton("Xoá gói ngôn ngữ đã nạp") { store.removePack(); packStatus.text = packStatusText(store) }
+        sec.addButton("Xoá dữ liệu đã học") { store.clearPersonal(); android.widget.Toast.makeText(context, "Đã xoá từ điển cá nhân", android.widget.Toast.LENGTH_SHORT).show() }
         packStatusView = packStatus
         predictionStore = store
 
-        col.add(header("Chống bấm nhầm"))
-        col.add(switch("Học độ lệch chạm theo từng phím", prefs.learnTouchOffsets) { prefs.learnTouchOffsets = it })
-        col.add(switch("Vùng chạm động: nới vùng phím hợp lệ tiếp theo (một dạng tự sửa ngầm)", prefs.dynamicHitZones) { prefs.dynamicHitZones = it })
-        col.addButton("Xoá dữ liệu độ lệch đã học") { prefs.touchOffsets = emptyMap() }
+        sec = section("Chống bấm nhầm")
+        sec.add(switch("Học độ lệch chạm theo từng phím", prefs.learnTouchOffsets) { prefs.learnTouchOffsets = it })
+        sec.add(switch("Vùng chạm động: nới vùng phím hợp lệ tiếp theo (một dạng tự sửa ngầm)", prefs.dynamicHitZones) { prefs.dynamicHitZones = it })
+        sec.addButton("Xoá dữ liệu độ lệch đã học") { prefs.touchOffsets = emptyMap() }
 
-        col.add(header("Cử chỉ"))
-        col.add(TextView(this).apply {
+        sec = section("Cử chỉ")
+        sec.add(TextView(this).apply {
             text = "Phím cách: vuốt trái = xoá (ngắn: 1 ký tự, dài: theo từ, có bôi đen xem trước); giữ rồi kéo = di con trỏ; chạm đúp rồi giữ-kéo = chọn; vuốt phải = dán; khi có vùng chọn: vuốt lên = chép, vuốt trái = cắt. Hai ngón vuốt trái/phải = undo/redo, hai ngón giữ = chọn hết."
             textSize = 13f
         })
-        col.add(slider("Ngưỡng vuốt", "dp", 12, 60, prefs.swipeThresholdDp) { prefs.swipeThresholdDp = it })
-        col.add(slider("Giữ phím cách trước khi kéo (con trỏ)", "ms", 150, 800, prefs.holdMs) { prefs.holdMs = it })
-        col.add(slider("Giữ lâu (long-press)", "ms", 250, 1000, prefs.longPressMs) { prefs.longPressMs = it })
-        col.add(slider("Mỗi bước xoá từ / di con trỏ", "dp", 25, 100, prefs.stepDp) { prefs.stepDp = it })
-        col.add(slider("Chạm đúp phím cách", "ms", 150, 600, prefs.doubleTapMs) { prefs.doubleTapMs = it })
+        sec.add(slider("Ngưỡng vuốt", "dp", 12, 60, prefs.swipeThresholdDp) { prefs.swipeThresholdDp = it })
+        sec.add(slider("Giữ phím cách trước khi kéo (con trỏ)", "ms", 150, 800, prefs.holdMs) { prefs.holdMs = it })
+        sec.add(slider("Giữ lâu (long-press)", "ms", 250, 1000, prefs.longPressMs) { prefs.longPressMs = it })
+        sec.add(slider("Mỗi bước xoá từ / di con trỏ", "dp", 25, 100, prefs.stepDp) { prefs.stepDp = it })
+        sec.add(slider("Chạm đúp phím cách", "ms", 150, 600, prefs.doubleTapMs) { prefs.doubleTapMs = it })
 
-        col.add(header("Sao lưu / khôi phục"))
-        col.add(TextView(this).apply {
+        sec = section("Sao lưu / khôi phục")
+        sec.add(TextView(this).apply {
             text = "Một file zip gồm bố cục, ký tự vuốt xuống, gõ tắt, tuỳ chọn, dữ liệu đã học và clipboard đã ghim."
             textSize = 13f
         })
-        col.addButton("Sao lưu ra file…") {
+        sec.addButton("Sao lưu ra file…") {
             startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE); type = "application/zip"; putExtra(Intent.EXTRA_TITLE, "telehex-backup.zip")
             }, REQ_BACKUP)
         }
-        col.addButton("Khôi phục từ file…") {
+        sec.addButton("Khôi phục từ file…") {
             startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply { addCategory(Intent.CATEGORY_OPENABLE); type = "*/*" }, REQ_RESTORE)
         }
 
-        col.add(header("Tương thích"))
-        col.add(TextView(this).apply {
+        sec = section("Tương thích")
+        sec.add(TextView(this).apply {
             text = "Các app xử lý composing không ổn (Zalo, Messenger…) dùng chế độ dự phòng: chữ được ghi thẳng thay vì gạch chân. Chọn app nếu thấy gõ bị lặp hoặc mất chữ."
             textSize = 13f
         })
@@ -220,13 +225,13 @@ class SettingsActivity : Activity() {
             fallbackSummary.text = if (names.isEmpty()) "Chưa chọn app nào" else names.joinToString(", ")
         }
         refreshFallback()
-        col.add(fallbackSummary)
+        sec.add(fallbackSummary)
         val picker = AppPicker(this, "Chế độ dự phòng") {
             prefs.fallbackPackages = it
             refreshFallback()
         }
         fallbackPicker = picker
-        col.addButton("Chọn app dùng chế độ dự phòng…") { picker.show(prefs.fallbackPackages) }
+        sec.addButton("Chọn app dùng chế độ dự phòng…") { picker.show(prefs.fallbackPackages) }
         picker.restoreState(savedInstanceState)
 
         col.add(TextView(this).apply {
@@ -252,6 +257,7 @@ class SettingsActivity : Activity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
+        outState.putStringArrayList(STATE_EXPANDED, ArrayList(expanded))
         fallbackPicker?.saveState(outState)
     }
 
@@ -370,11 +376,62 @@ class SettingsActivity : Activity() {
         setPadding(0, dp(12), 0, dp(2))
     }
 
-    private fun header(text: String) = TextView(this).apply {
-        this.text = text
-        textSize = 18f
-        setTypeface(typeface, android.graphics.Typeface.BOLD)
-        setPadding(0, dp(20), 0, dp(6))
+    private lateinit var content: LinearLayout
+    /** Tiêu đề các section đang mở; giữ qua recreate() (đổi giao diện, khôi phục sao lưu). */
+    private val expanded = LinkedHashSet<String>()
+
+    /**
+     * Section thu gọn được: chạm tiêu đề để mở / đóng. Trả về thân section để thêm tuỳ chọn vào.
+     * Màn dài nên mặc định đóng hết, trừ những section đã mở trước khi recreate().
+     */
+    private fun section(title: String): LinearLayout {
+        val body = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, 0, 0, dp(12))
+            visibility = if (title in expanded) View.VISIBLE else View.GONE
+        }
+        val chevron = TextView(this).apply { textSize = 16f; alpha = 0.6f }
+        fun mark() { chevron.text = if (body.visibility == View.VISIBLE) "▴" else "▾" }
+        mark()
+        val head = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            minimumHeight = dp(56)
+            isClickable = true
+            isFocusable = true
+            background = selectableBackground()
+            addView(TextView(context).apply {
+                text = title
+                textSize = 18f
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+                setTextColor(currentTextColor(android.R.attr.textColorPrimary))
+            }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(chevron)
+            setOnClickListener {
+                val open = body.visibility != View.VISIBLE
+                body.visibility = if (open) View.VISIBLE else View.GONE
+                if (open) expanded.add(title) else expanded.remove(title)
+                mark()
+            }
+        }
+        content.add(divider())
+        content.add(head)
+        content.add(body)
+        return body
+    }
+
+    private fun isCurrentIme(): Boolean =
+        Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)?.startsWith("$packageName/") == true
+
+    private fun divider() = View(this).apply {
+        setBackgroundColor(currentTextColor(android.R.attr.textColorPrimary))
+        alpha = 0.12f
+        minimumHeight = 1
+    }
+
+    private fun selectableBackground(): android.graphics.drawable.Drawable? {
+        val ta = obtainStyledAttributes(intArrayOf(android.R.attr.selectableItemBackground))
+        try { return ta.getDrawable(0) } finally { ta.recycle() }
     }
 
     @Suppress("DEPRECATION")
@@ -385,5 +442,8 @@ class SettingsActivity : Activity() {
         setOnCheckedChangeListener { _, v -> onChange(v) }
     }
 
-    companion object { private const val REQ_PACK = 11; private const val REQ_BACKUP = 12; private const val REQ_RESTORE = 13 }
+    companion object {
+        private const val REQ_PACK = 11; private const val REQ_BACKUP = 12; private const val REQ_RESTORE = 13
+        private const val STATE_EXPANDED = "expanded"
+    }
 }
