@@ -17,7 +17,7 @@ class ReleaseTest(unittest.TestCase):
         self.repo = Path(self.tmp.name)
         (self.repo / "app").mkdir()
         (self.repo / "tools").mkdir()
-        for name in ("release.sh", "version.sh"):
+        for name in ("release.sh", "version.sh", "release_notes.py"):
             shutil.copy(TOOLS / name, self.repo / "tools" / name)
         (self.repo / "app/build.gradle.kts").write_text('plugins { }\n\nval appVersion = "0.1.0"\n')
         (self.repo / "CHANGELOG.md").write_text("# Changelog\n\n## 0.1.0 — unreleased\n\n- First.\n")
@@ -260,6 +260,42 @@ class ReleaseTest(unittest.TestCase):
         self.git("commit", "-q", "-am", "A change under a subheading")
         result = self.release()
         self.assertEqual(0, result.returncode, result.stderr)
+
+    def notes(self, *args):
+        return subprocess.run(["python3", "tools/release_notes.py", *args], cwd=self.repo,
+                              text=True, capture_output=True)
+
+    def test_notes_list_the_changelog_and_commits_without_version_bumps(self):
+        self.assertEqual(0, self.release().returncode)  # v0.1.0
+        result = self.notes("v0.1.0", "o/r")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertTrue(result.stdout.startswith("## Thay đổi\n\n- First.\n\n## Commits\n\n- Initial ("))
+        self.assertNotIn("Full Changelog", result.stdout)  # no previous release to compare with
+        self.git("tag", "dev")  # the moving prerelease tag is never the previous release
+        self.git("commit", "-q", "--allow-empty", "-m", "Fix a thing")
+        self.add_change()
+        self.assertEqual(0, self.release().returncode)  # v0.1.1
+        self.git("commit", "-q", "--allow-empty", "-m", "After the release")
+        result = self.notes("v0.1.1", "o/r")
+        self.assertEqual(0, result.returncode, result.stderr)
+        sha = lambda subject: self.git("log", "--format=%h", "--grep=^%s$" % subject)
+        self.assertEqual(
+            "## Thay đổi\n\n- More.\n\n## Commits\n\n"
+            "- Fix a thing (%s)\n- More (%s)\n\n"
+            "**Full Changelog**: https://github.com/o/r/compare/v0.1.0...v0.1.1\n" % (sha("Fix a thing"), sha("More")),
+            result.stdout)
+
+    def test_notes_read_the_changelog_at_the_tag_and_refuse_other_tags(self):
+        self.assertEqual(0, self.release().returncode)
+        (self.repo / "CHANGELOG.md").write_text("# Changelog\n")  # the working tree no longer has it
+        self.assertIn("- First.", self.notes("v0.1.0").stdout)
+        result = self.notes("dev")
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("not a release tag", result.stderr)
+        self.git("tag", "v0.0.9", "HEAD~2")  # "Initial": its CHANGELOG has no 0.0.9 section
+        result = self.notes("v0.0.9")
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("no '## 0.0.9' section", result.stderr)
 
 
 if __name__ == "__main__":

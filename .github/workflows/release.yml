@@ -1,4 +1,6 @@
 # Pushing a tag vX.Y.Z builds the release APK and opens a draft release for a maintainer to publish.
+# Its notes are the CHANGELOG.md section plus the commits since the previous release, without the
+# version bumps (tools/release_notes.py).
 name: release
 
 on:
@@ -14,6 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # Full history and tags: the release notes list the commits since the previous release.
+          fetch-depth: 0
           # The gh steps use GH_TOKEN; keep the write token out of .git/config while Gradle runs.
           persist-credentials: false
       - uses: actions/setup-java@v4
@@ -25,6 +29,10 @@ jobs:
         run: |
           RELEASE=1 . tools/version.sh
           test "v$VERSION_NAME" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME, appVersion $VERSION_NAME"; exit 1; }
+      - name: Release notes from CHANGELOG.md and the commits since the previous release
+        run: |
+          python3 tools/release_notes.py "$GITHUB_REF_NAME" "$GITHUB_REPOSITORY" > "$RUNNER_TEMP/notes.md"
+          cat "$RUNNER_TEMP/notes.md"
       - name: Tests and lint
         run: |
           ./gradlew --no-daemon :telex:test :app:testDebugUnitTest :app:lintDebug
@@ -52,5 +60,5 @@ jobs:
         run: |
           cp out/TeleHex.apk "out/TeleHex-$GITHUB_REF_NAME.apk"
           (cd out && sha256sum "TeleHex-$GITHUB_REF_NAME.apk" > "TeleHex-$GITHUB_REF_NAME.apk.sha256")
-          gh release create "$GITHUB_REF_NAME" --draft --title "TeleHex $GITHUB_REF_NAME" --generate-notes \
+          gh release create "$GITHUB_REF_NAME" --draft --title "TeleHex $GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md" \
             "out/TeleHex-$GITHUB_REF_NAME.apk" "out/TeleHex-$GITHUB_REF_NAME.apk.sha256"
