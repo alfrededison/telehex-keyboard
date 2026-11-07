@@ -85,6 +85,11 @@ class SettingsActivity : Activity() {
         })
         sec.add(switch("Rung khi chạm", prefs.haptic) { prefs.haptic = it })
         sec.add(switch("Âm thanh khi chạm", prefs.sound) { prefs.sound = it })
+        sec.add(label("Tiếng phím dùng âm lượng Hệ thống. Nếu không nghe tiếng, hãy tăng âm lượng này trong Cài đặt của máy.").apply {
+            textSize = 13f
+            setTextColor(currentTextColor(android.R.attr.textColorSecondary))
+            setPadding(0, dp(4), 0, dp(2))
+        })
         sec.add(label("Giao diện"))
         sec.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
