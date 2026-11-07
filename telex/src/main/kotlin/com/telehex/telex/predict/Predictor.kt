@@ -1,6 +1,7 @@
 package com.telehex.telex.predict
 
 import com.telehex.telex.ToneRules
+import com.telehex.telex.CommonSyllables
 
 /**
  * Gợi ý âm tiết tiếp theo, trộn mô hình gốc (gói ngôn ngữ) với mô hình cá nhân theo kiểu lùi bậc
@@ -31,6 +32,26 @@ class Predictor(
     var personal: PersonalModel = PersonalModel(),
     private val phrases: Map<String, List<String>> = Phrases.TABLE,
 ) {
+    /** Từ vựng cho vuốt: dùng được ngay khi chưa nạp gói, mở rộng bằng gói và từ đã học. */
+    fun glideWords(context: List<String>): List<NgramModel.Scored> {
+        val ctx = context.takeLast(2).map { it.lowercase() }
+        val scorer = base?.scorer(ctx)
+        val bi = ctx.lastOrNull()?.let { personal.bigram(it) }
+        val tri = if (ctx.size == 2) personal.trigram(ctx[0], ctx[1]) else null
+        val phrases = ctx.lastOrNull()?.let { phrases[it] }.orEmpty()
+        val words = LinkedHashSet(CommonSyllables.RANK.keys)
+        words += personal.vocabulary()
+        words += (base as? BinaryNgramModel)?.vocabulary.orEmpty()
+        scorer?.let { words += it.candidates(100) }
+        words += phrases
+        return words.map { word ->
+            val rank = CommonSyllables.rankOf(word)
+            val fallback = if (rank == Int.MAX_VALUE) 0.00001 else 0.01 / (1 + rank / 40.0)
+            val phrase = if (word in phrases) 0.4 else 0.0
+            NgramModel.Scored(word, maxOf(fallback, mixed(word, ctx.isEmpty(), scorer, bi, tri)) + phrase)
+        }
+    }
+
     /**
      * Gợi ý âm tiết tiếp theo sau [context]. Nếu [prefix] khác rỗng (đang gõ dở), chỉ giữ ứng viên
      * bắt đầu bằng prefix (so sánh sau khi bỏ dấu thanh).

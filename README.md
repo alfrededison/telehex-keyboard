@@ -25,6 +25,7 @@ Z   X   C   V   B   N   M
 | Cử chỉ | Hành vi |
 |---|---|
 | Chạm phím chữ | Gõ Telex (`tieengs vieetj` → tiếng việt) |
+| Lướt qua ít nhất **3 phím chữ khác nhau** rồi nhả tay | Slide to type: hiện các từ phù hợp với đường vuốt, chạm một gợi ý để chèn kèm khoảng trắng. Lướt chữ không dấu (`t → i → e → n → g` → tiếng) hoặc chuỗi Telex, mỗi lần một âm tiết. Có nét vuốt trên bàn phím; không tự chèn từ |
 | Vuốt **lên** phím chữ | Đảo hoa/thường như Gboard: nhãn phím đang thường thì ra chữ hoa (giữ hoa khi biến đổi: vuốt lên D rồi gõ d → Đ), đang hoa (đầu câu) thì ra chữ thường |
 | Vuốt **xuống** phím chữ / `,` / `.` | Ký tự phụ hiện nhỏ phía dưới chữ (số, emoji, ký hiệu; tuỳ biến từng phím trong Cài đặt) |
 | Chạm phím ↵ | Ô có hành động (Tìm, Gửi…) thì làm hành động đó, ngược lại xuống dòng |
@@ -61,6 +62,8 @@ Bàn phím **không bao giờ tự đổi chữ** đã gõ. Thanh trên bàn ph�
 Chạm một gợi ý thì chèn luôn kèm khoảng trắng; gõ dấu câu (`. , ! ? : ; … ) ] }`) ngay sau đó thì khoảng trắng này bị xoá ("Tối" rồi `,` → "Tối,").
 
 Chuỗi phím không thể là tiếng Việt thì hiện đúng phím đã gõ (`windows` không thành `ưindows`) và được tô nhạt.
+
+**Slide to type** bật mặc định, tắt được trong Cài đặt → Gợi ý. Hoạt động ở lớp chữ tiếng Việt, theo profile và kích thước một tay đang dùng; tắt ở EN, ô mật khẩu và tìm emoji. Chỉ nhận khi đường lướt đi qua ít nhất **3 phím chữ khác nhau**, áp dụng cùng một quy tắc cho mọi hướng; lướt qua 1–2 phím vẫn là cử chỉ thường (vuốt lên/xuống đổi hoa/gõ ký tự phụ). Đếm phím đi qua, không đếm số ký tự của từ: `o → w → r` vẫn có thể gợi ý “ở”. Giữ yên rồi kéo vẫn đổi chỗ phím. Có sẵn vốn âm tiết phổ biến để dùng offline ngay; từ đã học và gói `.ngram` đã nạp bổ sung từ vựng và ngữ cảnh. Từ ngoài vốn từ hiện có có thể chưa nhận ra. ⌫ bỏ gợi ý vuốt đang chờ; chọn gợi ý khi đang soạn dở sẽ thay âm tiết đó.
 
 ### Gói ngôn ngữ (tuỳ chọn)
 

@@ -197,6 +197,11 @@ class SettingsActivity : Activity() {
             textSize = 13f
         })
         sec.add(switch("Gợi ý âm tiết tiếp theo", prefs.predictions) { prefs.predictions = it })
+        sec.add(switch("Slide to type: lướt qua các phím chữ để gợi ý từ", prefs.glideTyping) { prefs.glideTyping = it })
+        sec.add(TextView(this).apply {
+            text = "Lướt qua ít nhất 3 phím chữ khác nhau, dùng chữ không dấu (t → i → e → n → g) hoặc chuỗi Telex; nhả tay rồi chạm từ gợi ý để chèn. Mỗi lần lướt một âm tiết. Chỉ qua 1–2 phím thì vẫn là cử chỉ thường, gồm vuốt lên/xuống để gõ hoa/ký tự phụ. Dùng ở chế độ tiếng Việt."
+            textSize = 13f
+        })
         sec.add(switch("Chế độ ẩn danh (không học)", prefs.incognito) { prefs.incognito = it })
         val store = com.telehex.keyboard.data.PredictionStore(this)
         val packStatus = TextView(this).apply { text = packStatusText(store) }

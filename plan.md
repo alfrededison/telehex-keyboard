@@ -1,6 +1,6 @@
 # Plan v2: Bàn phím Telex tổ ong (Android)
 
-> v1 (layout, engine Telex, tuỳ biến, phát hành) được giữ nguyên ở các mục 1–8 và lưu riêng trong `plan-v1.md`. v2 thêm bàn phím số dạng dialpad (mục 1.5) và mục 9: tính năng nâng cao. Gõ vuốt (glide) tạm hoãn; không dùng autocorrect.
+> v1 (layout, engine Telex, tuỳ biến, phát hành) được giữ nguyên ở các mục 1–8 và lưu riêng trong `plan-v1.md`. v2 thêm bàn phím số dạng dialpad (mục 1.5) và mục 9: tính năng nâng cao. Gõ vuốt (glide) gợi ý để người dùng chọn; không dùng autocorrect.
 
 Bàn phím tiếng Việt gõ **Telex** trên lưới **lục giác đều 7 cột**, giữ tinh thần QWERTY nhưng phím to hơn ~45% so với QWERTY 10 cột. Thao tác phụ (xoá, chữ hoa, ký tự phụ) chuyển sang cử chỉ vuốt.
 
@@ -287,7 +287,7 @@ Mục này bổ sung các tính năng của các bộ gõ khác, sau khi khảo 
 
 ### 9.2 Cử chỉ chức năng
 
-**Nguyên tắc:** cử chỉ vuốt chỉ dùng cho **chức năng chỉnh sửa**, không dùng để nhập chữ (không gõ vuốt). Các flick trên từng phím của v1 vẫn giữ: vuốt lên ra chữ hoa, vuốt xuống ra ký tự phụ.
+**Nguyên tắc:** cử chỉ trên phím cách dùng cho **chức năng chỉnh sửa**. Lướt qua nhiều phím chữ dùng cho gõ vuốt (9.3). Các flick dọc ngắn trên từng phím của v1 vẫn giữ: vuốt lên ra chữ hoa, vuốt xuống ra ký tự phụ.
 
 Hầu hết cử chỉ bắt đầu từ **phím cách**, vì đây là phím lớn nhất và ngón cái luôn ở gần. Phân biệt các cử chỉ bằng thời gian giữ, tốc độ và khoảng cách.
 
@@ -329,9 +329,11 @@ Hầu hết cử chỉ bắt đầu từ **phím cách**, vì đây là phím l�
 - Thao tác hai ngón luôn được ưu tiên hơn một ngón.
 - Mọi ngưỡng (thời gian, vận tốc, khoảng cách) đặt trong Cài đặt để chỉnh theo tay từng người.
 
-### 9.3 Gõ vuốt: tạm hoãn
+### 9.3 Gõ vuốt: slide to type
 
-Để sau v2. Nếu làm lại, ý tưởng đã khảo sát: mỗi lần vuốt là một âm tiết không dấu, dùng mô hình ngôn ngữ để thêm dấu, và hiện 3 ứng viên. Không có thư viện mã nguồn mở dùng được (HeliBoard phải nạp thư viện đóng của Google), nên sẽ phải tự viết.
+Mỗi lần lướt là một âm tiết: dùng chữ không dấu hoặc chuỗi Telex. Nhả tay hiện tối đa 6 ứng viên, chạm để chèn kèm khoảng trắng; không tự chèn. So khớp hình dạng đường vuốt bằng dynamic time warping trên tâm phím của profile đang dùng, kết hợp ngữ cảnh từ mô hình cá nhân/gói ngôn ngữ. Có vốn âm tiết phổ biến để dùng ngay khi chưa nạp gói. Toàn bộ xử lý offline, không thêm thư viện glide đóng.
+
+Vẽ nét vuốt, đọc cả lịch sử MOVE để không mất đường đi khi sự kiện bị gộp. Chỉ kích hoạt khi đi qua ít nhất 3 phím chữ khác nhau và đủ quãng đường để loại rung tay, cùng quy tắc cho mọi hướng. Qua 1–2 phím vẫn là cử chỉ thường, gồm flick lên/xuống; đếm phím đi qua thay vì số ký tự của từ (`o → w → r` → “ở” vẫn hợp lệ). Giữ yên đủ lâu thì chuyển sang kéo đổi chỗ phím; thêm ngón thứ hai huỷ nhận diện glide. Chỉ bật ở lớp chữ tiếng Việt ngoài ô mật khẩu/tìm emoji. Bật mặc định, tắt được trong Cài đặt › Gợi ý. ⌫ bỏ gợi ý đang chờ; nếu đang soạn dở thì từ được chọn thay âm tiết đang soạn.
 
 ### 9.4 Gợi ý từ và gợi ý sửa lỗi (không autocorrect)
 
@@ -424,7 +426,7 @@ Chi tiết từng phần:
 - [x] Voice qua IME ngoài.
 - [ ] Nạp mô hình transformer do người dùng cung cấp.
 - [x] Sao lưu / khôi phục.
-- [ ] Gõ vuốt (xem 9.3).
+- [x] Gõ vuốt (xem 9.3).
 
 ### 9.10 License khi tham khảo mã
 

@@ -14,6 +14,7 @@ import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import com.telehex.keyboard.layout.HexGeometry
+import com.telehex.telex.predict.GlideDecoder.Point
 import kotlin.math.hypot
 
 /**
@@ -31,6 +32,7 @@ open class KeyboardView @JvmOverloads constructor(
         fun onKeyCancel(key: Key)
         fun onMultiTouchStart() {}
         fun onTwoFinger(gesture: Gesture) {}
+        fun onGlide(points: List<Point>, centers: Map<Char, Point>) {}
         /** Giữ đủ lâu: [key] nhấc lên, sẵn sàng kéo sang phím khác. */
         fun onKeyLift(key: Key) {}
         /** Kéo [from] thả lên [to]: đổi chỗ hai phím. Không phím nào được gõ. */
@@ -38,6 +40,24 @@ open class KeyboardView @JvmOverloads constructor(
     }
 
     var listener: Listener? = null
+
+    /** Chỉ bật ở lớp chữ tiếng Việt, ngoài ô mật khẩu/tìm emoji. */
+    var canGlide: (() -> Boolean)? = null
+    private var glide: GlideTrace? = null
+    private var glidePointer = -1
+    private var glideLast: Point? = null
+    private val glidePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
+
+    fun cancelGlide() {
+        glide = null
+        glidePointer = -1
+        glideLast = null
+        invalidate()
+    }
 
     var theme: Theme = Theme.LIGHT
         set(value) { field = value; invalidate() }
@@ -107,6 +127,16 @@ open class KeyboardView @JvmOverloads constructor(
             if (hapticEnabled) performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             if (soundEnabled) audio.playSoundEffect(AudioManager.FX_KEYPRESS_STANDARD, 0.5f)
             listener?.onKeyDown(key)
+            if (gestures.activeCount == 1 && key.isLetter && canGlide?.invoke() == true) {
+                val down = lastDown
+                val w = geometry?.w
+                if (down != null && w != null && w > 0) {
+                    val p = Point(down[0] / w, down[1] / w)
+                    glide = GlideTrace(p, key.code[0])
+                    glidePointer = pointerId
+                    glideLast = p
+                }
+            }
             invalidate()
         }
 
@@ -125,11 +155,12 @@ open class KeyboardView @JvmOverloads constructor(
         }
 
         override fun onCancel(pointerId: Int) {
+            downPoints.remove(pointerId)
             pressed.remove(pointerId)?.let { listener?.onKeyCancel(it) }
             invalidate()
         }
 
-        override fun onMultiTouchStart() { cancelDrag(); listener?.onMultiTouchStart() }
+        override fun onMultiTouchStart() { cancelDrag(); cancelGlide(); listener?.onMultiTouchStart() }
         override fun onTwoFinger(gesture: Gesture) { listener?.onTwoFinger(gesture) }
     }
 
@@ -169,6 +200,7 @@ open class KeyboardView @JvmOverloads constructor(
         val d = drag ?: return@Runnable
         if (gestures.activeCount != 1) { drag = null; return@Runnable }
         d.lifted = true
+        cancelGlide()
         parent?.requestDisallowInterceptTouchEvent(true)
         if (hapticEnabled) performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         listener?.onKeyLift(d.key)
@@ -238,6 +270,7 @@ open class KeyboardView @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         cancelDrag()
+        cancelGlide()
         super.onDetachedFromWindow()
     }
 
@@ -388,6 +421,17 @@ open class KeyboardView @JvmOverloads constructor(
             }
         }
         if (lifted != null) drawFloatingKey(canvas, lifted.key, lifted.x, lifted.y)
+        glide?.takeIf { it.active }?.let { trace ->
+            val w = geometry?.w ?: return@let
+            val path = Path()
+            trace.points.forEachIndexed { i, p ->
+                if (i == 0) path.moveTo(p.x * w, p.y * w) else path.lineTo(p.x * w, p.y * w)
+            }
+            glidePaint.color = theme.chipActiveBg
+            glidePaint.alpha = 190
+            glidePaint.strokeWidth = dp(5f)
+            canvas.drawPath(path, glidePaint)
+        }
         drawOverlay(canvas)
     }
 
@@ -403,6 +447,56 @@ open class KeyboardView @JvmOverloads constructor(
 
     private var lastDown: FloatArray? = null
 
+    private fun handleGlide(event: MotionEvent): Boolean {
+        val trace = glide ?: return false
+        val a = event.actionMasked
+        if (a == MotionEvent.ACTION_POINTER_DOWN || a == MotionEvent.ACTION_CANCEL) {
+            val consumed = trace.active
+            cancelGlide()
+            if (consumed && a == MotionEvent.ACTION_POINTER_DOWN) swallowUntilUp = true
+            return consumed
+        }
+        if (a != MotionEvent.ACTION_MOVE && a != MotionEvent.ACTION_UP) return false
+        val i = event.findPointerIndex(glidePointer)
+        val w = geometry?.w ?: return false
+        if (i < 0 || w <= 0) return false
+        val wasActive = trace.active
+        fun sample(x: Float, y: Float) {
+            val point = Point(x / w, y / w)
+            val previous = glideLast ?: point
+            // Nối các mẫu xa nhau để không bỏ phím khi Android gộp sự kiện MOVE.
+            val steps = (previous.distance(point) / 0.15f).toInt().coerceIn(1, 128)
+            for (step in 1..steps) {
+                val t = step.toFloat() / steps
+                val p = Point(previous.x + (point.x - previous.x) * t, previous.y + (point.y - previous.y) * t)
+                // Dùng hình học thật, không dùng vùng chạm động dành cho gõ Telex từng phím.
+                val key = geometry?.cellAt(p.x * w, p.y * w)?.let { cellToKey[it] }
+                trace.add(p, key?.takeIf { it.isLetter }?.code?.first())
+            }
+            glideLast = point
+        }
+        for (h in 0 until event.historySize) sample(event.getHistoricalX(i, h), event.getHistoricalY(i, h))
+        sample(event.getX(i), event.getY(i))
+        if (trace.active && !wasActive) {
+            cancelDrag()
+            gestures.drop(glidePointer)
+            downPoints.remove(glidePointer)
+            pressed.remove(glidePointer)?.let { listener?.onKeyCancel(it) }
+            parent?.requestDisallowInterceptTouchEvent(true)
+        }
+        val consumed = trace.active
+        if (a == MotionEvent.ACTION_UP) {
+            val points = trace.points.toList()
+            val centers = drawn.filter { it.key.isLetter }.associate {
+                it.key.code[0] to Point(it.center.x / w, it.center.y / w)
+            }
+            cancelGlide()
+            if (consumed) listener?.onGlide(points, centers)
+        }
+        if (consumed) invalidate()
+        return consumed
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val a = event.actionMasked
@@ -416,6 +510,7 @@ open class KeyboardView @JvmOverloads constructor(
             return true
         }
         if (handleDrag(event)) return true
+        if (handleGlide(event)) return true
         return gestures.onTouch(event, ::keyAt, gestureListener)
     }
 }

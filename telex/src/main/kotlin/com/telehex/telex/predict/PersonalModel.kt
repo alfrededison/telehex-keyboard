@@ -130,6 +130,8 @@ class PersonalModel {
 
     fun unigramCount(w: String): Int = ids[w]?.let { uni[it] } ?: 0
 
+    internal fun vocabulary(): List<String> = words.indices.filter { uni[it] > 0 }.map { words[it] }
+
     /** Các âm tiết đứng ngay sau [prev]; null nếu chưa từng gõ gì sau nó. */
     fun bigram(prev: String): Followers? = ids[prev]?.let { bi.getOrNull(it) }?.let { Followers(it) }
 

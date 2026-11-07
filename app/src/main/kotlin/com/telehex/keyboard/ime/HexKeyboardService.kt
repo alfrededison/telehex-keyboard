@@ -23,6 +23,7 @@ import com.telehex.keyboard.settings.SettingsActivity
 import com.telehex.telex.Corrector
 import com.telehex.telex.TelexDecomposer
 import com.telehex.telex.TelexEngine
+import com.telehex.telex.predict.GlideDecoder
 
 class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     SharedPreferences.OnSharedPreferenceChangeListener {
@@ -45,6 +46,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private lateinit var spaceGestures: SpaceGestures
     private var corrector: Corrector? = null
     private lateinit var predictions: PredictionStore
+    private val glideDecoder = GlideDecoder()
+    private var glideSuggestions: List<String> = emptyList()
     /** Các âm tiết vừa chốt trong ô nhập hiện tại (ngữ cảnh dự đoán), gần nhất ở cuối. */
     private val recent = ArrayDeque<String>()
     private var noLearning = false
@@ -368,6 +371,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         keyboardView.theme = t
         keyboardView.hapticEnabled = prefs.haptic
         keyboardView.soundEnabled = prefs.sound
+        keyboardView.canGlide = { prefs.glideTyping && mode == Mode.ABC && telexEnabled && !emojiSearch && !hasSelection() && !cursorMode }
         keyboardView.setThresholds(dpF(prefs.swipeThresholdDp), prefs.longPressMs.toLong())
         keyboardView.oneHanded = prefs.oneHanded
         keyboardView.canLift = if (prefs.dragToRearrange) ::canLift else null
@@ -391,6 +395,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     private fun refreshKeys() {
         if (!::keyboardView.isInitialized) return
+        clearGlide()
         keyboardView.keys = KeyPage.build(prefs.layout, mode, symbolPage, engine.config, prefs.swipeGrid, prefs.symbolPages, enterLabel)
         updateShift()
     }
@@ -472,6 +477,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
+        clearGlide()
         suggestionSpace = null
         if (!restarting) capsOverride = null
         engine.reset()
@@ -517,6 +523,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     override fun onFinishInput() {
         super.onFinishInput()
+        clearGlide()
+        if (::keyboardView.isInitialized) keyboardView.cancelGlide()
         spaceGestures.cancel()
         currentInputConnection?.let { sink.detach(it) }
         engine.reset()
@@ -542,6 +550,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         candidatesStart: Int, candidatesEnd: Int,
     ) {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd)
+        if (oldSelStart != newSelStart || oldSelEnd != newSelEnd) clearGlide()
         candStart = candidatesStart; candEnd = candidatesEnd
         selStart = newSelStart; selEnd = newSelEnd
         if (!engine.isEmpty) {
@@ -586,6 +595,22 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             val results = if (q.isEmpty()) prefs.recentEmoji.take(20) else EmojiData.get(this).search(q, 30)
             // Chạm ô tìm (có ✕), ⌫ khi ô tìm trống, ↵ hoặc ☺ đều bỏ tìm
             candidateBar.showSuggestions("🔍 " + q.ifEmpty { "tìm emoji…" } + "  ✕", results, onTyped = { cancelEmojiSearch() }) { insertEmoji(it); stopEmojiSearch() }
+            return
+        }
+        if (glideSuggestions.isNotEmpty()) {
+            candidateBar.showPredictions(glideSuggestions, emptyList(), onPick = { word ->
+                val auto = upperNext() && !predictions.predictor.personal.usuallyCapitalized(word)
+                clearGlide()
+                if (!engine.isEmpty) {
+                    replaceComposing(word)
+                    return@showPredictions
+                }
+                commitSyllable("$word ")
+                pushContext(word, auto)
+                suggestionSpace = "$word "
+                if (capsOverride == CapsOverride.LOWER) capsOverride = null
+                updateBar()
+            }, onPickEmoji = {}, onForget = {})
             return
         }
         if ((hasSelection() || cursorMode) && engine.isEmpty) {
@@ -838,6 +863,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     }
 
     private fun deleteBackward() {
+        if (glideSuggestions.isNotEmpty()) { clearGlide(); updateBar(); return }
         val ic = currentInputConnection ?: return
         if (engine.backspace()) { updateComposing(); return }
         if (emojiSearch) { cancelEmojiSearch(); return } // ô tìm đã trống: đừng xoá chữ trong ô nhập
@@ -995,6 +1021,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     // ---- Phím ----
 
     override fun onKeyDown(key: Key) {
+        if (glideSuggestions.isNotEmpty()) { clearGlide(); updateBar() }
         if (key.isSpace) spaceGestures.onDown(android.os.SystemClock.uptimeMillis()) else spaceGestures.noteOtherKey()
     }
 
@@ -1015,6 +1042,21 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             Gesture.LONG_PRESS -> selectAll()
             else -> {}
         }
+    }
+
+    private fun clearGlide() { glideSuggestions = emptyList() }
+
+    override fun onGlide(points: List<GlideDecoder.Point>, centers: Map<Char, GlideDecoder.Point>) {
+        if (keyboardView.canGlide?.invoke() != true) return
+        clearGlide()
+        suggestionSpace = null
+        val words = predictions.predictor.glideWords(recent.toList())
+        val typed = engine.text()
+        glideSuggestions = glideDecoder.suggest(points, centers, words, engine.config).map {
+            if (typed.isEmpty()) casedPrediction(it) else casedCompletion(it, typed)
+        }
+        if (glideSuggestions.isEmpty()) flash("Chưa nhận ra từ, thử lướt lại")
+        updateBar()
     }
 
     override fun onKeyUp(key: Key, gesture: Gesture, dx: Float, dy: Float, dt: Long) {

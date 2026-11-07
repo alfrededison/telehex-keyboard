@@ -120,6 +120,10 @@ class Prefs(context: Context) {
         get() = sp.getBoolean(KEY_PREDICTIONS, true)
         set(v) = sp.edit().putBoolean(KEY_PREDICTIONS, v).apply()
 
+    var glideTyping: Boolean
+        get() = sp.getBoolean(KEY_GLIDE, true)
+        set(v) = sp.edit().putBoolean(KEY_GLIDE, v).apply()
+
     /** Tự viết hoa chữ đầu câu. */
     var autoCapitalize: Boolean
         get() = sp.getBoolean(KEY_AUTO_CAP, true)
@@ -358,6 +362,7 @@ class Prefs(context: Context) {
         const val KEY_CLIPBOARD = "clipboard_history"
         const val KEY_SHORTCUTS = "shortcuts"
         const val KEY_PREDICTIONS = "predictions"
+        const val KEY_GLIDE = "glide_typing"
         const val KEY_INCOGNITO = "incognito"
         const val KEY_AUTO_CAP = "auto_capitalize"
         const val KEY_DYNAMIC_ZONES = "dynamic_hit_zones"
@@ -381,7 +386,7 @@ class Prefs(context: Context) {
             KEY_CUSTOM to String::class, KEY_RECENT_EMOJI to String::class,
             KEY_SWIPE_DP to Int::class, KEY_HOLD_MS to Int::class, KEY_LONG_PRESS_MS to Int::class,
             KEY_STEP_DP to Int::class, KEY_DOUBLE_TAP_MS to Int::class,
-            KEY_PREDICTIONS to Boolean::class, KEY_INCOGNITO to Boolean::class,
+            KEY_PREDICTIONS to Boolean::class, KEY_GLIDE to Boolean::class, KEY_INCOGNITO to Boolean::class,
             KEY_DYNAMIC_ZONES to Boolean::class, KEY_LEARN_OFFSETS to Boolean::class,
             KEY_ONE_HANDED to Int::class, KEY_SKIN_TONE to Int::class, KEY_CLIPBOARD to Boolean::class,
             KEY_SHORTCUTS to String::class, KEY_AUTO_CAP to Boolean::class,
