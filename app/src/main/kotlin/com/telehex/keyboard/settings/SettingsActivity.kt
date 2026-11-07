@@ -176,26 +176,11 @@ class SettingsActivity : Activity() {
 
         sec = section("shortcuts", "Gõ tắt", "Cụm từ thường dùng, gõ nhanh hơn", R.drawable.ic_settings_shortcuts)
         sec.add(TextView(this).apply {
-            text = "Mỗi dòng một mục dạng  viết tắt = nội dung . Kích hoạt khi chạm cách. Ví dụ:\nko = không\ndc = được\n@@ = ten@email.com"
+            text = "Nhập viết tắt và nội dung, bấm Tiếp để chuyển ô hoặc thêm dòng. Tự lưu, bỏ khoảng trắng thừa ở hai đầu. Khi gõ, chạm cách để bung nội dung."
             textSize = 13f
         })
-        sec.add(EditText(this).apply {
-            setText(prefs.shortcuts.entries.sortedBy { it.key }.joinToString("\n") { "${it.key} = ${it.value}" })
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
-            // Đầu dòng tự viết hoa sẽ lưu "Ko" thay vì "ko"
-            privateImeOptions = com.telehex.keyboard.ime.HexKeyboardService.NO_AUTO_CAP
-            minLines = 3
-            addTextChangedListener(object : android.text.TextWatcher {
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-                override fun afterTextChanged(s: android.text.Editable?) {
-                    prefs.shortcuts = s.toString().lines().mapNotNull { line ->
-                        val i = line.indexOf('=')
-                        if (i <= 0) null else line.substring(0, i).trim() to line.substring(i + 1).trim()
-                    }.filter { it.first.isNotEmpty() && it.second.isNotEmpty() }.toMap()
-                }
-            })
-        })
+        shortcutsEditor = ShortcutsEditor(this, prefs, savedInstanceState)
+        sec.add(shortcutsEditor!!)
 
         sec = section("predictions", "Gợi ý (không tự sửa)", "Gợi ý từ và slide to type", R.drawable.ic_settings_predictions)
         sec.add(TextView(this).apply {
@@ -293,11 +278,13 @@ class SettingsActivity : Activity() {
 
     private var fallbackPicker: AppPicker? = null
     private var englishPicker: AppPicker? = null
+    private var shortcutsEditor: ShortcutsEditor? = null
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         fallbackPicker?.saveState(outState)
         englishPicker?.saveState(outState)
+        shortcutsEditor?.saveState(outState)
     }
 
     override fun onDestroy() {

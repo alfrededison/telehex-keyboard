@@ -2,6 +2,7 @@
 
 ## 0.5.1 — unreleased
 
+- Gõ tắt dùng bảng hai cột Viết tắt / Nội dung, tự lưu và bỏ khoảng trắng thừa ở hai đầu. Phím Tiếp chuyển ô và thêm dòng; có nút xoá từng dòng, không cần gõ dấu `=`.
 - Cài đặt mặc định mở tất cả section và ghi nhớ trạng thái đóng/mở của từng section khi mở lại ứng dụng.
 - Section Cài đặt có icon nét, mô tả ngắn và khối bo góc với khoảng cách thoáng hơn, theo giao diện sáng/tối.
 
