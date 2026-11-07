@@ -46,7 +46,6 @@ class SettingsActivity : Activity() {
             setPadding(dp(20), dp(16), dp(20), dp(32))
         }
         content = col
-        savedInstanceState?.getStringArrayList(STATE_EXPANDED)?.let { expanded.addAll(it) }
         // Có id để giữ vị trí cuộn khi recreate() sau khi đổi giao diện
         setContentView(ScrollView(this).apply { id = R.id.settings_scroll; addView(col) })
 
@@ -61,13 +60,11 @@ class SettingsActivity : Activity() {
             minLines = 2
         })
 
-        // Chưa dùng TeleHex thì mở sẵn hướng dẫn bật
-        if (savedInstanceState == null && !isCurrentIme()) expanded.add("Bật bàn phím")
-        var sec = section("Bật bàn phím")
+        var sec = section("enable_keyboard", "Bật bàn phím")
         sec.addButton("1. Bật TeleHex trong Cài đặt hệ thống") { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }
         sec.addButton("2. Chọn TeleHex làm bàn phím hiện tại") { (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker() }
 
-        sec = section("Bàn phím")
+        sec = section("keyboard", "Bàn phím")
         // Đổi nhanh profile (bố cục đủ ba lớp chữ / vuốt xuống / 123); nhãn cập nhật ở onResume
         profileButton = sec.addButton("") {
             showProfilePicker(context, Profile.BUILT_IN + prefs.userProfiles, prefs.activeProfile.name) { p ->
@@ -122,7 +119,7 @@ class SettingsActivity : Activity() {
             })
         })
 
-        sec = section("Emoji và clipboard")
+        sec = section("emoji_clipboard", "Emoji và clipboard")
         sec.add(label("Tông da mặc định (cho emoji nhận tông da)"))
         sec.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
@@ -134,7 +131,7 @@ class SettingsActivity : Activity() {
         })
         sec.add(switch("Lưu clipboard history (giữ phím ⚙ để mở; mục thường hết hạn sau 1 giờ, mục ghim giữ lâu)", prefs.clipboardHistory) { prefs.clipboardHistory = it })
 
-        sec = section("Telex")
+        sec = section("telex", "Telex")
         sec.add(label("Kiểu đặt dấu"))
         sec.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
@@ -168,7 +165,7 @@ class SettingsActivity : Activity() {
         sec.addButton("Chọn app tự bật EN…") { enPicker.show(prefs.englishPackages) }
         enPicker.restoreState(savedInstanceState)
 
-        sec = section("Gõ tắt")
+        sec = section("shortcuts", "Gõ tắt")
         sec.add(TextView(this).apply {
             text = "Mỗi dòng một mục dạng  viết tắt = nội dung . Kích hoạt khi chạm cách. Ví dụ:\nko = không\ndc = được\n@@ = ten@email.com"
             textSize = 13f
@@ -191,7 +188,7 @@ class SettingsActivity : Activity() {
             })
         })
 
-        sec = section("Gợi ý (không tự sửa)")
+        sec = section("predictions", "Gợi ý (không tự sửa)")
         sec.add(TextView(this).apply {
             text = "Bàn phím không bao giờ tự đổi chữ đã gõ. Gợi ý âm tiết tiếp theo học từ chính bạn, hoàn toàn trên máy. Giữ một gợi ý để xoá nó khỏi từ điển cá nhân."
             textSize = 13f
@@ -216,12 +213,12 @@ class SettingsActivity : Activity() {
         packStatusView = packStatus
         predictionStore = store
 
-        sec = section("Chống bấm nhầm")
+        sec = section("touch_accuracy", "Chống bấm nhầm")
         sec.add(switch("Học độ lệch chạm theo từng phím", prefs.learnTouchOffsets) { prefs.learnTouchOffsets = it })
         sec.add(switch("Vùng chạm động: nới vùng phím hợp lệ tiếp theo (một dạng tự sửa ngầm)", prefs.dynamicHitZones) { prefs.dynamicHitZones = it })
         sec.addButton("Xoá dữ liệu độ lệch đã học") { prefs.touchOffsets = emptyMap() }
 
-        sec = section("Cử chỉ")
+        sec = section("gestures", "Cử chỉ")
         sec.add(TextView(this).apply {
             text = "Phím cách: vuốt trái = xoá (ngắn: 1 ký tự, dài: theo từ, có bôi đen xem trước); giữ rồi kéo = di con trỏ; chạm đúp rồi giữ-kéo = chọn; vuốt phải = dán; vuốt lên = đổi hoa/thường; vuốt xuống = bật/tắt EN (tắt Telex); khi có vùng chọn: vuốt lên = chép, vuốt trái = cắt. Hai ngón vuốt trái/phải = undo/redo, hai ngón giữ = chọn hết."
             textSize = 13f
@@ -232,7 +229,7 @@ class SettingsActivity : Activity() {
         sec.add(slider("Mỗi bước xoá từ / di con trỏ", "dp", 25, 100, prefs.stepDp) { prefs.stepDp = it })
         sec.add(slider("Chạm đúp phím cách", "ms", 150, 600, prefs.doubleTapMs) { prefs.doubleTapMs = it })
 
-        sec = section("Sao lưu / khôi phục")
+        sec = section("backup_restore", "Sao lưu / khôi phục")
         sec.add(TextView(this).apply {
             text = "Một file zip gồm bố cục, ký tự vuốt xuống, gõ tắt, tuỳ chọn, dữ liệu đã học và clipboard đã ghim."
             textSize = 13f
@@ -246,7 +243,7 @@ class SettingsActivity : Activity() {
             startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply { addCategory(Intent.CATEGORY_OPENABLE); type = "*/*" }, REQ_RESTORE)
         }
 
-        sec = section("Tương thích")
+        sec = section("compatibility", "Tương thích")
         sec.add(TextView(this).apply {
             text = "Các app xử lý composing không ổn (Zalo, Messenger…) dùng chế độ dự phòng: chữ được ghi thẳng thay vì gạch chân. Chọn app nếu thấy gõ bị lặp hoặc mất chữ."
             textSize = 13f
@@ -290,7 +287,6 @@ class SettingsActivity : Activity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putStringArrayList(STATE_EXPANDED, ArrayList(expanded))
         fallbackPicker?.saveState(outState)
         englishPicker?.saveState(outState)
     }
@@ -412,18 +408,16 @@ class SettingsActivity : Activity() {
     }
 
     private lateinit var content: LinearLayout
-    /** Tiêu đề các section đang mở; giữ qua recreate() (đổi giao diện, khôi phục sao lưu). */
-    private val expanded = LinkedHashSet<String>()
 
     /**
      * Section thu gọn được: chạm tiêu đề để mở / đóng. Trả về thân section để thêm tuỳ chọn vào.
-     * Màn dài nên mặc định đóng hết, trừ những section đã mở trước khi recreate().
+     * Mặc định mở; lưu trạng thái thu gọn theo mã cố định để giữ khi mở lại hoặc đổi tên tiêu đề.
      */
-    private fun section(title: String): LinearLayout {
+    private fun section(sectionId: String, title: String): LinearLayout {
         val body = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, 0, 0, dp(12))
-            visibility = if (title in expanded) View.VISIBLE else View.GONE
+            visibility = if (sectionId in prefs.collapsedSettingsSections) View.GONE else View.VISIBLE
         }
         val chevron = TextView(this).apply { textSize = 16f; alpha = 0.6f }
         fun mark() { chevron.text = if (body.visibility == View.VISIBLE) "▴" else "▾" }
@@ -445,7 +439,11 @@ class SettingsActivity : Activity() {
             setOnClickListener {
                 val open = body.visibility != View.VISIBLE
                 body.visibility = if (open) View.VISIBLE else View.GONE
-                if (open) expanded.add(title) else expanded.remove(title)
+                prefs.collapsedSettingsSections = if (open) {
+                    prefs.collapsedSettingsSections - sectionId
+                } else {
+                    prefs.collapsedSettingsSections + sectionId
+                }
                 mark()
             }
         }
@@ -461,9 +459,6 @@ class SettingsActivity : Activity() {
     }
 
     private fun showActiveProfile() { profileButton.text = "Profile: ${prefs.activeProfile.name}  ▾" }
-
-    private fun isCurrentIme(): Boolean =
-        Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)?.startsWith("$packageName/") == true
 
     private fun divider() = View(this).apply {
         setBackgroundColor(currentTextColor(android.R.attr.textColorPrimary))
@@ -486,6 +481,5 @@ class SettingsActivity : Activity() {
 
     companion object {
         private const val REQ_PACK = 11; private const val REQ_BACKUP = 12; private const val REQ_RESTORE = 13
-        private const val STATE_EXPANDED = "expanded"
     }
 }

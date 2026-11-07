@@ -21,6 +21,11 @@ class Prefs(context: Context) {
     fun registerListener(l: SharedPreferences.OnSharedPreferenceChangeListener) = sp.registerOnSharedPreferenceChangeListener(l)
     fun unregisterListener(l: SharedPreferences.OnSharedPreferenceChangeListener) = sp.unregisterOnSharedPreferenceChangeListener(l)
 
+    /** Mã các section Cài đặt đã thu gọn; section chưa có trong danh sách mặc định mở. */
+    var collapsedSettingsSections: Set<String>
+        get() = sp.getStringSet(KEY_COLLAPSED_SETTINGS_SECTIONS, emptySet())?.toSet() ?: emptySet()
+        set(v) = sp.edit().putStringSet(KEY_COLLAPSED_SETTINGS_SECTIONS, v.toSet()).apply()
+
     var newToneStyle: Boolean
         get() = sp.getBoolean(KEY_NEW_TONE_STYLE, false)
         set(v) = sp.edit().putBoolean(KEY_NEW_TONE_STYLE, v).apply()
@@ -338,6 +343,7 @@ class Prefs(context: Context) {
     )
 
     companion object {
+        const val KEY_COLLAPSED_SETTINGS_SECTIONS = "collapsed_settings_sections"
         const val KEY_NEW_TONE_STYLE = "new_tone_style"
         const val KEY_L_GRAVE = "l_as_grave"
         const val KEY_EN_FALLBACK = "english_fallback"
@@ -380,6 +386,7 @@ class Prefs(context: Context) {
 
         /** Khoá → kiểu được phép khi khôi phục (sai kiểu sẽ làm getter ném ClassCastException). */
         val KNOWN_TYPES: Map<String, kotlin.reflect.KClass<*>> = mapOf(
+            KEY_COLLAPSED_SETTINGS_SECTIONS to Set::class,
             KEY_NEW_TONE_STYLE to Boolean::class, KEY_L_GRAVE to Boolean::class, KEY_EN_FALLBACK to Boolean::class,
             KEY_HAPTIC to Boolean::class, KEY_SOUND to Boolean::class, KEY_THEME to String::class, KEY_ACCENT to String::class,
             KEY_EXTRA_BOTTOM to Int::class, KEY_FALLBACK_PKGS to Set::class, KEY_EN_PKGS to Set::class, KEY_LAYOUT to String::class,
