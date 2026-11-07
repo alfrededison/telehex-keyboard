@@ -13,7 +13,8 @@ import kotlin.math.roundToInt
  *   thì tới đầu dòng);
  * - giữ ≥ holdMs rồi kéo: di con trỏ (ngang theo ký tự, dọc theo dòng);
  * - chạm đúp, giữ lần hai rồi kéo: chọn văn bản;
- * - khi có vùng chọn: vuốt lên = chép, vuốt trái = cắt; vuốt phải = dán.
+ * - khi có vùng chọn: vuốt lên = chép, vuốt trái = cắt; vuốt phải = dán;
+ * - không có vùng chọn: vuốt lên = đổi hoa/thường (khoá chữ hoa, hoặc bỏ tự viết hoa).
  */
 class SpaceGestures(private val host: Host) {
 
@@ -39,6 +40,7 @@ class SpaceGestures(private val host: Host) {
         fun copy()
         fun cut()
         fun paste()
+        fun toggleCaps()
         fun setCursorMode(on: Boolean)
         fun haptic()
         fun onSelectionGestureEnd()
@@ -100,6 +102,8 @@ class SpaceGestures(private val host: Host) {
             }
             State.DOUBLE_PENDING -> {
                 if (!moved) return
+                // Chọn chỉ kéo ngang; vuốt dọc ngay sau chạm cách là cử chỉ thường (vuốt lên = đổi hoa/thường)
+                if (ay > ax) { state = State.PENDING; return }
                 state = State.SELECT
                 val removed = host.undoLastSpace()
                 host.detachComposing()
@@ -130,7 +134,7 @@ class SpaceGestures(private val host: Host) {
                 Gesture.TAP -> { host.commitSpace(); lastTapUpTime = now }
                 Gesture.SWIPE_LEFT -> if (host.hasSelection()) host.cut() else host.deleteBackward()
                 Gesture.SWIPE_RIGHT -> host.paste()
-                Gesture.SWIPE_UP -> if (host.hasSelection()) host.copy()
+                Gesture.SWIPE_UP -> if (host.hasSelection()) host.copy() else host.toggleCaps()
                 else -> {}
             }
             State.IDLE -> {}

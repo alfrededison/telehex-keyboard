@@ -44,6 +44,10 @@ open class KeyboardView @JvmOverloads constructor(
     var shifted: Boolean = true
         set(value) { if (field != value) { field = value; invalidate() } }
 
+    /** Đang khoá chữ hoa (vuốt lên phím cách): phím cách ghi "⇪ HOA" thay cho "cách". */
+    var capsLock: Boolean = false
+        set(value) { if (field != value) { field = value; invalidate() } }
+
     /** Phím đang mờ đi (ví dụ chế độ con trỏ). */
     var dimmed: Boolean = false
         set(value) { field = value; invalidate() }
@@ -245,7 +249,7 @@ open class KeyboardView @JvmOverloads constructor(
             val hasHint = k.hint.isNotEmpty()
             if (k.isSpace) {
                 subPaint.color = fg; subPaint.textSize = sp(11f)
-                canvas.drawText(k.sub, cx, cy + sp(4f), subPaint)
+                canvas.drawText(if (capsLock) "⇪ HOA" else k.sub, cx, cy + sp(4f), subPaint)
                 continue
             }
             // Nhãn chính; nếu có nhãn phụ hoặc ký tự vuốt xuống ở dưới thì nhích lên một chút

@@ -34,6 +34,7 @@ Z   X   C   V   B   N   M
 | **Giữ** phím cách ≥ 300 ms rồi kéo | Di con trỏ (ngang theo ký tự, dọc theo dòng); bàn phím mờ đi |
 | Chạm đúp phím cách, giữ lần hai rồi kéo | Chọn văn bản |
 | Vuốt **phải** trên phím cách | Dán |
+| Vuốt **lên** trên phím cách (không có vùng chọn) | Đổi hoa/thường: chữ sắp gõ đang thường thì khoá chữ hoa (phím cách ghi "⇪ HOA", vuốt lên lần nữa để tắt); đang tự viết hoa đầu câu thì chữ kế tiếp ra thường |
 | Có vùng chọn: vuốt lên / vuốt trái (ngắn hay dài) trên phím cách | Chép / Cắt |
 | Hai ngón vuốt trái / phải | Undo / Redo (bàn phím tự quản lý lịch sử) |
 | Hai ngón giữ | Chọn hết |

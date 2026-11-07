@@ -73,8 +73,12 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private var selEnd = 0
     private var cursorMode = false
     private var numberOnly = false
-    /** Chữ đầu của âm tiết đang soạn được viết hoa chỉ vì đầu câu. */
+    /** Chữ đầu của âm tiết đang soạn được viết hoa chỉ vì đầu câu (hoặc khoá chữ hoa): học như chữ thường. */
     private var autoCappedFirst = false
+
+    /** Vuốt lên phím cách ghi đè tự viết hoa: [LOCK] đến khi vuốt lại; [LOWER] chỉ cho chữ kế tiếp. */
+    private enum class CapsOverride { LOCK, LOWER }
+    private var capsOverride: CapsOverride? = null
     /**
      * Văn bản vừa chèn từ một gợi ý trên thanh, kết thúc bằng khoảng trắng tự thêm. Dấu câu gõ ngay
      * sau đó (phím kế tiếp) xoá khoảng trắng này: chọn "không" rồi gõ "," ra "không,".
@@ -258,19 +262,21 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     }
 
     /** Đầu câu ở ô có tự viết hoa: gợi ý cũng viết hoa như chữ sắp gõ. */
-    private fun capsSentenceStart(): Boolean = capRequest() != 0 && atSentenceStart()
+    private fun capsSentenceStart(): Boolean = capsOverride == null && capRequest() != 0 && atSentenceStart()
 
     /**
      * Gợi ý hoàn thành âm tiết đang gõ theo hoa/thường của phần đã gõ, như biến thể dấu:
      * "Yêu" → "Yếu", "KH" → "KHÔNG". Gõ thường thì chỉ viết hoa tên riêng đã học.
      */
     private fun casedCompletion(s: String, typed: String): String = when {
+        capsLockActive() -> s.uppercase()
         typed.length > 1 && typed.none { it.isLowerCase() } -> s.uppercase()
         typed.first().isUpperCase() || predictions.predictor.personal.usuallyCapitalized(s) -> s.replaceFirstChar { it.titlecase() }
         else -> s
     }
 
     private fun casedPrediction(s: String): String = when {
+        capsLockActive() -> s.uppercase()
         capsSentenceStart() || predictions.predictor.personal.usuallyCapitalized(s) ->
             s.replaceFirstChar { it.titlecase() }
         else -> s
@@ -372,7 +378,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     /** Nhãn chữ hoa/thường theo chữ sắp gõ. */
     private fun updateShift() {
-        if (::keyboardView.isInitialized) keyboardView.shifted = autoCaps()
+        if (!::keyboardView.isInitialized) return
+        keyboardView.shifted = upperNext()
+        keyboardView.capsLock = capsLockActive()
     }
 
     /** Thay lưới phím bằng một bảng (emoji, dialpad) có cùng chiều cao; null = về lưới phím. */
@@ -445,6 +453,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
         suggestionSpace = null
+        if (!restarting) capsOverride = null
         engine.reset()
         history.clear()
         emojiSearch = false
@@ -584,7 +593,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             if (next.isEmpty() && emoji.isEmpty()) showWordAtCursorSuggestions()
             else candidateBar.showPredictions(next, emoji, onPick = { pick ->
                 // Gợi ý được viết hoa vì đầu câu (không phải tên riêng đã học) thì học như chữ thường
-                val auto = capsSentenceStart() && !predictions.predictor.personal.usuallyCapitalized(pick)
+                val auto = (capsLockActive() || capsSentenceStart()) && !predictions.predictor.personal.usuallyCapitalized(pick)
                 commitSyllable("$pick "); pushContext(pick, auto)
                 suggestionSpace = "$pick "
             }, onPickEmoji = { commitSyllable(it) }, onForget = { forget(it) })
@@ -702,9 +711,10 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
      * nên đầu câu vuốt lên ra chữ thường.
      */
     private fun typeLetter(ch: Char, swipedUp: Boolean) {
-        val auto = autoCaps()
+        val auto = upperNext()
         val upper = auto != swipedUp
         if (engine.isEmpty) autoCappedFirst = auto && !swipedUp
+        if (capsOverride == CapsOverride.LOWER) capsOverride = null
         if (!telexEnabled) {
             commitSyllable((if (upper) ch.uppercaseChar() else ch).toString())
             return
@@ -723,6 +733,35 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         if (!engine.isEmpty) req = req and InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS
         if (req == 0) return false
         return (currentInputConnection?.getCursorCapsMode(req) ?: 0) != 0
+    }
+
+    /** Chữ sắp gõ là hoa: tự viết hoa của ô nhập, trừ khi vuốt lên phím cách đã ghi đè. */
+    private fun upperNext(): Boolean = when {
+        mode != Mode.ABC || emojiSearch -> false
+        capsOverride == CapsOverride.LOCK -> true
+        capsOverride == CapsOverride.LOWER -> false
+        else -> autoCaps()
+    }
+
+    private fun capsLockActive(): Boolean = capsOverride == CapsOverride.LOCK && mode == Mode.ABC && !emojiSearch
+
+    /**
+     * Vuốt lên phím cách: đang khoá hoa thì tắt; chữ sắp gõ đang hoa (tự viết hoa đầu câu) thì chữ
+     * kế tiếp ra thường; đang thường thì khoá chữ hoa.
+     */
+    private fun toggleCaps() {
+        if (mode != Mode.ABC || emojiSearch) return
+        capsOverride = when {
+            capsOverride == CapsOverride.LOCK -> null
+            capsOverride == null && autoCaps() -> CapsOverride.LOWER
+            else -> CapsOverride.LOCK
+        }
+        when (capsOverride) {
+            CapsOverride.LOCK -> flash("⇪ Khoá chữ hoa")
+            null -> flash("Tắt khoá chữ hoa")
+            CapsOverride.LOWER -> {}
+        }
+        updateBar() // nhãn phím + gợi ý viết hoa theo trạng thái mới
     }
 
     /** Cờ CAP_* áp cho ô nhập hiện tại (0 = không tự viết hoa). */
@@ -870,7 +909,10 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         }
         override fun deleteBackward() = this@HexKeyboardService.deleteBackward()
         override fun deleteSelection() = this@HexKeyboardService.deleteSelection()
-        override fun commitSpace() = commitSyllable(" ")
+        override fun commitSpace() {
+            if (capsOverride == CapsOverride.LOWER) capsOverride = null
+            commitSyllable(" ")
+        }
         override fun undoLastSpace(): Boolean {
             val ic = currentInputConnection ?: return false
             if (ic.getTextBeforeCursor(1, 0)?.toString() != " ") return false
@@ -885,6 +927,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         override fun copy() = this@HexKeyboardService.copy()
         override fun cut() = this@HexKeyboardService.cut()
         override fun paste() = this@HexKeyboardService.paste()
+        override fun toggleCaps() = this@HexKeyboardService.toggleCaps()
         override fun setCursorMode(on: Boolean) {
             cursorMode = on
             keyboardView.dimmed = on
@@ -924,6 +967,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         // Chỉ phím ngay sau lần chọn gợi ý mới được xoá khoảng trắng tự thêm
         val autoSpace = suggestionSpace
         suggestionSpace = null
+        // Chữ thường một lần chỉ dành cho chữ kế tiếp: phím khác (dấu câu, ↵, ⌫…) bỏ nó
+        if (capsOverride == CapsOverride.LOWER && !key.isLetter && !key.isSpace) capsOverride = null
         when {
             code == KeyCode.SPACE -> spaceGestures.onUp(gesture, android.os.SystemClock.uptimeMillis())
             code == KeyCode.ENTER -> pressEnter()
