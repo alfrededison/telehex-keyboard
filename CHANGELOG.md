@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.5.1 — unreleased
+
 ## 0.5.0 — 2026-11-07
 
 - Slide to type: lướt qua ít nhất 3 phím chữ khác nhau (chữ không dấu hoặc Telex), nhả tay để hiện gợi ý rồi chạm để chèn từ. Cùng ngưỡng cho mọi hướng; qua 1–2 phím vẫn là cử chỉ thường. Vẽ nét vuốt, theo bố cục/profile và chế độ một tay; nhận diện hoàn toàn offline từ âm tiết phổ biến, từ đã học và gói ngôn ngữ nếu có. Tắt được trong Cài đặt › Gợi ý; giữ-kéo đổi chỗ phím vẫn dùng như trước.
