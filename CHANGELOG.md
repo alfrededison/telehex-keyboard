@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.1 — unreleased
+## 0.5.0 — 2026-11-07
 
 - Slide to type: lướt qua ít nhất 3 phím chữ khác nhau (chữ không dấu hoặc Telex), nhả tay để hiện gợi ý rồi chạm để chèn từ. Cùng ngưỡng cho mọi hướng; qua 1–2 phím vẫn là cử chỉ thường. Vẽ nét vuốt, theo bố cục/profile và chế độ một tay; nhận diện hoàn toàn offline từ âm tiết phổ biến, từ đã học và gói ngôn ngữ nếu có. Tắt được trong Cài đặt › Gợi ý; giữ-kéo đổi chỗ phím vẫn dùng như trước.
 - Profile có sẵn "Công thái học" (L V B ⚙ Q P 123 / M W R X Y U E / F N S J A I K / Z D H C T O G): nhanh hơn "Cân bằng hai ngón" ~5% theo mô hình Fitts hai ngón, tối ưu trên văn bản tiểu thuyết (~250 nghìn âm tiết), gõ luân phiên ~71%. Sắp xếp lại toàn bộ chữ nên cần học lại; lớp vuốt xuống và 123 giữ như mặc định.
