@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.3.2 — unreleased
+
 ## 0.3.1 — 2026-11-07
 
 - Vuốt lên phím cách (khi không có vùng chọn) đổi hoa/thường: đang thường thì khoá chữ hoa (phím cách ghi "⇪ HOA", vuốt lên lần nữa để tắt), đang tự viết hoa đầu câu thì chữ kế tiếp ra thường. Chữ gõ khi khoá hoa không bị học thành "hay viết hoa".
