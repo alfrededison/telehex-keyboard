@@ -159,6 +159,9 @@ class Prefs(context: Context) {
             sp.edit().putString(KEY_TOUCH_OFFSETS, o.toString()).putString(KEY_OFFSETS_LAYOUT, layout.toJson()).apply()
         }
 
+    /** Độ lệch đã lưu được đóng dấu đúng bố cục đang dùng (xem [saveProfiles] với keepTouchOffsets). */
+    fun offsetsStampedOnLayout(): Boolean = sp.getString(KEY_OFFSETS_LAYOUT, null) == layout.toJson()
+
     private fun offsetsMatchLayout(): Boolean {
         val learnedOn = sp.getString(KEY_OFFSETS_LAYOUT, null)
             // Bản cũ không lưu bố cục: chưa từng lưu bố cục riêng nghĩa là học trên bố cục mặc định cũ
@@ -180,6 +183,11 @@ class Prefs(context: Context) {
     var longPressMs: Int
         get() = sp.getInt(KEY_LONG_PRESS_MS, 450)
         set(v) = sp.edit().putInt(KEY_LONG_PRESS_MS, v).apply()
+
+    /** Giữ lâu một phím rồi kéo thả lên phím khác để đổi chỗ ngay trên bàn phím. */
+    var dragToRearrange: Boolean
+        get() = sp.getBoolean(KEY_DRAG_REARRANGE, true)
+        set(v) = sp.edit().putBoolean(KEY_DRAG_REARRANGE, v).apply()
 
     /** Khoảng cách kéo (dp) cho mỗi bước xoá từ / di con trỏ. */
     var stepDp: Int
@@ -283,9 +291,12 @@ class Prefs(context: Context) {
     /**
      * Ghi danh sách profile người dùng và dùng [active] trong một lần ghi: ba lớp của [active] thành bố cục của
      * bàn phím. Lớp không đổi thì SharedPreferences không báo thay đổi, nên độ lệch chạm đã học được giữ.
+     * [keepTouchOffsets]: lớp chữ chỉ đổi chỗ phím, độ lệch (theo chữ) vẫn dùng được: đóng dấu bố cục mới cho nó.
      */
-    fun saveProfiles(user: List<Profile>, active: Profile) {
-        sp.edit()
+    fun saveProfiles(user: List<Profile>, active: Profile, keepTouchOffsets: Boolean = false) {
+        val e = sp.edit()
+        if (keepTouchOffsets && offsetsMatchLayout()) e.putString(KEY_OFFSETS_LAYOUT, active.letters.toJson())
+        e
             .putString(KEY_PROFILES, profilesToJson(user))
             .putString(KEY_ACTIVE_PROFILE, active.name)
             .putString(KEY_LAYOUT, active.letters.toJson())
@@ -357,6 +368,7 @@ class Prefs(context: Context) {
         const val KEY_HOLD_MS = "hold_ms"
         const val KEY_LONG_PRESS_MS = "long_press_ms"
         const val KEY_STEP_DP = "step_dp"
+        const val KEY_DRAG_REARRANGE = "drag_rearrange"
         const val KEY_DOUBLE_TAP_MS = "double_tap_ms"
 
         val DEFAULT_FALLBACK_PKGS: Set<String> = setOf("com.zing.zalo", "com.facebook.orca")
@@ -375,6 +387,7 @@ class Prefs(context: Context) {
             KEY_SHORTCUTS to String::class, KEY_AUTO_CAP to Boolean::class,
             KEY_SWIPE_GRID to String::class, KEY_SYMBOL_PAGES to String::class,
             KEY_PROFILES to String::class, KEY_ACTIVE_PROFILE to String::class,
+            KEY_DRAG_REARRANGE to Boolean::class,
         )
     }
 }

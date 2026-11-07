@@ -2,6 +2,7 @@
 
 ## 0.3.2 — unreleased
 
+- Đổi chỗ phím ngay trên bàn phím: giữ một phím ký tự ~0,8 giây đến khi nó nổi lên, kéo thả lên phím khác. Áp cho lớp chữ hoặc trang 123 đang hiện. Phím chức năng không tự nhấc nhưng đổi chỗ được khi phím ký tự thả lên nó; phím cách và ↵ cố định; ký tự vuốt xuống đứng yên theo ô như ở màn chỉnh sửa. Tự lưu vào profile đang dùng (profile có sẵn thì thành profile mới "Của tôi") và giữ độ lệch chạm đã học. Nhả tại chỗ không kéo đi thì vẫn gõ ký tự đó. Tắt được trong Cài đặt › Bàn phím.
 - Chế độ EN (tắt Telex): vuốt xuống phím cách để bật/tắt, phím cách ghi "cách · EN" khi đang bật. Lựa chọn giữ cho các ô của cùng app. Ô email và các app chọn trong Cài đặt › Telex › "Chọn app tự bật EN…" mở sẵn ở EN. Ở EN vẫn tự viết hoa đầu câu và lưu clipboard history như bình thường.
 
 ## 0.3.1 — 2026-11-07

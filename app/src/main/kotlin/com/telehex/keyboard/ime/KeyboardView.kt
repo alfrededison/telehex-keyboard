@@ -14,6 +14,7 @@ import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import com.telehex.keyboard.layout.HexGeometry
+import kotlin.math.hypot
 
 /**
  * Bàn phím lục giác vẽ bằng Canvas với `Path` dựng sẵn cho mỗi phím, cache lại khi kích thước đổi.
@@ -30,6 +31,10 @@ open class KeyboardView @JvmOverloads constructor(
         fun onKeyCancel(key: Key)
         fun onMultiTouchStart() {}
         fun onTwoFinger(gesture: Gesture) {}
+        /** Giữ đủ lâu: [key] nhấc lên, sẵn sàng kéo sang phím khác. */
+        fun onKeyLift(key: Key) {}
+        /** Kéo [from] thả lên [to]: đổi chỗ hai phím. Không phím nào được gõ. */
+        fun onKeySwap(from: Key, to: Key) {}
     }
 
     var listener: Listener? = null
@@ -95,6 +100,10 @@ open class KeyboardView @JvmOverloads constructor(
             key ?: return
             pressed[pointerId] = key
             lastDown?.let { downPoints[pointerId] = it }
+            if (gestures.activeCount == 1 && canLift?.invoke(key) == true) {
+                drag = Drag(pointerId, key, lastDown?.get(0) ?: 0f, lastDown?.get(1) ?: 0f)
+                postDelayed(liftKey, dragHoldMs)
+            }
             if (hapticEnabled) performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             if (soundEnabled) audio.playSoundEffect(AudioManager.FX_KEYPRESS_STANDARD, 0.5f)
             listener?.onKeyDown(key)
@@ -120,8 +129,116 @@ open class KeyboardView @JvmOverloads constructor(
             invalidate()
         }
 
-        override fun onMultiTouchStart() { listener?.onMultiTouchStart() }
+        override fun onMultiTouchStart() { cancelDrag(); listener?.onMultiTouchStart() }
         override fun onTwoFinger(gesture: Gesture) { listener?.onTwoFinger(gesture) }
+    }
+
+    /**
+     * Giữ lâu một phím rồi kéo để đổi chỗ ngay trên bàn phím: trả true cho phím nhấc lên được (phím ký tự).
+     * null = tắt.
+     */
+    var canLift: ((Key) -> Boolean)? = null
+
+    /** Phím thả lên được (đổi chỗ với phím đang kéo), kể cả phím chức năng. */
+    var canDrop: (Key) -> Boolean = { true }
+
+    /** Giữ yên bao lâu (ms) thì phím nhấc lên. */
+    var dragHoldMs: Long = 800L
+
+    /**
+     * Phím đang giữ chờ nhấc ([lifted] = false) hoặc đã nhấc và đang kéo. [left]: ngón đã rời phím gốc;
+     * chưa rời thì nhả ra vẫn là long-press bình thường của phím đó.
+     */
+    private class Drag(val pointerId: Int, val key: Key, val downX: Float, val downY: Float) {
+        var lifted = false
+        var left = false
+        var x = downX
+        var y = downY
+        var over: Key? = null
+    }
+
+    private var drag: Drag? = null
+
+    /**
+     * Đã huỷ một phím đang kéo vì ngón thứ hai chạm xuống: bỏ qua mọi sự kiện tới khi nhấc hết ngón, để ngón
+     * thứ hai không thành một lần chạm một ngón mới (gõ phím, giữ phím cách di con trỏ, nhấc phím khác).
+     */
+    private var swallowUntilUp = false
+
+    private val liftKey = Runnable {
+        val d = drag ?: return@Runnable
+        if (gestures.activeCount != 1) { drag = null; return@Runnable }
+        d.lifted = true
+        parent?.requestDisallowInterceptTouchEvent(true)
+        if (hapticEnabled) performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        listener?.onKeyLift(d.key)
+        invalidate()
+    }
+
+    /** Bỏ phím đang chờ nhấc hoặc đang kéo; không đổi chỗ gì. */
+    private fun cancelDrag() {
+        removeCallbacks(liftKey)
+        if (drag?.lifted == true) invalidate()
+        drag = null
+    }
+
+    /**
+     * Phím đang chờ nhấc: vuốt đi hay chạm thêm ngón thì huỷ. Phím đã nhấc: tự xử lý pointer của nó thay cho
+     * [gestures]. @return true nếu đã xử lý sự kiện (không chuyển cho [gestures]).
+     */
+    private fun handleDrag(event: MotionEvent): Boolean {
+        val d = drag ?: return false
+        when (event.actionMasked) {
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                // Ngón thứ hai chạm xuống: huỷ kéo. Chưa nhấc thì để [gestures] xử lý hai ngón như thường;
+                // đã nhấc thì phím đó không được gõ và cả cử chỉ bị bỏ
+                cancelDrag()
+                if (!d.lifted) return false
+                abandonPointer(d)
+                swallowUntilUp = true
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                val i = event.findPointerIndex(d.pointerId)
+                if (i < 0) return false
+                val x = event.getX(i); val y = event.getY(i)
+                if (!d.lifted) {
+                    // Vuốt đi trước khi kịp nhấc: là cử chỉ vuốt, không kéo
+                    if (hypot(x - d.downX, y - d.downY) > gestures.threshold) cancelDrag()
+                    return false
+                }
+                d.x = x; d.y = y
+                val k = keyAt(x, y)
+                if (k != d.key) d.left = true
+                d.over = k?.takeIf { it != d.key && canDrop(it) }
+                invalidate()
+                return true
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+                if (event.getPointerId(event.actionIndex) != d.pointerId) return false
+                if (!d.lifted || !d.left) { cancelDrag(); return false }
+                val to = d.over
+                abandonPointer(d)
+                cancelDrag()
+                if (to != null) listener?.onKeySwap(d.key, to)
+                return true
+            }
+            MotionEvent.ACTION_CANCEL -> { cancelDrag(); return false }
+        }
+        return false
+    }
+
+    /** Pointer của phím đã nhấc không còn là một lần gõ: [gestures] quên nó, bỏ tô "đang nhấn". */
+    private fun abandonPointer(d: Drag) {
+        gestures.drop(d.pointerId)
+        downPoints.remove(d.pointerId)
+        pressed.remove(d.pointerId)?.let { listener?.onKeyCancel(it) }
+        invalidate()
+    }
+
+    override fun onDetachedFromWindow() {
+        cancelDrag()
+        super.onDetachedFromWindow()
     }
 
     /** Ngưỡng vuốt (px) và long-press (ms), đặt từ Cài đặt. */
@@ -227,7 +344,8 @@ open class KeyboardView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         canvas.drawColor(theme.background)
-        val pressedKeys = pressed.values + highlighted
+        val lifted = drag?.takeIf { it.lifted }
+        val pressedKeys = pressed.values + highlighted + listOfNotNull(lifted?.over)
         val labelSize = sp(20f)
         val smallSize = sp(14f)
         for (d in drawn) {
@@ -269,7 +387,18 @@ open class KeyboardView @JvmOverloads constructor(
                 canvas.drawText(k.hint, cx, labelY + sp(14f), hintPaint)
             }
         }
+        if (lifted != null) drawFloatingKey(canvas, lifted.key, lifted.x, lifted.y)
         drawOverlay(canvas)
+    }
+
+    /** Phím đang kéo vẽ nổi phía trên ngón tay để ngón không che nhãn. */
+    protected fun drawFloatingKey(canvas: Canvas, key: Key, x: Float, y: Float) {
+        val cy = y - dp(40f)
+        fill.color = theme.bgFor(key.kind)
+        canvas.drawCircle(x, cy, dp(26f), fill)
+        labelPaint.color = theme.fgFor(key.kind)
+        labelPaint.textSize = sp(28f)
+        canvas.drawText(if (key.isLetter && !shifted) key.code else key.label, x, cy + labelPaint.textSize * 0.36f, labelPaint)
     }
 
     private var lastDown: FloatArray? = null
@@ -281,10 +410,12 @@ open class KeyboardView @JvmOverloads constructor(
             val i = event.actionIndex
             lastDown = floatArrayOf(event.getX(i), event.getY(i))
         }
+        if (a == MotionEvent.ACTION_DOWN) swallowUntilUp = false // cử chỉ mới: không để cờ cũ kẹt lại
+        if (swallowUntilUp) {
+            if (a == MotionEvent.ACTION_UP || a == MotionEvent.ACTION_CANCEL) swallowUntilUp = false
+            return true
+        }
+        if (handleDrag(event)) return true
         return gestures.onTouch(event, ::keyAt, gestureListener)
     }
-
-    /** Paint nhãn dùng lại cho overlay của lớp con. */
-    protected fun labelPaint(): Paint = labelPaint
-    protected fun fillPaint(): Paint = fill
 }

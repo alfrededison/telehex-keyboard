@@ -19,8 +19,27 @@ class Profile(val name: String, val letters: LayoutModel, val swipe: CellGrid, v
         KeyLayers.reconcile(letters, symbols, KeyLayers::symbolUsable),
     )
 
+    /** Đổi chỗ hai ô ở lớp chữ; giá trị vuốt xuống / 123 bị phím chức năng che thì dời sang ô trống. */
+    fun swapLetters(a: Pair<Int, Int>, b: Pair<Int, Int>): Profile =
+        Profile(name, letters.withSwapped(a, b), swipe, symbols).reconciled()
+
+    /** Đổi chỗ hai ô trong trang [page] (từ 0) của lớp 123. */
+    fun swapSymbols(page: Int, a: Pair<Int, Int>, b: Pair<Int, Int>): Profile =
+        Profile(name, letters, swipe, KeyLayers.swap(symbols, GridCell(page, a.first, a.second), GridCell(page, b.first, b.second)))
+
     companion object {
         const val MINE = "Của tôi"
+
+        /**
+         * Ghi [edited] (bản sửa của profile đang dùng [active]) vào danh sách [user]: profile người dùng thì thay
+         * tại chỗ; profile có sẵn không sửa được nên thành profile mới tên "Của tôi" (hoặc "Của tôi 2"…).
+         * @return danh sách profile người dùng mới và profile đang dùng mới.
+         */
+        fun saveEdit(edited: Profile, active: Profile, user: List<Profile>): Pair<List<Profile>, Profile> {
+            if (!active.isBuiltIn) return user.map { if (it.name == active.name) edited.named(active.name) else it } to edited.named(active.name)
+            val p = edited.named(uniqueName(MINE, (BUILT_IN + user).map { it.name }))
+            return user + p to p
+        }
 
         val DEFAULT = Profile("Mặc định", LayoutModel.DEFAULT, KeyLayers.DEFAULT_SWIPE, SymbolPages.DEFAULT)
 

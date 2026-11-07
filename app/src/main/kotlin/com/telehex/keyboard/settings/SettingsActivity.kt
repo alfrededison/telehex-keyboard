@@ -76,6 +76,7 @@ class SettingsActivity : Activity() {
             }
         }
         sec.addButton("Chỉnh sửa phím") { startActivity(Intent(context, LayoutEditorActivity::class.java)) }
+        sec.add(switch("Đổi chỗ phím ngay trên bàn phím: giữ một phím ký tự đến khi nó nổi lên (~0,8 giây), kéo thả lên phím khác (tự lưu vào profile đang dùng)", prefs.dragToRearrange) { prefs.dragToRearrange = it })
         sec.add(label("Chế độ một tay (lưới thu còn ~80%, lục giác vẫn đều)"))
         sec.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL

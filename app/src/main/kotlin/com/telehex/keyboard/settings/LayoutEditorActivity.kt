@@ -4,10 +4,10 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Canvas
 import android.os.Build
 import android.os.Bundle
-import android.util.TypedValue
 import android.text.InputFilter
 import android.view.Gravity
 import android.view.MotionEvent
@@ -178,15 +178,7 @@ class LayoutEditorView(context: Context) : KeyboardView(context) {
     }
 
     override fun drawOverlay(canvas: Canvas) {
-        val d = dragging ?: return
-        val paint = labelPaint()
-        paint.color = theme.fgFor(d.kind)
-        paint.textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 28f, resources.displayMetrics)
-        val r = dp(26f)
-        val fill = fillPaint()
-        fill.color = theme.bgFor(d.kind)
-        canvas.drawCircle(dragX, dragY - dp(40f), r, fill)
-        canvas.drawText(d.label, dragX, dragY - dp(40f) + paint.textSize * 0.36f, paint)
+        drawFloatingKey(canvas, dragging ?: return, dragX, dragY)
     }
 
     companion object {
@@ -204,6 +196,17 @@ class LayoutEditorActivity : Activity() {
     /** Như đã lưu: profile người dùng và profile đang dùng. Lưới khác [active] là có thay đổi chưa lưu. */
     private lateinit var user: List<Profile>
     private lateinit var active: Profile
+
+    /** Đang tự ghi profile ([commit]): đừng coi là thay đổi từ ngoài. */
+    private var writing = false
+
+    /**
+     * Bàn phím cũng ghi profile (giữ rồi kéo đổi chỗ phím, kể cả khi đang gõ tên profile ở màn này): đọc lại để
+     * lần lưu sau không ghi đè bằng danh sách cũ. Giữ tham chiếu mạnh vì SharedPreferences chỉ giữ yếu.
+     */
+    private val profilesListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (!writing && (key == Prefs.KEY_PROFILES || key == Prefs.KEY_ACTIVE_PROFILE)) syncFromPrefs()
+    }
 
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -276,6 +279,20 @@ class LayoutEditorActivity : Activity() {
         }
         load(active)
         showLayer(EditLayer.LETTERS)
+        prefs.registerListener(profilesListener)
+    }
+
+    override fun onDestroy() {
+        prefs.unregisterListener(profilesListener)
+        super.onDestroy()
+    }
+
+    /** Profile đổi từ ngoài: nhận danh sách mới; chưa sửa gì thì nạp lưới mới, đang sửa dở thì giữ lưới đang sửa. */
+    private fun syncFromPrefs() {
+        val unsaved = hasUnsaved()
+        user = prefs.userProfiles
+        active = prefs.activeProfile
+        if (unsaved) onEditorChanged() else load(active)
     }
 
     private fun showLayer(l: EditLayer) {
@@ -297,7 +314,8 @@ class LayoutEditorActivity : Activity() {
 
     /** Ghi profile và dùng [newActive] cho bàn phím ngay. [keepEdits]: giữ lưới đang sửa (đổi tên), không thì nạp [newActive]. */
     private fun commit(newUser: List<Profile>, newActive: Profile, keepEdits: Boolean = false) {
-        prefs.saveProfiles(newUser, newActive)
+        writing = true
+        try { prefs.saveProfiles(newUser, newActive) } finally { writing = false }
         user = newUser
         active = newActive
         if (keepEdits) onEditorChanged() else load(newActive)

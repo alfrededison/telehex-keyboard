@@ -41,6 +41,9 @@ class GestureDetector(
 
     val activeCount: Int get() = pointers.size
 
+    /** Bỏ theo dõi một pointer (view đã tự xử lý nó, ví dụ kéo đổi chỗ phím): `up` của nó bị bỏ qua. */
+    fun drop(pointerId: Int) { pointers.remove(pointerId) }
+
     fun onTouch(event: MotionEvent, keyAt: (Float, Float) -> Key?, listener: Listener): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {

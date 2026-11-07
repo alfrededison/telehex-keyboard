@@ -43,6 +43,7 @@ Z   X   C   V   B   N   M
 | Hai ngón giữ | Chọn hết |
 | Phím 1234 ở lớp ký tự (hoặc giữ phím 123) | Dialpad (tự mở ở ô số điện thoại / số / ngày giờ) |
 | Giữ phím ⚙ | Bảng sửa văn bản + clipboard history |
+| **Giữ** một phím ký tự ~0,8 s đến khi nó nổi lên, kéo thả lên phím khác | Đổi chỗ hai phím ngay trên bàn phím (lớp chữ hoặc trang 123 đang hiện). Chỉ phím ký tự nhấc lên được; phím chức năng đổi chỗ khi phím ký tự thả lên nó; phím cách và ↵ cố định. Tự lưu vào profile đang dùng (profile có sẵn thì thành profile mới "Của tôi"), giữ độ lệch chạm đã học. Nhả tại chỗ thì vẫn gõ ký tự đó. Tắt được trong Cài đặt › Bàn phím |
 | Chạm ⚙ | Cài đặt |
 
 Mọi ngưỡng (vuốt, giữ, bước xoá từ, chạm đúp) chỉnh được trong Cài đặt → Cử chỉ.

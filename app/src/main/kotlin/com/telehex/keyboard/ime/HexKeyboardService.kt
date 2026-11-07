@@ -18,6 +18,7 @@ import com.telehex.keyboard.data.ClipboardStore
 import com.telehex.keyboard.data.PredictionStore
 import com.telehex.keyboard.data.Prefs
 import com.telehex.keyboard.layout.KeyCode
+import com.telehex.keyboard.layout.Profile
 import com.telehex.keyboard.settings.SettingsActivity
 import com.telehex.telex.Corrector
 import com.telehex.telex.TelexDecomposer
@@ -308,8 +309,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             clipboardStore = ClipboardStore(this)
             return
         }
-        if (key == Prefs.KEY_LAYOUT) {
-            // Độ lệch học cho ô cũ của chữ; bản lưu cũng tự bị bỏ vì khác bố cục (Prefs.touchOffsets)
+        if (key == Prefs.KEY_LAYOUT && !prefs.offsetsStampedOnLayout()) {
+            // Độ lệch học cho ô cũ của chữ; bản lưu cũng tự bị bỏ vì khác bố cục (Prefs.touchOffsets).
+            // Đổi chỗ phím ngay trên bàn phím đóng dấu lại bố cục mới nên độ lệch được giữ.
             touchOffsets.clear(); offsetsDirty = false
             if (::keyboardView.isInitialized) keyboardView.removeCallbacks(saveOffsets)
         }
@@ -368,6 +370,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         keyboardView.soundEnabled = prefs.sound
         keyboardView.setThresholds(dpF(prefs.swipeThresholdDp), prefs.longPressMs.toLong())
         keyboardView.oneHanded = prefs.oneHanded
+        keyboardView.canLift = if (prefs.dragToRearrange) ::canLift else null
+        keyboardView.canDrop = ::canDrop
+        keyboardView.dragHoldMs = DRAG_HOLD_MS
         keyboardView.touchOffsets = if (prefs.learnTouchOffsets) touchOffsets else null
         keyboardView.onTouchOffsetsChanged = {
             offsetsDirty = true
@@ -1048,6 +1053,45 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     }
 
     /**
+     * Chỉ phím ký tự nhấc lên được: chữ và `,` `.` ở lớp chữ, ký tự ở lớp 123. Giữ lâu các phím này nhả ra chỉ
+     * gõ ký tự, nên không đụng long-press của ⚙ / 123.
+     */
+    private fun canLift(key: Key): Boolean = when (mode) {
+        Mode.ABC -> key.isLetter || key.code == "," || key.code == "."
+        Mode.SYMBOLS -> key.kind == KeyKind.SYMBOL && key.code.isNotEmpty()
+        else -> false
+    }
+
+    /** Phím chức năng không tự nhấc nhưng đổi chỗ được khi phím ký tự thả lên nó; phím cách và ↵ cố định. */
+    private fun canDrop(key: Key): Boolean = when (mode) {
+        Mode.ABC -> !key.isSpace && key.code != KeyCode.ENTER
+        Mode.SYMBOLS -> key.kind == KeyKind.SYMBOL
+        else -> false
+    }
+
+    override fun onKeyLift(key: Key) = flash("Kéo thả lên phím khác để đổi chỗ")
+
+    /**
+     * Đổi chỗ ở lớp đang hiện rồi lưu ngay vào profile đang dùng (profile có sẵn thì thành profile mới).
+     * Độ lệch chạm học theo chữ, đo từ tâm phím, nên vẫn đúng ở chỗ mới: giữ lại.
+     */
+    override fun onKeySwap(from: Key, to: Key) {
+        val active = prefs.activeProfile
+        val a = from.cells.first(); val b = to.cells.first()
+        val edited = when (mode) {
+            Mode.ABC -> active.swapLetters(a, b)
+            Mode.SYMBOLS -> active.swapSymbols(if (symbolPage == 2) 1 else 0, a, b)
+            else -> return
+        }
+        val (user, saved) = Profile.saveEdit(edited, active, prefs.userProfiles)
+        // Ghi độ lệch chưa lưu theo bố cục cũ trước, để saveProfiles đóng dấu lại đúng bản đang dùng
+        keyboardView.removeCallbacks(saveOffsets); saveOffsets.run()
+        prefs.saveProfiles(user, saved, keepTouchOffsets = true)
+        val what = "Đã đổi ${from.label.ifEmpty { "ô trống" }} ↔ ${to.label.ifEmpty { "ô trống" }}"
+        flash(if (saved.name == active.name) what else "$what · lưu vào \"${saved.name}\"")
+    }
+
+    /**
      * Chèn ký tự từ phím. Dấu câu gõ ngay sau gợi ý vừa chọn thì xoá khoảng trắng tự thêm trước nó,
      * nếu văn bản trước con trỏ vẫn đúng là gợi ý đó (con trỏ chưa bị dời đi).
      */
@@ -1073,6 +1117,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     companion object {
         /** Đặt vào `privateImeOptions` của ô nhập để không tự viết hoa (ô gõ tắt: viết tắt so khớp theo chữ thường). */
         const val NO_AUTO_CAP = "com.telehex.keyboard.noAutoCap"
+
+        /** Giữ tối thiểu (ms) trước khi phím nhấc lên để kéo đổi chỗ. */
+        private const val DRAG_HOLD_MS = 800L
 
         /** Dấu câu đứng sát chữ phía trước. */
         private const val NO_SPACE_BEFORE = ".,!?:;…)]}"
