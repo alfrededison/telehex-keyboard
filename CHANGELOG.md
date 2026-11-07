@@ -3,6 +3,7 @@
 ## 0.5.1 — unreleased
 
 - Cài đặt mặc định mở tất cả section và ghi nhớ trạng thái đóng/mở của từng section khi mở lại ứng dụng.
+- Section Cài đặt có icon nét, mô tả ngắn và khối bo góc với khoảng cách thoáng hơn, theo giao diện sáng/tối.
 
 ## 0.5.0 — 2026-11-07
 

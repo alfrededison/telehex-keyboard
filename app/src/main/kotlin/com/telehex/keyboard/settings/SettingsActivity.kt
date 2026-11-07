@@ -3,6 +3,7 @@ package com.telehex.keyboard.settings
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ColorFilter
@@ -10,6 +11,7 @@ import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.RippleDrawable
 import android.os.Bundle
 import android.provider.Settings
 import android.text.InputType
@@ -18,6 +20,7 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
@@ -25,6 +28,7 @@ import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
+import androidx.core.view.ViewCompat
 import com.telehex.keyboard.R
 import com.telehex.keyboard.data.Prefs
 import com.telehex.keyboard.ime.Accent
@@ -43,7 +47,7 @@ class SettingsActivity : Activity() {
         super.onCreate(savedInstanceState)
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(16), dp(20), dp(32))
+            setPadding(dp(16), dp(16), dp(16), dp(32))
         }
         content = col
         // Có id để giữ vị trí cuộn khi recreate() sau khi đổi giao diện
@@ -60,11 +64,11 @@ class SettingsActivity : Activity() {
             minLines = 2
         })
 
-        var sec = section("enable_keyboard", "Bật bàn phím")
+        var sec = section("enable_keyboard", "Bật bàn phím", "Thiết lập TeleHex trên thiết bị", R.drawable.ic_settings_enable)
         sec.addButton("1. Bật TeleHex trong Cài đặt hệ thống") { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }
         sec.addButton("2. Chọn TeleHex làm bàn phím hiện tại") { (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker() }
 
-        sec = section("keyboard", "Bàn phím")
+        sec = section("keyboard", "Bàn phím", "Bố cục, giao diện và âm thanh", R.drawable.ic_settings_keyboard)
         // Đổi nhanh profile (bố cục đủ ba lớp chữ / vuốt xuống / 123); nhãn cập nhật ở onResume
         profileButton = sec.addButton("") {
             showProfilePicker(context, Profile.BUILT_IN + prefs.userProfiles, prefs.activeProfile.name) { p ->
@@ -124,7 +128,7 @@ class SettingsActivity : Activity() {
             })
         })
 
-        sec = section("emoji_clipboard", "Emoji và clipboard")
+        sec = section("emoji_clipboard", "Emoji và clipboard", "Tông da và lịch sử sao chép", R.drawable.ic_settings_emoji)
         sec.add(label("Tông da mặc định (cho emoji nhận tông da)"))
         sec.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
@@ -136,7 +140,7 @@ class SettingsActivity : Activity() {
         })
         sec.add(switch("Lưu clipboard history (giữ phím ⚙ để mở; mục thường hết hạn sau 1 giờ, mục ghim giữ lâu)", prefs.clipboardHistory) { prefs.clipboardHistory = it })
 
-        sec = section("telex", "Telex")
+        sec = section("telex", "Telex", "Kiểu gõ tiếng Việt và chế độ EN", R.drawable.ic_settings_telex)
         sec.add(label("Kiểu đặt dấu"))
         sec.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
@@ -170,7 +174,7 @@ class SettingsActivity : Activity() {
         sec.addButton("Chọn app tự bật EN…") { enPicker.show(prefs.englishPackages) }
         enPicker.restoreState(savedInstanceState)
 
-        sec = section("shortcuts", "Gõ tắt")
+        sec = section("shortcuts", "Gõ tắt", "Cụm từ thường dùng, gõ nhanh hơn", R.drawable.ic_settings_shortcuts)
         sec.add(TextView(this).apply {
             text = "Mỗi dòng một mục dạng  viết tắt = nội dung . Kích hoạt khi chạm cách. Ví dụ:\nko = không\ndc = được\n@@ = ten@email.com"
             textSize = 13f
@@ -193,7 +197,7 @@ class SettingsActivity : Activity() {
             })
         })
 
-        sec = section("predictions", "Gợi ý (không tự sửa)")
+        sec = section("predictions", "Gợi ý (không tự sửa)", "Gợi ý từ và slide to type", R.drawable.ic_settings_predictions)
         sec.add(TextView(this).apply {
             text = "Bàn phím không bao giờ tự đổi chữ đã gõ. Gợi ý âm tiết tiếp theo học từ chính bạn, hoàn toàn trên máy. Giữ một gợi ý để xoá nó khỏi từ điển cá nhân."
             textSize = 13f
@@ -218,12 +222,12 @@ class SettingsActivity : Activity() {
         packStatusView = packStatus
         predictionStore = store
 
-        sec = section("touch_accuracy", "Chống bấm nhầm")
+        sec = section("touch_accuracy", "Chống bấm nhầm", "Độ chính xác khi chạm phím", R.drawable.ic_settings_touch)
         sec.add(switch("Học độ lệch chạm theo từng phím", prefs.learnTouchOffsets) { prefs.learnTouchOffsets = it })
         sec.add(switch("Vùng chạm động: nới vùng phím hợp lệ tiếp theo (một dạng tự sửa ngầm)", prefs.dynamicHitZones) { prefs.dynamicHitZones = it })
         sec.addButton("Xoá dữ liệu độ lệch đã học") { prefs.touchOffsets = emptyMap() }
 
-        sec = section("gestures", "Cử chỉ")
+        sec = section("gestures", "Cử chỉ", "Vuốt, giữ và chạm đúp", R.drawable.ic_settings_gestures)
         sec.add(TextView(this).apply {
             text = "Phím cách: vuốt trái = xoá (ngắn: 1 ký tự, dài: theo từ, có bôi đen xem trước); giữ rồi kéo = di con trỏ; chạm đúp rồi giữ-kéo = chọn; vuốt phải = dán; vuốt lên = đổi hoa/thường; vuốt xuống = bật/tắt EN (tắt Telex); khi có vùng chọn: vuốt lên = chép, vuốt trái = cắt. Hai ngón vuốt trái/phải = undo/redo, hai ngón giữ = chọn hết."
             textSize = 13f
@@ -234,7 +238,7 @@ class SettingsActivity : Activity() {
         sec.add(slider("Mỗi bước xoá từ / di con trỏ", "dp", 25, 100, prefs.stepDp) { prefs.stepDp = it })
         sec.add(slider("Chạm đúp phím cách", "ms", 150, 600, prefs.doubleTapMs) { prefs.doubleTapMs = it })
 
-        sec = section("backup_restore", "Sao lưu / khôi phục")
+        sec = section("backup_restore", "Sao lưu / khôi phục", "Lưu và chuyển dữ liệu của bạn", R.drawable.ic_settings_backup)
         sec.add(TextView(this).apply {
             text = "Một file zip gồm bố cục, ký tự vuốt xuống, gõ tắt, tuỳ chọn, dữ liệu đã học và clipboard đã ghim."
             textSize = 13f
@@ -248,7 +252,7 @@ class SettingsActivity : Activity() {
             startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply { addCategory(Intent.CATEGORY_OPENABLE); type = "*/*" }, REQ_RESTORE)
         }
 
-        sec = section("compatibility", "Tương thích")
+        sec = section("compatibility", "Tương thích", "Tuỳ chỉnh cách gõ theo ứng dụng", R.drawable.ic_settings_apps)
         sec.add(TextView(this).apply {
             text = "Các app xử lý composing không ổn (Zalo, Messenger…) dùng chế độ dự phòng: chữ được ghi thẳng thay vì gạch chân. Chọn app nếu thấy gõ bị lặp hoặc mất chữ."
             textSize = 13f
@@ -418,43 +422,88 @@ class SettingsActivity : Activity() {
      * Section thu gọn được: chạm tiêu đề để mở / đóng. Trả về thân section để thêm tuỳ chọn vào.
      * Mặc định mở; lưu trạng thái thu gọn theo mã cố định để giữ khi mở lại hoặc đổi tên tiêu đề.
      */
-    private fun section(sectionId: String, title: String): LinearLayout {
+    private fun section(sectionId: String, title: String, summary: String, iconRes: Int): LinearLayout {
+        val primary = currentTextColor(android.R.attr.textColorPrimary)
+        val secondary = currentTextColor(android.R.attr.textColorSecondary)
+        val accent = SettingsUi.accentColor(this)
+        fun rounded(color: Int, radius: Int) = GradientDrawable().apply {
+            cornerRadius = dp(radius).toFloat()
+            setColor(color)
+        }
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = rounded((primary and 0x00FFFFFF) or (0x0A shl 24), 24)
+            clipToOutline = true
+        }
         val body = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(0, 0, 0, dp(12))
+            setPadding(dp(16), 0, dp(16), dp(20))
             visibility = if (sectionId in prefs.collapsedSettingsSections) View.GONE else View.VISIBLE
         }
-        val chevron = TextView(this).apply { textSize = 16f; alpha = 0.6f }
-        fun mark() { chevron.text = if (body.visibility == View.VISIBLE) "▴" else "▾" }
-        mark()
+        val chevron = ImageView(this).apply {
+            setImageResource(R.drawable.ic_settings_chevron)
+            imageTintList = ColorStateList.valueOf(secondary)
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }
         val head = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            minimumHeight = dp(56)
+            minimumHeight = dp(88)
+            setPadding(dp(16), dp(16), dp(16), dp(16))
             isClickable = true
             isFocusable = true
-            background = selectableBackground()
-            addView(TextView(context).apply {
-                text = title
-                textSize = 18f
-                setTypeface(typeface, android.graphics.Typeface.BOLD)
-                setTextColor(currentTextColor(android.R.attr.textColorPrimary))
-            }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            addView(chevron)
-            setOnClickListener {
-                val open = body.visibility != View.VISIBLE
-                body.visibility = if (open) View.VISIBLE else View.GONE
-                prefs.collapsedSettingsSections = if (open) {
-                    prefs.collapsedSettingsSections - sectionId
-                } else {
-                    prefs.collapsedSettingsSections + sectionId
-                }
-                mark()
-            }
+            contentDescription = "$title. $summary"
+            background = RippleDrawable(
+                ColorStateList.valueOf((accent and 0x00FFFFFF) or (0x20 shl 24)),
+                null, rounded(Color.WHITE, 24),
+            )
+            addView(ImageView(context).apply {
+                setImageResource(iconRes)
+                imageTintList = ColorStateList.valueOf(accent)
+                setPadding(dp(10), dp(10), dp(10), dp(10))
+                background = rounded((accent and 0x00FFFFFF) or (0x18 shl 24), 14)
+                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            }, LinearLayout.LayoutParams(dp(44), dp(44)))
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+                add(TextView(context).apply {
+                    text = title
+                    textSize = 17f
+                    typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+                    setTextColor(primary)
+                })
+                add(TextView(context).apply {
+                    text = summary
+                    textSize = 13f
+                    setTextColor(secondary)
+                }, dp(4))
+            }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginStart = dp(14)
+                marginEnd = dp(8)
+            })
+            addView(chevron, LinearLayout.LayoutParams(dp(24), dp(24)))
         }
-        content.add(divider())
-        content.add(head)
-        content.add(body)
+        ViewCompat.setAccessibilityHeading(head, true)
+        fun mark() {
+            val open = body.visibility == View.VISIBLE
+            chevron.rotation = if (open) 180f else 0f
+            ViewCompat.setStateDescription(head, if (open) "Đã mở rộng" else "Đã thu gọn")
+        }
+        mark()
+        head.setOnClickListener {
+            val open = body.visibility != View.VISIBLE
+            body.visibility = if (open) View.VISIBLE else View.GONE
+            prefs.collapsedSettingsSections = if (open) {
+                prefs.collapsedSettingsSections - sectionId
+            } else {
+                prefs.collapsedSettingsSections + sectionId
+            }
+            mark()
+        }
+        card.add(head)
+        card.add(body)
+        content.add(card, dp(12))
         return body
     }
 
@@ -464,17 +513,6 @@ class SettingsActivity : Activity() {
     }
 
     private fun showActiveProfile() { profileButton.text = "Profile: ${prefs.activeProfile.name}  ▾" }
-
-    private fun divider() = View(this).apply {
-        setBackgroundColor(currentTextColor(android.R.attr.textColorPrimary))
-        alpha = 0.12f
-        minimumHeight = 1
-    }
-
-    private fun selectableBackground(): android.graphics.drawable.Drawable? {
-        val ta = obtainStyledAttributes(intArrayOf(android.R.attr.selectableItemBackground))
-        try { return ta.getDrawable(0) } finally { ta.recycle() }
-    }
 
     @Suppress("DEPRECATION")
     private fun switch(label: String, checked: Boolean, onChange: (Boolean) -> Unit) = Switch(this).apply {
