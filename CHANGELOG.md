@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.4.1 — unreleased
+
 ## 0.4.0 — 2026-11-07
 
 - Đổi chỗ phím ngay trên bàn phím: giữ một phím ký tự ~0,8 giây đến khi nó nổi lên, kéo thả lên phím khác. Áp cho lớp chữ hoặc trang 123 đang hiện. Phím chức năng không tự nhấc nhưng đổi chỗ được khi phím ký tự thả lên nó; phím cách và ↵ cố định; ký tự vuốt xuống đứng yên theo ô như ở màn chỉnh sửa. Tự lưu vào profile đang dùng (profile có sẵn thì thành profile mới "Của tôi") và giữ độ lệch chạm đã học. Nhả tại chỗ không kéo đi thì vẫn gõ ký tự đó. Tắt được trong Cài đặt › Bàn phím.
