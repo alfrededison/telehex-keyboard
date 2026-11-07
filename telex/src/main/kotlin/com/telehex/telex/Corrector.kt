@@ -1,7 +1,9 @@
 package com.telehex.telex
 
+import java.text.Normalizer
+
 /**
- * Sinh gợi ý sửa cho một chuỗi phím đã gõ, từ ba nguồn rồi xếp hạng:
+ * Sinh gợi ý sửa cho một chuỗi phím đã gõ, ưu tiên khôi phục dấu của từ đã biết, rồi thử:
  * - thay 1 phím bằng phím lân cận trên lưới lục giác (tối đa 6 ô);
  * - thiếu hoặc thừa 1 phím, đảo 2 phím liền nhau;
  * - lỗi Telex thường gặp (quên `w`, gõ dấu trước nguyên âm) — đã nằm trong hai nguồn trên.
@@ -46,6 +48,23 @@ class Corrector(
         }
         val original = render(keys, caps)
         val out = ArrayList<Suggestion>()
+        // Khôi phục cả mũ/móc và thanh cùng lúc: "truoc" → "trước" cần hơn một phím Telex.
+        // Không bỏ dấu người dùng đã gõ để đổi sang một từ khác có cùng chữ không dấu.
+        val typed = TelexEngine(config.copy(englishFallback = false))
+        for (i in keys.indices) typed.press(keys[i], caps.getOrElse(i) { false })
+        val text = typed.text()
+        for (word in restorationWords[plain(text)].orEmpty()) {
+            if (typed.tone != Tone.NONE && word.none { ToneRules.toneOfChar(it) == typed.tone }) continue
+            if (text.indices.any { i ->
+                val base = ToneRules.stripTone(text[i].lowercaseChar())
+                base !in 'a'..'z' && base != ToneRules.stripTone(word[i])
+            }) continue
+            val restored = ToneRules.spell(
+                word.map { ToneRules.stripTone(it) }, word.maxOf { ToneRules.toneOfChar(it) },
+                text.map { it.isUpperCase() }, config.newToneStyle,
+            )
+            if (restored != original) out.add(Suggestion(restored, 0.5f, CommonSyllables.rankOf(word)))
+        }
         for ((k, cost) in candidates) {
             val text = renderValid(k, caps) ?: continue
             if (text == original) continue
@@ -74,6 +93,18 @@ class Corrector(
     private fun renderValid(keys: String, caps: List<Boolean>): String? {
         val e = TelexEngine(config)
         for (i in keys.indices) e.press(keys[i], caps.getOrElse(i) { false })
+        // Validator cho phép thiếu thanh khi đang gõ; gợi ý sửa phải là âm tiết hoàn chỉnh.
+        if (e.text().endsWith("c", true) || e.text().endsWith("ch", true) ||
+            e.text().endsWith("p", true) || e.text().endsWith("t", true)) {
+            if (e.tone != Tone.ACUTE && e.tone != Tone.DOT) return null
+        }
         return if (e.isValid()) e.text() else null
+    }
+
+    private companion object {
+        fun plain(word: String): String = Normalizer.normalize(word.lowercase().replace('đ', 'd'), Normalizer.Form.NFD)
+            .filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
+
+        val restorationWords: Map<String, List<String>> by lazy { CommonSyllables.RANK.keys.groupBy { plain(it) } }
     }
 }

@@ -30,6 +30,48 @@ class CorrectorTest {
     }
 
     @Test
+    fun restoresMissingDiacriticsBeforeKeyboardTypos() {
+        for ((keys, expected) in mapOf(
+            "truoc" to "trước", "duoc" to "được", "nuoc" to "nước", "nguoi" to "người",
+            "tieng" to "tiếng", "thuoc" to "thuốc", "viec" to "việc", "truocs" to "trước",
+        )) {
+            val suggestions = corrector.suggest(keys)
+            assertEquals("$keys: $suggestions", expected, suggestions.first())
+        }
+    }
+
+    @Test
+    fun correctionsNeverOfferStopFinalsWithoutAcuteOrDotTone() {
+        for (keys in listOf("truoc", "duoc", "nuoc", "cach", "tap", "viet")) {
+            val suggestions = corrector.suggest(keys, max = 100)
+            assertTrue("$keys: $suggestions", suggestions.none { it in listOf("trôc", "truơc", "trươc") })
+            for (word in suggestions) {
+                if (listOf("c", "ch", "p", "t").any { word.endsWith(it) }) {
+                    assertTrue("$keys → $word", word.any {
+                        ToneRules.toneOfChar(it) == Tone.ACUTE || ToneRules.toneOfChar(it) == Tone.DOT
+                    })
+                }
+            }
+        }
+    }
+
+    @Test
+    fun restorationPreservesCapitalizationAndExplicitDiacritics() {
+        assertEquals("Trước", corrector.suggest("truoc", listOf(true)).first())
+        assertEquals("TRƯỚC", corrector.suggest("truoc", List(5) { true }).first())
+        assertTrue("đã gõ dấu ngã", "trước" !in corrector.suggest("truocx"))
+        assertTrue("đã gõ ô", "tờ" !in corrector.suggest("too"))
+    }
+
+    @Test
+    fun restorationRespectsToneStyleAndCustomToneKeys() {
+        val custom = Corrector(TelexConfig(toneKeys = mapOf('v' to Tone.ACUTE), newToneStyle = true), neighbors)
+        assertEquals("trước", custom.suggest("truocv").first())
+        assertEquals("khoẻ", custom.suggest("khoe").first())
+        assertEquals("khỏe", corrector.suggest("khoe").first())
+    }
+
+    @Test
     fun decomposerRoundTrip() {
         for (w in listOf("người", "tiếng", "Việt", "đường", "thuở", "quốc", "giữa", "xoong")) {
             val (keys, caps) = TelexDecomposer.keysOf(w)!!
