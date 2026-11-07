@@ -120,6 +120,21 @@ class LayoutModel(val rows: List<List<String?>>) {
             )
         )
 
+        /**
+         * Nhanh nhất theo mô hình Fitts hai ngón, tối ưu tự do trên văn bản tiểu thuyết (~250 nghìn âm tiết):
+         * ~180 ms/phím so với ~190 của [BALANCED] và ~208 của [DEFAULT], gõ luân phiên ~71%, tải hai ngón ~50/50.
+         * Không giữ QWERTY (chỉ Z và phím chức năng ở chỗ cũ) nên phải học lại.
+         */
+        val ERGONOMIC: LayoutModel = LayoutModel(
+            listOf(
+                listOf("l", "v", "b", KeyCode.SETTINGS, "q", "p", KeyCode.NUMBERS),
+                listOf("m", "w", "r", "x", "y", "u", "e"),
+                listOf("f", "n", "s", "j", "a", "i", "k"),
+                listOf("z", "d", "h", "c", "t", "o", "g"),
+                listOf(KeyCode.EMOJI, ",", null, null, null, ".", KeyCode.ENTER),
+            )
+        )
+
         fun fromJson(json: String): LayoutModel? = runCatching {
             val arr = JSONArray(json)
             val rows = (0 until arr.length()).map { r ->

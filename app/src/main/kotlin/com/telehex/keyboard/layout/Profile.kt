@@ -47,6 +47,7 @@ class Profile(val name: String, val letters: LayoutModel, val swipe: CellGrid, v
         val BUILT_IN: List<Profile> = listOf(
             DEFAULT,
             Profile("Cân bằng hai ngón", LayoutModel.BALANCED, KeyLayers.DEFAULT_SWIPE, SymbolPages.DEFAULT),
+            Profile("Công thái học", LayoutModel.ERGONOMIC, KeyLayers.DEFAULT_SWIPE, SymbolPages.DEFAULT),
         )
 
         fun nameTaken(name: String, taken: Collection<String>) = taken.any { it.equals(name, ignoreCase = true) }
