@@ -196,6 +196,11 @@ class Prefs(context: Context) {
         get() = sp.getStringSet(KEY_FALLBACK_PKGS, DEFAULT_FALLBACK_PKGS) ?: DEFAULT_FALLBACK_PKGS
         set(v) = sp.edit().putStringSet(KEY_FALLBACK_PKGS, v).apply()
 
+    /** Danh sách package mở bàn phím ở chế độ EN (tắt Telex, gõ đúng phím). */
+    var englishPackages: Set<String>
+        get() = sp.getStringSet(KEY_EN_PKGS, emptySet()) ?: emptySet()
+        set(v) = sp.edit().putStringSet(KEY_EN_PKGS, v).apply()
+
     /** Lớp chữ bàn phím đang dùng; ba lớp chỉ ghi qua [saveProfiles] để luôn khớp profile đang dùng. */
     val layout: LayoutModel
         get() = sp.getString(KEY_LAYOUT, null)?.let { LayoutModel.fromJson(it) } ?: LayoutModel.DEFAULT
@@ -327,6 +332,7 @@ class Prefs(context: Context) {
         const val KEY_ACCENT = "accent"
         const val KEY_EXTRA_BOTTOM = "extra_bottom_dp"
         const val KEY_FALLBACK_PKGS = "fallback_packages"
+        const val KEY_EN_PKGS = "english_packages"
         const val KEY_LAYOUT = "layout_json"
         const val KEY_CUSTOM = "custom_keys"
         const val KEY_SWIPE_GRID = "swipe_grid"
@@ -359,7 +365,7 @@ class Prefs(context: Context) {
         val KNOWN_TYPES: Map<String, kotlin.reflect.KClass<*>> = mapOf(
             KEY_NEW_TONE_STYLE to Boolean::class, KEY_L_GRAVE to Boolean::class, KEY_EN_FALLBACK to Boolean::class,
             KEY_HAPTIC to Boolean::class, KEY_SOUND to Boolean::class, KEY_THEME to String::class, KEY_ACCENT to String::class,
-            KEY_EXTRA_BOTTOM to Int::class, KEY_FALLBACK_PKGS to Set::class, KEY_LAYOUT to String::class,
+            KEY_EXTRA_BOTTOM to Int::class, KEY_FALLBACK_PKGS to Set::class, KEY_EN_PKGS to Set::class, KEY_LAYOUT to String::class,
             KEY_CUSTOM to String::class, KEY_RECENT_EMOJI to String::class,
             KEY_SWIPE_DP to Int::class, KEY_HOLD_MS to Int::class, KEY_LONG_PRESS_MS to Int::class,
             KEY_STEP_DP to Int::class, KEY_DOUBLE_TAP_MS to Int::class,

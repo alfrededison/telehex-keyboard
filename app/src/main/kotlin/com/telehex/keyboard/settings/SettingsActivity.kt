@@ -147,6 +147,25 @@ class SettingsActivity : Activity() {
         sec.add(switch("L cũng là dấu huyền (lal → là)", prefs.lAsGrave) { prefs.lAsGrave = it })
         sec.add(switch("Tự viết hoa chữ đầu câu", prefs.autoCapitalize) { prefs.autoCapitalize = it })
         sec.add(switch("Tự khôi phục từ tiếng Anh (windows không thành ưindows)", prefs.englishFallback) { prefs.englishFallback = it })
+        sec.add(label("Chế độ EN (tắt Telex)"))
+        sec.add(TextView(this).apply {
+            text = "Vuốt xuống phím cách để bật/tắt; phím cách ghi \"EN\" khi đang bật. Các app dưới đây và ô email mở sẵn ở EN."
+            textSize = 13f
+        })
+        val englishSummary = TextView(this).apply { setPadding(0, dp(6), 0, dp(6)) }
+        fun refreshEnglish() {
+            val names = AppPicker.labels(this, prefs.englishPackages)
+            englishSummary.text = if (names.isEmpty()) "Chưa chọn app nào" else names.joinToString(", ")
+        }
+        refreshEnglish()
+        sec.add(englishSummary)
+        val enPicker = AppPicker(this, "Tự động bật EN", "english") {
+            prefs.englishPackages = it
+            refreshEnglish()
+        }
+        englishPicker = enPicker
+        sec.addButton("Chọn app tự bật EN…") { enPicker.show(prefs.englishPackages) }
+        enPicker.restoreState(savedInstanceState)
 
         sec = section("Gõ tắt")
         sec.add(TextView(this).apply {
@@ -198,7 +217,7 @@ class SettingsActivity : Activity() {
 
         sec = section("Cử chỉ")
         sec.add(TextView(this).apply {
-            text = "Phím cách: vuốt trái = xoá (ngắn: 1 ký tự, dài: theo từ, có bôi đen xem trước); giữ rồi kéo = di con trỏ; chạm đúp rồi giữ-kéo = chọn; vuốt phải = dán; khi có vùng chọn: vuốt lên = chép, vuốt trái = cắt. Hai ngón vuốt trái/phải = undo/redo, hai ngón giữ = chọn hết."
+            text = "Phím cách: vuốt trái = xoá (ngắn: 1 ký tự, dài: theo từ, có bôi đen xem trước); giữ rồi kéo = di con trỏ; chạm đúp rồi giữ-kéo = chọn; vuốt phải = dán; vuốt lên = đổi hoa/thường; vuốt xuống = bật/tắt EN (tắt Telex); khi có vùng chọn: vuốt lên = chép, vuốt trái = cắt. Hai ngón vuốt trái/phải = undo/redo, hai ngón giữ = chọn hết."
             textSize = 13f
         })
         sec.add(slider("Ngưỡng vuốt", "dp", 12, 60, prefs.swipeThresholdDp) { prefs.swipeThresholdDp = it })
@@ -233,7 +252,7 @@ class SettingsActivity : Activity() {
         }
         refreshFallback()
         sec.add(fallbackSummary)
-        val picker = AppPicker(this, "Chế độ dự phòng") {
+        val picker = AppPicker(this, "Chế độ dự phòng", "fallback") {
             prefs.fallbackPackages = it
             refreshFallback()
         }
@@ -261,15 +280,18 @@ class SettingsActivity : Activity() {
     }
 
     private var fallbackPicker: AppPicker? = null
+    private var englishPicker: AppPicker? = null
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putStringArrayList(STATE_EXPANDED, ArrayList(expanded))
         fallbackPicker?.saveState(outState)
+        englishPicker?.saveState(outState)
     }
 
     override fun onDestroy() {
         fallbackPicker?.dismiss()
+        englishPicker?.dismiss()
         super.onDestroy()
     }
 

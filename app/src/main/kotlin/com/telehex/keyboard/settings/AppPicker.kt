@@ -34,6 +34,8 @@ class AppEntry(val pkg: String, val label: String, val installed: Boolean)
 class AppPicker(
     private val activity: Activity,
     private val title: String,
+    /** Tiền tố khoá trong Bundle, để nhiều bảng chọn trên cùng activity không đè trạng thái của nhau. */
+    private val stateKey: String,
     private val onSave: (Set<String>) -> Unit,
 ) {
     private var dialog: AlertDialog? = null
@@ -56,13 +58,13 @@ class AppPicker(
 
     fun saveState(out: Bundle) {
         val c = chosen ?: return
-        out.putStringArrayList(KEY_CHOSEN, ArrayList(c))
-        out.putString(KEY_QUERY, query)
+        out.putStringArrayList(stateKey + KEY_CHOSEN, ArrayList(c))
+        out.putString(stateKey + KEY_QUERY, query)
     }
 
     fun restoreState(state: Bundle?) {
-        val c = state?.getStringArrayList(KEY_CHOSEN) ?: return
-        show(c.toSet(), state.getString(KEY_QUERY) ?: "")
+        val c = state?.getStringArrayList(stateKey + KEY_CHOSEN) ?: return
+        show(c.toSet(), state.getString(stateKey + KEY_QUERY) ?: "")
     }
 
     fun dismiss() {
@@ -168,8 +170,8 @@ class AppPicker(
     }
 
     companion object {
-        private const val KEY_CHOSEN = "app_picker_chosen"
-        private const val KEY_QUERY = "app_picker_query"
+        private const val KEY_CHOSEN = "_app_picker_chosen"
+        private const val KEY_QUERY = "_app_picker_query"
 
         /** Tên dễ đọc cho các package mặc định khi app chưa cài (không đọc được nhãn từ hệ thống). */
         private val KNOWN_NAMES = mapOf("com.zing.zalo" to "Zalo", "com.facebook.orca" to "Messenger")

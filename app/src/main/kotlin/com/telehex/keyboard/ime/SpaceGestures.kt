@@ -41,6 +41,7 @@ class SpaceGestures(private val host: Host) {
         fun cut()
         fun paste()
         fun toggleCaps()
+        fun toggleEnglish()
         fun setCursorMode(on: Boolean)
         fun haptic()
         fun onSelectionGestureEnd()
@@ -135,6 +136,7 @@ class SpaceGestures(private val host: Host) {
                 Gesture.SWIPE_LEFT -> if (host.hasSelection()) host.cut() else host.deleteBackward()
                 Gesture.SWIPE_RIGHT -> host.paste()
                 Gesture.SWIPE_UP -> if (host.hasSelection()) host.copy() else host.toggleCaps()
+                Gesture.SWIPE_DOWN -> host.toggleEnglish()
                 else -> {}
             }
             State.IDLE -> {}

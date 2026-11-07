@@ -65,7 +65,16 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private var sink: TextSink = ComposingSink()
     private var mode = Mode.ABC
     private var symbolPage = 1
-    private var telexEnabled = true
+    /** Ô mật khẩu: tắt Telex, không học, không lưu clipboard, không tự viết hoa. */
+    private var secureField = false
+    /** Chế độ EN: tắt Telex, gõ đúng phím. Bật sẵn ở app đã chọn và ô email; vuốt xuống phím cách để đổi. */
+    private var english = false
+    /** EN/VI đổi bằng tay, giữ qua các ô của cùng app ([overridePkg]); null = theo mặc định của app. */
+    private var englishOverride: Boolean? = null
+    private var overridePkg = ""
+    /** Ô email: luôn mở ở EN; đổi bằng tay ở đây chỉ áp cho ô này, không thành lựa chọn của cả app. */
+    private var emailField = false
+    private val telexEnabled: Boolean get() = !secureField && !english
     private var enterLabel = "↵"
     private var candStart = -1
     private var candEnd = -1
@@ -111,7 +120,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     /** Lưu clipboard history; bỏ qua nội dung nhạy cảm và khi đang ở ô mật khẩu. */
     private fun onClipChanged() {
-        if (!prefs.clipboardHistory || !telexEnabled) return
+        if (!prefs.clipboardHistory || secureField) return
         val clip = clipboard().primaryClip ?: return
         if (clip.itemCount == 0) return
         val desc = clip.description
@@ -386,6 +395,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         if (!::keyboardView.isInitialized) return
         keyboardView.shifted = upperNext()
         keyboardView.capsLock = capsLockActive()
+        keyboardView.english = english && !secureField
     }
 
     /** Thay lưới phím bằng một bảng (emoji, dialpad) có cùng chiều cao; null = về lưới phím. */
@@ -475,7 +485,13 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                 variation == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
                 variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
             ) || (cls == InputType.TYPE_CLASS_NUMBER && variation == InputType.TYPE_NUMBER_VARIATION_PASSWORD)
-        telexEnabled = !isPassword
+        secureField = isPassword
+        if (pkg != overridePkg) englishOverride = null
+        emailField = cls == InputType.TYPE_CLASS_TEXT && (
+            variation == InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS || variation == InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS
+            )
+        // Khởi động lại cùng ô (xoay màn hình, app gọi restartInput) thì giữ EN/VI đang dùng
+        if (!restarting) english = emailField || (englishOverride ?: (pkg in prefs.englishPackages))
         noLearning = isPassword || (attribute?.imeOptions ?: 0) and EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING != 0
         numberOnly = cls == InputType.TYPE_CLASS_NUMBER
         numberSigned = inputType and InputType.TYPE_NUMBER_FLAG_SIGNED != 0
@@ -644,7 +660,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     /** Con trỏ nằm trong một từ đã gõ: hiện phương án sửa cho từ đó (kiểu Gboard). */
     private fun showWordAtCursorSuggestions() {
         val ic = currentInputConnection ?: run { candidateBar.clear(); return }
-        if (hasSelection() || cursorMode || mode != Mode.ABC) { candidateBar.clear(); return }
+        // Ở EN / ô mật khẩu chữ gõ ra là cố ý, đừng gợi ý đổi sang tiếng Việt
+        if (hasSelection() || cursorMode || mode != Mode.ABC || !telexEnabled) { candidateBar.clear(); return }
         val before = ic.getTextBeforeCursor(24, 0)?.toString() ?: ""
         val after = ic.getTextAfterCursor(24, 0)?.toString() ?: ""
         var i = before.length
@@ -720,7 +737,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         val upper = auto != swipedUp
         if (engine.isEmpty) autoCappedFirst = auto && !swipedUp
         if (capsOverride == CapsOverride.LOWER) capsOverride = null
-        if (!telexEnabled) {
+        // Tìm emoji đọc chữ từ engine nên vẫn gõ vào engine dù đang EN
+        if (!telexEnabled && !emojiSearch) {
             commitSyllable((if (upper) ch.uppercaseChar() else ch).toString())
             return
         }
@@ -769,6 +787,22 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         updateBar() // nhãn phím + gợi ý viết hoa theo trạng thái mới
     }
 
+    /**
+     * Vuốt xuống phím cách: bật/tắt chế độ EN. Lựa chọn giữ cho các ô khác của cùng app, sang app
+     * khác thì về mặc định (app trong danh sách EN thì EN, còn lại VI). Ở ô email chỉ đổi cho ô đó.
+     */
+    private fun toggleEnglish() {
+        if (mode == Mode.DIAL || emojiSearch || secureField) return
+        commitSyllable()
+        english = !english
+        if (!emailField) {
+            englishOverride = english
+            overridePkg = currentInputEditorInfo?.packageName ?: ""
+        }
+        flash(if (english) "EN · tắt Telex" else "VI · bật Telex")
+        updateBar()
+    }
+
     /** Nút ⌫ trên thanh gợi ý: như phím ⌫ trên lưới. */
     private fun barBackspace() {
         spaceGestures.noteOtherKey()
@@ -781,7 +815,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     /** Cờ CAP_* áp cho ô nhập hiện tại (0 = không tự viết hoa). */
     private fun capRequest(): Int {
-        if (!prefs.autoCapitalize || !telexEnabled || emojiSearch || mode != Mode.ABC) return 0
+        if (!prefs.autoCapitalize || secureField || emojiSearch || mode != Mode.ABC) return 0
         val info = currentInputEditorInfo ?: return 0
         if (info.privateImeOptions?.split(',')?.any { it.trim() == NO_AUTO_CAP } == true) return 0
         val type = info.inputType
@@ -943,6 +977,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         override fun cut() = this@HexKeyboardService.cut()
         override fun paste() = this@HexKeyboardService.paste()
         override fun toggleCaps() = this@HexKeyboardService.toggleCaps()
+        override fun toggleEnglish() = this@HexKeyboardService.toggleEnglish()
         override fun setCursorMode(on: Boolean) {
             cursorMode = on
             keyboardView.dimmed = on

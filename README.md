@@ -35,6 +35,7 @@ Z   X   C   V   B   N   M
 | Chạm đúp phím cách, giữ lần hai rồi kéo | Chọn văn bản |
 | Vuốt **phải** trên phím cách | Dán |
 | Vuốt **lên** trên phím cách (không có vùng chọn) | Đổi hoa/thường: chữ sắp gõ đang thường thì khoá chữ hoa (phím cách ghi "⇪ HOA", vuốt lên lần nữa để tắt); đang tự viết hoa đầu câu thì chữ kế tiếp ra thường |
+| Vuốt **xuống** trên phím cách | Bật/tắt chế độ EN (tắt Telex, gõ đúng phím); phím cách ghi "cách · EN". Giữ cho các ô khác của cùng app, sang app khác thì về mặc định. Ô email và các app chọn trong Cài đặt › Telex mở sẵn ở EN (đổi ở ô email thì chỉ áp cho ô đó) |
 | Có vùng chọn: vuốt lên / vuốt trái (ngắn hay dài) trên phím cách | Chép / Cắt |
 | Có vùng chọn: ⌫ | Xoá vùng chọn, không đưa vào clipboard |
 | Nút ⌫ ở góc phải thanh gợi ý | Xoá lùi như phím ⌫; giữ để xoá liên tục |
@@ -69,6 +70,7 @@ Gợi ý âm tiết tiếp theo dùng thêm một mô hình n-gram âm tiết n�
 - **Chỉnh sửa phím**: kéo một phím thả lên phím khác để đổi chỗ; phím cách và ↵ cố định. Màn này có 3 chế độ: **Chữ**, **Vuốt xuống**, **123**; mỗi lớp đổi chỗ riêng, hai lớp còn lại đứng yên theo ô. Ở chế độ 123, đang kéo thì giữ ngón trên phím 1/2 để sang trang kia. Số 1…0 mặc định ở ô của Q W R Y F H U O P L (cả lớp 123 lẫn vuốt xuống) và kéo được như mọi ký tự khác.
 - **Profile**: mỗi profile giữ đủ ba lớp Chữ, Vuốt xuống, 123. Màn chỉnh sửa luôn sửa profile đang dùng; Lưu là áp ngay cho bàn phím. Menu ⋮ có Tạo mới, Nhân bản (gồm cả thay đổi chưa lưu), Đổi tên, Xoá, Bỏ thay đổi. Có sẵn "Mặc định" và "Cân bằng hai ngón" (chia đều tải cho hai ngón cái, tăng gõ luân phiên); hai profile này khoá 🔒, sửa thì lưu thành profile mới. Đổi nhanh profile ngay trong Cài đặt › Bàn phím.
 - **Ký tự vuốt xuống** cho từng ô phím: số, ký hiệu, emoji hoặc đoạn văn bản ngắn (≤ 8 ký tự). Ở chế độ **Vuốt xuống** của màn chỉnh sửa phím, chạm một phím để chọn ký tự, kéo để đổi chỗ.
+- **App tự bật EN**: chọn app (Termux, app code…) trong Cài đặt › Telex để luôn mở bàn phím ở chế độ EN.
 - Kiểu đặt dấu cũ/mới (hòa/hoà), "L cũng là dấu huyền" (`lal` → là), tự viết hoa đầu câu, rung, âm thanh, giao diện sáng/tối, màu nhấn, chế độ một tay, tông da emoji, gõ tắt, clipboard history, chế độ ẩn danh, vùng chạm động (tắt mặc định), học độ lệch chạm.
 - **Sao lưu / khôi phục** mọi thứ ra một file zip.
 - **Giọng nói**: nút 🎤 trong bảng sửa văn bản chuyển sang IME giọng nói đã bật (ví dụ FUTO Voice Input chạy offline).
