@@ -1,35 +1,114 @@
 package com.telehex.keyboard.ime
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.media.AudioManager
 import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.HorizontalScrollView
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.telehex.keyboard.R
 import com.telehex.telex.TelexEngine
 
-/** Thanh trên bàn phím (~52dp): 6 biến thể dấu của âm tiết đang soạn. Chạm để chốt âm tiết với dấu đó. */
-class CandidateBar(context: Context) : HorizontalScrollView(context) {
+/**
+ * Thanh trên bàn phím (~52dp): gợi ý cuộn ngang (biến thể dấu, hoàn thành, thanh chỉnh sửa) và nút ⌫
+ * cố định ở góc phải. Giữ ⌫ để xoá liên tục.
+ */
+@SuppressLint("ClickableViewAccessibility") // ⌫ vẫn có setOnClickListener cho trình đọc màn hình
+class CandidateBar(context: Context) : LinearLayout(context) {
     private val row = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
         val p = dp(6)
         setPadding(p, 0, p, 0)
     }
+    private val scroll = HorizontalScrollView(context).apply {
+        isHorizontalScrollBarEnabled = false
+        addView(row, ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT))
+    }
+    private val backspaceBg = GradientDrawable().apply { cornerRadius = dp(19).toFloat(); setColor(Color.TRANSPARENT) }
+    private val backspace = ImageView(context).apply {
+        setImageResource(R.drawable.ic_edit_backspace)
+        scaleType = ImageView.ScaleType.CENTER
+        contentDescription = "Xoá"
+        background = backspaceBg
+    }
 
     var theme: Theme = Theme.LIGHT
-        set(value) { field = value; setBackgroundColor(value.barBg) }
+        set(value) { field = value; applyColors() }
 
     var onPick: ((Int) -> Unit)? = null
 
-    init {
-        isHorizontalScrollBarEnabled = false
-        addView(row, ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT))
-        layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52))
-        setBackgroundColor(theme.barBg)
+    /** Nút ⌫ ở góc phải: gọi một lần khi chạm xuống, rồi lặp lại khi giữ. */
+    var onBackspace: (() -> Unit)? = null
+    var hapticEnabled: Boolean = true
+    var soundEnabled: Boolean = false
+    private val audio by lazy { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
+
+    /** Đang giữ ⌫; [stopBackspace] gọi từ trong [onBackspace] cũng chặn được lần lặp kế tiếp. */
+    private var repeating = false
+    private val backspaceRepeat = object : Runnable {
+        override fun run() {
+            if (!repeating) return
+            fireBackspace()
+            if (repeating) postDelayed(this, REPEAT_MS)
+        }
     }
+
+    init {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        addView(scroll, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
+        addView(backspace, LinearLayout.LayoutParams(dp(52), dp(38)).apply { marginEnd = dp(6) })
+        layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52))
+        backspace.setOnClickListener { onBackspace?.invoke() } // trình đọc màn hình (performClick)
+        backspace.setOnTouchListener { _, e ->
+            when (e.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    backspaceBg.setColor(theme.pressedOverlay)
+                    repeating = true
+                    fireBackspace()
+                    if (repeating) postDelayed(backspaceRepeat, REPEAT_DELAY_MS)
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> stopBackspace()
+            }
+            true
+        }
+        applyColors()
+    }
+
+    private fun fireBackspace() {
+        if (hapticEnabled) backspace.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        if (soundEnabled) audio.playSoundEffect(AudioManager.FX_KEYPRESS_DELETE, 0.5f)
+        onBackspace?.invoke()
+    }
+
+    /** Dừng xoá liên tục dù ngón tay còn giữ ⌫. */
+    fun stopBackspace() {
+        repeating = false
+        removeCallbacks(backspaceRepeat)
+        backspaceBg.setColor(Color.TRANSPARENT)
+    }
+
+    override fun onDetachedFromWindow() {
+        stopBackspace()
+        super.onDetachedFromWindow()
+    }
+
+    private fun applyColors() {
+        setBackgroundColor(theme.barBg)
+        backspace.imageTintList = ColorStateList.valueOf(theme.chipFg)
+    }
+
+    private fun scrollToStart() = scroll.scrollTo(0, 0)
 
     private fun dp(v: Int): Int = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics).toInt()
 
@@ -62,7 +141,7 @@ class CandidateBar(context: Context) : HorizontalScrollView(context) {
             lp.marginEnd = dp(6)
             row.addView(tv, lp)
         }
-        scrollTo(0, 0)
+        scrollToStart()
     }
 
     fun clear() = row.removeAllViews()
@@ -72,7 +151,7 @@ class CandidateBar(context: Context) : HorizontalScrollView(context) {
         row.removeAllViews()
         for (n in next) chip(n, selected = false, onLongClick = { onForget(n) }) { onPick(n) }
         for (e in emoji) chip(e, selected = false) { onPickEmoji(e) }
-        scrollTo(0, 0)
+        scrollToStart()
     }
 
     /** Chữ đang gõ (ô đầu, giữ nguyên) + các gợi ý sửa; chạm gợi ý để thay. */
@@ -80,7 +159,7 @@ class CandidateBar(context: Context) : HorizontalScrollView(context) {
         row.removeAllViews()
         chip(typed, selected = true) { onTyped() }
         for (f in fixes) chip(f, selected = false) { onPick(f) }
-        scrollTo(0, 0)
+        scrollToStart()
     }
 
     private fun chip(text: String, selected: Boolean, onLongClick: (() -> Unit)? = null, onClick: () -> Unit) {
@@ -129,6 +208,11 @@ class CandidateBar(context: Context) : HorizontalScrollView(context) {
             lp.marginEnd = dp(6)
             row.addView(tv, lp)
         }
-        scrollTo(0, 0)
+        scrollToStart()
+    }
+
+    private companion object {
+        const val REPEAT_DELAY_MS = 400L
+        const val REPEAT_MS = 50L
     }
 }

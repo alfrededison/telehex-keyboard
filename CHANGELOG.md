@@ -3,6 +3,7 @@
 ## 0.3.1 — unreleased
 
 - Vuốt lên phím cách (khi không có vùng chọn) đổi hoa/thường: đang thường thì khoá chữ hoa (phím cách ghi "⇪ HOA", vuốt lên lần nữa để tắt), đang tự viết hoa đầu câu thì chữ kế tiếp ra thường. Chữ gõ khi khoá hoa không bị học thành "hay viết hoa".
+- Nút ⌫ cố định ở góc phải thanh gợi ý; giữ để xoá liên tục. Khi đang bôi đen, ⌫ xoá vùng chọn mà không cắt vào clipboard.
 
 ## 0.3.0 — 2026-11-06
 

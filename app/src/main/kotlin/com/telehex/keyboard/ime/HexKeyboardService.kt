@@ -315,7 +315,10 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     // ---- View ----
 
     override fun onCreateInputView(): View {
-        candidateBar = CandidateBar(this).apply { onPick = { tone -> engine.setTone(tone); replaceComposing(engine.text()) } }
+        candidateBar = CandidateBar(this).apply {
+            onPick = { tone -> engine.setTone(tone); replaceComposing(engine.text()) }
+            onBackspace = { barBackspace() }
+        }
         keyboardView = KeyboardView(this).apply { listener = this@HexKeyboardService }
         root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -363,6 +366,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         }
         keyboardView.validNextLetter = if (prefs.dynamicHitZones) { ch -> mode != Mode.ABC || telexEnabled.not() || engine.copy().apply { press(ch) }.isSuspicious().not() } else null
         candidateBar.theme = t
+        candidateBar.hapticEnabled = prefs.haptic
+        candidateBar.soundEnabled = prefs.sound
         toast.theme = t
         root.setBackgroundColor(t.background)
         emojiPanel = null // dựng lại theo theme khi mở lần sau
@@ -762,6 +767,16 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             CapsOverride.LOWER -> {}
         }
         updateBar() // nhãn phím + gợi ý viết hoa theo trạng thái mới
+    }
+
+    /** Nút ⌫ trên thanh gợi ý: như phím ⌫ trên lưới. */
+    private fun barBackspace() {
+        spaceGestures.noteOtherKey()
+        suggestionSpace = null
+        if (capsOverride == CapsOverride.LOWER) capsOverride = null
+        // Ô tìm emoji đã trống: lần này chỉ thoát tìm, đừng để phần giữ lặp tiếp xoá chữ trong ô nhập
+        if (emojiSearch && engine.isEmpty) candidateBar.stopBackspace()
+        deleteBackward()
     }
 
     /** Cờ CAP_* áp cho ô nhập hiện tại (0 = không tự viết hoa). */

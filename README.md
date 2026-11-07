@@ -36,6 +36,8 @@ Z   X   C   V   B   N   M
 | Vuốt **phải** trên phím cách | Dán |
 | Vuốt **lên** trên phím cách (không có vùng chọn) | Đổi hoa/thường: chữ sắp gõ đang thường thì khoá chữ hoa (phím cách ghi "⇪ HOA", vuốt lên lần nữa để tắt); đang tự viết hoa đầu câu thì chữ kế tiếp ra thường |
 | Có vùng chọn: vuốt lên / vuốt trái (ngắn hay dài) trên phím cách | Chép / Cắt |
+| Có vùng chọn: ⌫ | Xoá vùng chọn, không đưa vào clipboard |
+| Nút ⌫ ở góc phải thanh gợi ý | Xoá lùi như phím ⌫; giữ để xoá liên tục |
 | Hai ngón vuốt trái / phải | Undo / Redo (bàn phím tự quản lý lịch sử) |
 | Hai ngón giữ | Chọn hết |
 | Phím 1234 ở lớp ký tự (hoặc giữ phím 123) | Dialpad (tự mở ở ô số điện thoại / số / ngày giờ) |
