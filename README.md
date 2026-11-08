@@ -59,6 +59,8 @@ Bàn phím **không bao giờ tự đổi chữ** đã gõ. Thanh trên bàn ph�
 - phương án sửa cho từ đã gõ khi đặt con trỏ vào từ, dùng ngữ cảnh thực tế ngay trước từ đó;
 - emoji theo từ khoá (gõ "cười" → 😂).
 
+Ở **EN**, thanh gợi ý hoàn thành từ đang gõ bằng từ điển tiếng Anh nhỏ có sẵn, giữ hoa/thường và chỉ thay khi chạm. Không học chung với tiếng Việt; tắt ở ô mật khẩu, email, URL và ô yêu cầu không gợi ý. Chọn gợi ý chèn khoảng trắng; dấu câu ngay sau đó bỏ khoảng trắng này.
+
 Nút **…** hiện khi còn ứng viên: mở lưới gợi ý cuộn được trong vùng phím, chạm **← Bàn phím** để quay lại. Giữ gợi ý từ đã học trong lưới vẫn xoá khỏi từ điển cá nhân.
 
 Chạm một gợi ý thì chèn luôn kèm khoảng trắng; gõ dấu câu (`. , ! ? : ; … ) ] }`) ngay sau đó thì khoảng trắng này bị xoá ("Tối" rồi `,` → "Tối,").

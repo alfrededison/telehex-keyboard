@@ -71,14 +71,14 @@ Mặc định dùng composing text. App trong danh sách dự phòng dùng
   biến thể Unicode hợp lệ và font vẽ được. Áp dụng nhất quán khi chọn từ bảng/tìm/gợi ý.
 - [x] **Nút xem thêm gợi ý**: `…` hiện khi có thêm ứng viên, mở rộng ngay trong vùng bàn phím;
   chọn từ giữ hành vi chèn hiện có. Giữ gợi ý vẫn xoá khỏi từ điển cá nhân.
+- [x] **Gợi ý EN**: từ điển tiếng Anh offline nhỏ, hoàn thành từ đang gõ, giữ hoa/thường;
+  chạm để chèn. Không học chung với tiếng Việt, không hiện ở ô mật khẩu/email/mã.
 - [x] **Sửa lỗi xét ngữ cảnh**: kết hợp chi phí sửa, độ phổ biến và xác suất n-gram cá nhân/gốc;
   áp dụng cả khi đang gõ và khi đặt con trỏ vào từ. Không có dữ liệu thì giữ thứ tự dự phòng.
   Test cùng lỗi với hai ngữ cảnh và kiểm tra độ trễ.
 
 ## 4. Để sau
 
-- [ ] Gợi ý EN: từ điển lớn và mô hình n-gram tiếng Anh; phát triển riêng trên
-  branch `feature/english-predictions`.
 - [ ] Bàn phím chia đôi cho màn hình ngang.
 - [ ] Bàn phím nổi.
 - [ ] Nạp mô hình transformer nhỏ do người dùng cung cấp (GGUF/llama.cpp).

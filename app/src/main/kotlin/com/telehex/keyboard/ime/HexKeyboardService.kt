@@ -24,6 +24,7 @@ import com.telehex.telex.Corrector
 import com.telehex.telex.TelexDecomposer
 import com.telehex.telex.TelexEngine
 import com.telehex.telex.predict.GlideDecoder
+import com.telehex.telex.predict.EnglishPredictor
 import com.telehex.telex.predict.PredictionContext
 
 class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
@@ -49,6 +50,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private var corrector: Corrector? = null
     private lateinit var predictions: PredictionStore
     private val glideDecoder = GlideDecoder()
+    private val englishPredictor = EnglishPredictor()
+    private var englishSuggestionsAllowed = false
     private var glideSuggestions: List<String> = emptyList()
     /** Các âm tiết vừa chốt trong ô nhập hiện tại (ngữ cảnh dự đoán), gần nhất ở cuối. */
     private val recent = ArrayDeque<String>()
@@ -531,6 +534,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                 variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
             ) || (cls == InputType.TYPE_CLASS_NUMBER && variation == InputType.TYPE_NUMBER_VARIATION_PASSWORD)
         secureField = isPassword
+        englishSuggestionsAllowed = EnglishFieldPolicy.allows(inputType)
         if (pkg != overridePkg) englishOverride = null
         emailField = cls == InputType.TYPE_CLASS_TEXT && (
             variation == InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS || variation == InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS
@@ -666,6 +670,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                     CandidateBar.EditAction("Chọn hết", "2 ngón giữ") { selectAll() },
                 )
             )
+        } else if (english && !emojiSearch) {
+            showEnglishSuggestions()
         } else if (!engine.isEmpty && engine.hasVowel() && !engine.isValid()) {
             // Âm tiết chưa hợp lệ: giữ đúng chữ đang gõ ở ô đầu, kèm gợi ý sửa (biến thể dấu lúc này vô nghĩa).
             val typed = engine.text()
@@ -702,6 +708,44 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         } else {
             showWordAtCursorSuggestions()
         }
+    }
+
+    private fun showEnglishSuggestions() {
+        val ic = currentInputConnection
+        if (!prefs.predictions || !englishSuggestionsAllowed || secureField || hasSelection() || cursorMode || mode != Mode.ABC || ic == null) {
+            candidateBar.clear()
+            return
+        }
+        val before = ic.getTextBeforeCursor(64, 0)?.toString().orEmpty()
+        val after = ic.getTextAfterCursor(64, 0)?.toString().orEmpty()
+        val token = EnglishPredictor.tokenAtCursor(before, after)
+        if (token == null) { candidateBar.clear(); return }
+        val suggestions = englishPredictor.complete(token.head, capsLock = capsLockActive())
+        if (suggestions.isEmpty()) { candidateBar.clear(); return }
+        val space = if (after.drop(token.tail.length).startsWith(" ")) " " else ""
+        val pick: (String) -> Unit = pick@ { word ->
+            val connection = currentInputConnection ?: return@pick
+            // Gợi ý chỉ thay đúng token đã hiển thị, kể cả khi editor đổi con trỏ mà callback đến trễ.
+            if (!english || !englishSuggestionsAllowed || secureField || hasSelection() ||
+                EnglishPredictor.tokenAtCursor(
+                    connection.getTextBeforeCursor(64, 0)?.toString().orEmpty(),
+                    connection.getTextAfterCursor(64, 0)?.toString().orEmpty(),
+                ) != token ||
+                connection.getTextAfterCursor(token.tail.length + space.length, 0)?.toString() != token.tail + space) {
+                updateBar(); return@pick
+            }
+            val inserted = "$word "
+            connection.beginBatchEdit()
+            connection.deleteSurroundingText(token.head.length, token.tail.length + space.length)
+            connection.commitText(inserted, 1)
+            connection.endBatchEdit()
+            history.record(EditHistory.Op.Delete(token.head + token.tail + space))
+            history.record(EditHistory.Op.Insert(inserted))
+            suggestionSpace = inserted
+            updateBar()
+        }
+        candidateBar.showPredictions(suggestions.take(3), emptyList(), onPick = pick, onPickEmoji = {}, onForget = {})
+        offerMore(suggestions.map { word -> SuggestionPanel.Choice(word) { pick(word) } }, 3)
     }
 
     private fun emojiFor(word: String): List<String> {
