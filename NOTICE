@@ -29,3 +29,9 @@ https://creativecommons.org/publicdomain/zero/1.0/.
 TeleHex does not bundle language models; users build and import them separately.
 Build details and checksums: docs/english-dictionary.md.
 English word-list attribution notices are also bundled in assets/en-NOTICE.txt.
+
+The Vietnamese word list in app/src/main/assets/vi-frequency.txt is also derived
+from wordfreq 3.1.1 by Robyn Speer, under CC BY-SA 4.0, with the same upstream
+credits listed above. TeleHex normalizes Unicode, removes duplicates and retains
+Latin/Vietnamese letter tokens up to 8 characters. See docs/vietnamese-dictionary.md
+and assets/vi-NOTICE.txt for details. This word list is separate from vi.ngram.

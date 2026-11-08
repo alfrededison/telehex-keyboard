@@ -9,6 +9,8 @@ import com.telehex.telex.predict.EnglishPredictor
 import com.telehex.telex.predict.NgramModel
 import com.telehex.telex.predict.PersonalModel
 import com.telehex.telex.predict.Predictor
+import com.telehex.telex.predict.Phrases
+import com.telehex.telex.predict.VietnameseVocabulary
 import java.io.File
 import java.io.FileInputStream
 import java.nio.channels.FileChannel
@@ -53,6 +55,9 @@ class PredictionStore(private val context: Context) {
         io.execute {
             val englishWords = context.assets.open("en-frequency.txt").bufferedReader().use { it.readLines() }
             val english = EnglishPredictor(englishWords, loadBase(englishPackFile, "en.ngram"))
+            val vietnameseWords = context.assets.open("vi-frequency.txt").bufferedReader().use { it.readLines() }
+            val vietnamese = VietnameseVocabulary(vietnameseWords)
+            val phrases = context.assets.open("vi-phrases.tsv").bufferedReader().use { Phrases.parse(it.readText()) }
             val base = loadBase()
             // "Chưa có file" khác "có file mà đọc lỗi": chỉ trường hợp đầu mới được bắt đầu từ mô hình rỗng
             // rồi ghi ra. Nội dung hỏng không làm đọc lỗi (read bỏ qua dòng hỏng); lỗi ở đây thường tạm thời.
@@ -68,6 +73,8 @@ class PredictionStore(private val context: Context) {
                 englishPredictor = english
                 readFailed = failed
                 predictor.base = base
+                predictor.vocabulary = vietnamese
+                predictor.phrases = phrases
                 predictor.personal = personal
                 val learnedWhileLoading = pending.isNotEmpty()
                 for (op in pending) op(personal)

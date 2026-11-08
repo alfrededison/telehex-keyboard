@@ -59,6 +59,10 @@ Bàn phím **không bao giờ tự đổi chữ** đã gõ. Thanh trên bàn ph�
 - phương án sửa cho từ đã gõ khi đặt con trỏ vào từ, dùng ngữ cảnh thực tế ngay trước từ đó;
 - emoji theo từ khoá (gõ "cười" → 😂).
 
+Tiếng Việt có sẵn asset từ vựng/tần suất để bổ sung hoàn thành âm tiết khi chưa nạp gói VI
+và mở rộng vốn từ cho gõ vuốt. Bảng cụm từ cũng nằm trong asset; dữ liệu cá nhân và cụm từ theo ngữ cảnh được ưu tiên;
+gói `vi.ngram` vẫn tự nạp riêng. Nguồn và giấy phép: [docs/vietnamese-dictionary.md](docs/vietnamese-dictionary.md).
+
 Ở **EN**, thanh gợi ý hoàn thành từ theo ngữ cảnh bằng từ điển **50.000 từ** có sẵn và mô hình **n-gram 1–3 từ** nếu đã nạp gói EN. Khi có gói EN, sau khoảng trắng sẽ gợi ý từ tiếp theo dựa trên hai từ trước con trỏ; đầu ô/câu dùng unigram của mô hình. Chưa nạp gói thì hoàn thành từ theo độ phổ biến. Giữ hoa/thường và chỉ chèn khi chạm, kèm khoảng trắng; dấu câu ngay sau đó bỏ khoảng trắng này. Chạy offline, không học dữ liệu gõ hay trộn với tiếng Việt; tắt ở ô mật khẩu, email, URL, ô yêu cầu không gợi ý và khi tắt Gợi ý trong Cài đặt. Nguồn dữ liệu, giới hạn và cách dựng lại: [docs/english-dictionary.md](docs/english-dictionary.md).
 
 Nút **…** hiện khi còn ứng viên: mở lưới gợi ý cuộn được trong vùng phím, chạm **← Bàn phím** để quay lại. Giữ gợi ý từ đã học trong lưới vẫn xoá khỏi từ điển cá nhân.

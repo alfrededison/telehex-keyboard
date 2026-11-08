@@ -63,7 +63,8 @@ Mặc định dùng composing text. App trong danh sách dự phòng dùng
 - [x] Dự đoán âm tiết tiếp theo và hoàn thành tiền tố từ mô hình cá nhân/gói n-gram.
 - [x] Ngữ cảnh trước con trỏ, học tên riêng, xoá từ đã học, chế độ ẩn danh.
 - [x] Pipeline n-gram 3 bậc, Kneser–Ney, lượng tử hoá, mmap và script đo chất lượng.
-- [x] Gói n-gram VI/EN do người dùng tự dựng và nạp/xoá riêng qua trình chọn file; APK chỉ kèm từ điển EN.
+- [x] Gói n-gram VI/EN do người dùng tự dựng và nạp/xoá riêng qua trình chọn file; APK kèm từ điển tần suất VI/EN.
+- [x] Asset tần suất tiếng Việt có nguồn/giấy phép, bổ sung hoàn thành khi thiếu gói VI và vốn từ gõ vuốt.
 - [x] Tìm/gợi ý emoji tiếng Việt từ CLDR, lọc theo font máy, tông da mặc định.
 - [x] Gõ tắt hai cột, sao lưu/khôi phục zip, voice qua IME ngoài.
 - [x] CI test/lint, dev APK và release có ký, ghim chứng chỉ và version tái lập từ tag.

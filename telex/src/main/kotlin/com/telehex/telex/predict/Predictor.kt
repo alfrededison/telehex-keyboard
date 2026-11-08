@@ -30,7 +30,8 @@ import com.telehex.telex.CommonSyllables
 class Predictor(
     var base: NgramModel? = null,
     var personal: PersonalModel = PersonalModel(),
-    private val phrases: Map<String, List<String>> = Phrases.TABLE,
+    var phrases: Map<String, List<String>> = emptyMap(),
+    var vocabulary: VietnameseVocabulary? = null,
 ) {
     /** Từ vựng cho vuốt: dùng được ngay khi chưa nạp gói, mở rộng bằng gói và từ đã học. */
     fun glideWords(context: List<String>): List<NgramModel.Scored> {
@@ -40,12 +41,13 @@ class Predictor(
         val tri = if (ctx.size == 2) personal.trigram(ctx[0], ctx[1]) else null
         val phrases = ctx.lastOrNull()?.let { phrases[it] }.orEmpty()
         val words = LinkedHashSet(CommonSyllables.RANK.keys)
+        vocabulary?.let { words += it.words }
         words += personal.vocabulary()
         words += (base as? BinaryNgramModel)?.vocabulary.orEmpty()
         scorer?.let { words += it.candidates(100) }
         words += phrases
         return words.map { word ->
-            val rank = CommonSyllables.rankOf(word)
+            val rank = vocabulary?.rankOf(word)?.takeIf { it != Int.MAX_VALUE } ?: CommonSyllables.rankOf(word)
             val fallback = if (rank == Int.MAX_VALUE) 0.00001 else 0.01 / (1 + rank / 40.0)
             val phrase = if (word in phrases) 0.4 else 0.0
             NgramModel.Scored(word, maxOf(fallback, mixed(word, ctx.isEmpty(), scorer, bi, tri)) + phrase)
@@ -75,12 +77,15 @@ class Predictor(
             ctx.isEmpty() -> candidates += personal.topFrequent(PERSONAL_CANDIDATES)
         }
         if (key.isNotEmpty()) candidates += personal.wordsWithPrefix(key, PERSONAL_CANDIDATES)
+        if (scorer == null) candidates += vocabulary?.complete(key,
+            if (key.isEmpty()) BASE_CANDIDATES else BASE_CANDIDATES_TYPING).orEmpty()
         candidates += phraseList
 
         val scores = ArrayList<Pair<String, Double>>(candidates.size)
         for (w in candidates) {
             if (w == typed || (key.isNotEmpty() && !stripTones(w).startsWith(key))) continue
             var p = mixed(w, ctx.isEmpty(), scorer, bi, tri)
+            if (scorer == null) p = maxOf(p, vocabulary?.prior(w) ?: 0.0)
             // Cụm từ cố định: âm tiết trước gợi ý âm tiết sau với điểm cao
             val phrase = phraseList.indexOf(w)
             if (phrase >= 0) p += 0.5 - phrase * 0.05
@@ -147,49 +152,14 @@ class Predictor(
     }
 }
 
-/** Cụm từ 2–3 âm tiết hay gặp: âm tiết đầu → các âm tiết tiếp theo thường đi cùng. */
+/** Đọc bảng cụm từ từ asset: âm tiết đầu<TAB>các âm tiết theo sau, phân cách dấu phẩy. */
 object Phrases {
-    private const val RAW = """
-điện:thoại,tử,lực
-cảm:ơn,giác,thấy
-không:sao,có,được,phải,biết
-xin:chào,lỗi,cảm
-chúc:mừng,ngủ,may
-hẹn:gặp
-gặp:lại
-bạn:bè
-gia:đình
-học:sinh,tập
-sinh:viên,nhật
-thời:gian,tiết
-công:việc,ty
-làm:việc
-tiếng:việt,anh
-việt:nam
-hà:nội
-sài:gòn
-hôm:nay,qua
-ngày:mai
-buổi:sáng,chiều,tối
-cuộc:sống,họp
-thành:phố,công
-sức:khỏe
-hạnh:phúc
-vui:vẻ
-nhanh:chóng
-cẩn:thận
-mọi:người,thứ
-chúng:ta,tôi
-tất:cả
-bao:nhiêu,giờ
-như:thế,vậy
-thế:nào
-đồng:ý
-"""
-    val TABLE: Map<String, List<String>> by lazy {
-        RAW.lineSequence().filter { ':' in it }.associate { line ->
-            val (k, v) = line.split(':', limit = 2)
-            k.trim() to v.split(',').map { it.trim() }.filter { it.isNotEmpty() }
+    fun parse(text: String): Map<String, List<String>> =
+        text.lineSequence().filter { it.isNotBlank() && !it.startsWith("#") }.associate { line ->
+            val columns = line.split('\t', limit = 2)
+            require(columns.size == 2 && columns[0].isNotBlank()) { "Dòng cụm từ không hợp lệ" }
+            val followers = columns[1].split(',').map { it.trim() }.filter { it.isNotEmpty() }
+            require(followers.isNotEmpty()) { "Cụm từ thiếu âm tiết theo sau" }
+            columns[0].trim() to followers
         }
-    }
 }

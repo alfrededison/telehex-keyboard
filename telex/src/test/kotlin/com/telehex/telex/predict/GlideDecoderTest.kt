@@ -52,7 +52,8 @@ class GlideDecoderTest {
     }
 
     @Test fun vocabularyWorksWithoutAPackAndIncludesLearnedWords() {
-        val predictor = Predictor()
+        val phrases = javaClass.getResourceAsStream("/vi-phrases.tsv")!!.bufferedReader().use { Phrases.parse(it.readText()) }
+        val predictor = Predictor(phrases = phrases)
         val initial = predictor.glideWords(emptyList())
         assertTrue(initial.any { it.text == "tiếng" })
         predictor.personal.learn(listOf("xin"), "telehex")

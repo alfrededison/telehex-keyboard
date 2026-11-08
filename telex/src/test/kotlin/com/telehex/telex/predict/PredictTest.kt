@@ -159,7 +159,8 @@ class PredictTest {
 
     @Test
     fun predictorFiltersByPrefixAndUsesPhrases() {
-        val p = Predictor(personal = PersonalModel())
+        val phrases = javaClass.getResourceAsStream("/vi-phrases.tsv")!!.bufferedReader().use { Phrases.parse(it.readText()) }
+        val p = Predictor(personal = PersonalModel(), phrases = phrases)
         assertEquals("thoại", p.next(listOf("điện"), "", 3).first())
         assertEquals(listOf("thoại"), p.next(listOf("điện"), "th", 3))
         assertTrue(p.next(listOf("điện"), "x", 3).isEmpty())
