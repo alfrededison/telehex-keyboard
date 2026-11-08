@@ -2,6 +2,7 @@
 
 ## 0.6.1 — unreleased
 
+- Tách nhóm xoá dữ liệu đã học bằng đường phân cách, ghi rõ chỉ xoá dữ liệu cá nhân tiếng Việt và giữ các gói ngôn ngữ đã nạp.
 - Thêm asset từ vựng/tần suất tiếng Việt: bổ sung hoàn thành âm tiết khi chưa nạp gói VI và vốn từ cho gõ vuốt; chuyển bảng cụm từ cũ sang asset, giữ thứ tự ưu tiên. Gói vi.ngram vẫn tự dựng và nạp riêng.
 - Gợi ý tiếng Anh offline: từ điển 50.000 từ theo độ phổ biến, kết hợp mô hình n-gram 1–3 từ để xếp hạng hoàn thành theo ngữ cảnh và dự đoán từ tiếp theo. Từ điển có sẵn trong APK; gói en.ngram tự dựng/nạp và xoá riêng với VI. Giữ hoa/thường, hỗ trợ … và chạm để chèn; không tự sửa hay học chung với tiếng Việt. Tắt ở ô mật khẩu/email/URL/mã và khi tắt Gợi ý.
 

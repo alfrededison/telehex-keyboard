@@ -228,7 +228,20 @@ class SettingsActivity : Activity() {
             store.removePack(PredictionStore.Language.EN)
             englishPackStatus.text = packStatusText(store, PredictionStore.Language.EN)
         }
-        sec.addButton("Xoá dữ liệu đã học") { store.clearPersonal(); android.widget.Toast.makeText(context, "Đã xoá từ điển cá nhân", android.widget.Toast.LENGTH_SHORT).show() }
+        sec.addView(View(this).apply {
+            setBackgroundColor((currentTextColor(android.R.attr.textColorSecondary) and 0x00FFFFFF) or (0x33 shl 24))
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(1)).apply {
+            topMargin = dp(16)
+            bottomMargin = dp(8)
+        })
+        sec.add(label("Dữ liệu cá nhân"))
+        sec.add(TextView(this).apply {
+            text = "Chỉ xoá các từ và thói quen gõ tiếng Việt đã học. Tiếng Anh không lưu dữ liệu học; các gói ngôn ngữ đã nạp được giữ lại."
+            textSize = 13f
+            setTextColor(currentTextColor(android.R.attr.textColorSecondary))
+        })
+        sec.addButton("Xoá dữ liệu tiếng Việt đã học") { store.clearPersonal(); android.widget.Toast.makeText(context, "Đã xoá từ điển cá nhân tiếng Việt", android.widget.Toast.LENGTH_SHORT).show() }
         packStatusView = packStatus
         englishPackStatusView = englishPackStatus
         predictionStore = store
