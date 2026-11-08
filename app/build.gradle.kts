@@ -6,7 +6,7 @@ plugins {
 }
 
 // Phiên bản: chỉ sửa ở dòng appVersion (X.Y.Z). tools/version.sh đọc đúng dòng này.
-val appVersion = "0.7.0"
+val appVersion = "0.7.1"
 
 // Mặc định là số của bản release (X.Y.Z, code = X·10^7 + Y·10^5 + Z·10^3 + 999) để build từ tag
 // ở đâu cũng ra cùng kết quả. Bản dev do tools/release-build.sh đặt VERSION_NAME/VERSION_CODE.

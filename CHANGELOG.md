@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.7.1 — unreleased
+
 ## 0.7.0 — 2026-11-08
 
 - Tách nhóm xoá dữ liệu đã học bằng đường phân cách, ghi rõ chỉ xoá dữ liệu cá nhân tiếng Việt và giữ các gói ngôn ngữ đã nạp.
