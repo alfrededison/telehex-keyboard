@@ -24,6 +24,7 @@ import com.telehex.telex.Corrector
 import com.telehex.telex.TelexDecomposer
 import com.telehex.telex.TelexEngine
 import com.telehex.telex.predict.GlideDecoder
+import com.telehex.telex.predict.PredictionContext
 
 class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     SharedPreferences.OnSharedPreferenceChangeListener {
@@ -254,8 +255,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         recent.clear()
         val ic = currentInputConnection ?: return
         val before = ic.getTextBeforeCursor(80, 0)?.toString() ?: return
-        val tail = before.substringAfterLast('\n').substringAfterLast('.').substringAfterLast('!').substringAfterLast('?')
-        for (tok in tail.split(Regex("\\s+")).filter { it.isNotEmpty() && it.all { c -> c.isLetter() } }.takeLast(2)) recent.addLast(tok)
+        recent.addAll(PredictionContext.before(before))
     }
 
     /** @param autoCapped chữ hoa đầu do bàn phím tự thêm (đầu câu): học như chữ thường, đừng coi là tên riêng. */
@@ -669,7 +669,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         } else if (!engine.isEmpty && engine.hasVowel() && !engine.isValid()) {
             // Âm tiết chưa hợp lệ: giữ đúng chữ đang gõ ở ô đầu, kèm gợi ý sửa (biến thể dấu lúc này vô nghĩa).
             val typed = engine.text()
-            val fixes = corrector?.suggest(engine.rawText(), engine.rawCaps(), 24) ?: emptyList()
+            val fixes = corrector?.suggest(engine.rawText(), engine.rawCaps(), 24,
+                predictions.predictor.correctionScorer(contextBeforeComposing(typed))) ?: emptyList()
             candidateBar.showSuggestions(typed, fixes.take(5)) { replaceComposing(it) }
             offerMore(fixes.map { word -> SuggestionPanel.Choice(word) { replaceComposing(word) } }, 5)
         } else if (!engine.isEmpty) {
@@ -737,12 +738,18 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         updateBar()
     }
 
+    private fun contextBeforeComposing(typed: String): List<String> {
+        val before = currentInputConnection?.getTextBeforeCursor(160 + typed.length, 0)?.toString() ?: return emptyList()
+        if (!before.endsWith(typed)) return emptyList()
+        return PredictionContext.before(before.dropLast(typed.length))
+    }
+
     /** Con trỏ nằm trong một từ đã gõ: hiện phương án sửa cho từ đó (kiểu Gboard). */
     private fun showWordAtCursorSuggestions() {
         val ic = currentInputConnection ?: run { candidateBar.clear(); return }
         // Ở EN / ô mật khẩu chữ gõ ra là cố ý, đừng gợi ý đổi sang tiếng Việt
         if (hasSelection() || cursorMode || mode != Mode.ABC || !telexEnabled) { candidateBar.clear(); return }
-        val before = ic.getTextBeforeCursor(24, 0)?.toString() ?: ""
+        val before = ic.getTextBeforeCursor(160, 0)?.toString() ?: ""
         val after = ic.getTextAfterCursor(24, 0)?.toString() ?: ""
         var i = before.length
         while (i > 0 && before[i - 1].isLetter()) i--
@@ -752,7 +759,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         val word = head + tail
         if (word.isEmpty() || head.isEmpty()) { candidateBar.clear(); return }
         val (keys, caps) = TelexDecomposer.keysOf(word, engine.config) ?: run { candidateBar.clear(); return }
-        val fixes = corrector?.suggest(keys, caps, 24) ?: emptyList()
+        val fixes = corrector?.suggest(keys, caps, 24,
+            predictions.predictor.correctionScorer(PredictionContext.before(before.substring(0, i)))) ?: emptyList()
         if (fixes.isEmpty()) { candidateBar.clear(); return }
         val pickFix: (String) -> Unit = pick@ { fix ->
             val c = currentInputConnection ?: return@pick

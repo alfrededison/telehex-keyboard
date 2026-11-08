@@ -1,6 +1,7 @@
 package com.telehex.telex
 
 import java.text.Normalizer
+import kotlin.math.ln
 
 /**
  * Sinh gợi ý sửa cho một chuỗi phím đã gõ, ưu tiên khôi phục dấu của từ đã biết, rồi thử:
@@ -18,7 +19,12 @@ class Corrector(
 ) {
     data class Suggestion(val text: String, val cost: Float, val rank: Int)
 
-    fun suggest(rawKeys: String, caps: List<Boolean> = emptyList(), max: Int = 5): List<String> {
+    fun suggest(
+        rawKeys: String,
+        caps: List<Boolean> = emptyList(),
+        max: Int = 5,
+        contextProbability: ((String) -> Double)? = null,
+    ): List<String> {
         val keys = rawKeys.lowercase()
         if (keys.isEmpty() || keys.length > 10) return emptyList()
         val candidates = HashMap<String, Float>()
@@ -70,18 +76,35 @@ class Corrector(
             if (text == original) continue
             out.add(Suggestion(text, cost, CommonSyllables.rankOf(text)))
         }
-        return out
-            .sortedWith(compareBy<Suggestion> { score(it) })
+        // Chấm toàn bộ ứng viên trước khi cắt top-k. Mỗi từ chỉ tra mô hình một lần.
+        val unique = out.groupBy { it.text }.values.map { variants -> variants.minBy { score(it) } }
+        val probabilities = if (contextProbability == null) emptyMap() else unique.associate { suggestion ->
+            val p = contextProbability(suggestion.text.lowercase())
+            suggestion.text to if (p.isFinite() && p > 0.0) p else 0.0
+        }
+        val nearestCost = unique.minOfOrNull { it.cost } ?: 0f
+        val near = unique.filter { it.cost <= nearestCost + 0.8f }
+        val best = near.maxOfOrNull { probabilities[it.text] ?: 0.0 } ?: 0.0
+        val floor = maxOf(0.000001, best * 0.01)
+        return unique
+            .sortedBy { suggestion ->
+                if (best == 0.0) return@sortedBy score(suggestion).toDouble()
+                if (suggestion.cost > nearestCost + 0.8f) return@sortedBy score(suggestion) + 2.0
+                // Tối đa 2 điểm: ngữ cảnh phân biệt các sửa gần nhau, không thắng lỗi gõ quá xa.
+                val penalty = (-ln((probabilities.getValue(suggestion.text) + floor) / (best + floor)) * 0.45).coerceAtMost(2.0)
+                // Có bằng chứng từ mô hình thì danh sách phổ biến nhỏ không được đè từ ngoài danh sách.
+                suggestion.cost + rarity(suggestion).coerceAtMost(0.5f) + penalty
+            }
             .map { it.text }
-            .distinct()
             .take(max)
     }
 
     /** Điểm thấp = tốt: khoảng cách bàn phím, cộng thêm nếu âm tiết hiếm. */
     private fun score(s: Suggestion): Float {
-        val rarity = if (s.rank == Int.MAX_VALUE) 3f else s.rank / 300f
-        return s.cost + rarity
+        return s.cost + rarity(s)
     }
+
+    private fun rarity(s: Suggestion): Float = if (s.rank == Int.MAX_VALUE) 3f else s.rank / 300f
 
     private fun render(keys: String, caps: List<Boolean>): String {
         val e = TelexEngine(config)

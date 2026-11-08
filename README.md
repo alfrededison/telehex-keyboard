@@ -54,9 +54,9 @@ Mọi ngưỡng (vuốt, giữ, bước xoá từ, chạm đúp) chỉnh đượ
 Bàn phím **không bao giờ tự đổi chữ** đã gõ. Thanh trên bàn phím hiện:
 
 - 6 biến thể dấu của âm tiết đang soạn (mới / mởi / mời / mỡi / mợi / mơi), chạm để chốt âm tiết với dấu đó kèm khoảng trắng;
-- gợi ý sửa khi âm tiết chưa hợp lệ (phím lân cận trên lưới lục giác, thiếu/thừa/đảo phím, quên phím Telex), chữ đang gõ luôn giữ nguyên ở ô đầu;
+- gợi ý sửa khi âm tiết chưa hợp lệ (phím lân cận trên lưới lục giác, thiếu/thừa/đảo phím, quên phím Telex), chữ đang gõ luôn giữ nguyên ở ô đầu; thứ tự xét hai âm tiết trước từ từ mô hình cá nhân/gói ngôn ngữ, thiếu dữ liệu thì giữ xếp hạng theo lỗi gõ và độ phổ biến;
 - gợi ý âm tiết tiếp theo sau khi chạm cách (học từ chính bạn; giữ một gợi ý để xoá khỏi từ điển cá nhân);
-- phương án sửa cho từ đã gõ khi đặt con trỏ vào từ;
+- phương án sửa cho từ đã gõ khi đặt con trỏ vào từ, dùng ngữ cảnh thực tế ngay trước từ đó;
 - emoji theo từ khoá (gõ "cười" → 😂).
 
 Nút **…** hiện khi còn ứng viên: mở lưới gợi ý cuộn được trong vùng phím, chạm **← Bàn phím** để quay lại. Giữ gợi ý từ đã học trong lưới vẫn xoá khỏi từ điển cá nhân.

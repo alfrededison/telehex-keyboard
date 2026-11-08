@@ -77,7 +77,7 @@ Mỗi tính năng có commit riêng, kiểm thử trước khi commit; cập nh�
    chọn từ giữ hành vi chèn hiện có. Giữ gợi ý vẫn xoá khỏi từ điển cá nhân.
 3. [ ] **Gợi ý EN**: từ điển tiếng Anh offline nhỏ, hoàn thành từ đang gõ, giữ hoa/thường;
    chạm để chèn. Không học chung với tiếng Việt, không hiện ở ô mật khẩu/email/mã.
-4. [ ] **Sửa lỗi xét ngữ cảnh**: kết hợp chi phí sửa, độ phổ biến và xác suất n-gram cá nhân/gốc;
+4. [x] **Sửa lỗi xét ngữ cảnh**: kết hợp chi phí sửa, độ phổ biến và xác suất n-gram cá nhân/gốc;
    áp dụng cả khi đang gõ và khi đặt con trỏ vào từ. Không có dữ liệu thì giữ thứ tự dự phòng.
    Test cùng lỗi với hai ngữ cảnh và kiểm tra độ trễ.
 

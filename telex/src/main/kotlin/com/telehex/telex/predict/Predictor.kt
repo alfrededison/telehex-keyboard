@@ -89,6 +89,17 @@ class Predictor(
         return scores.sortedByDescending { it.second }.take(max).map { it.first }
     }
 
+    /** Chuẩn bị phần chung một lần cho mọi ứng viên sửa lỗi; không có ngữ cảnh thì giữ xếp hạng cũ. */
+    fun correctionScorer(context: List<String>): (String) -> Double {
+        val ctx = context.takeLast(2).map { it.lowercase() }
+        if (ctx.isEmpty()) return { 0.0 }
+        val scorer = base?.scorer(ctx)
+        val bi = personal.bigram(ctx.last())?.takeIf { it.total > 0 }
+        val tri = if (ctx.size == 2) personal.trigram(ctx[0], ctx[1])?.takeIf { it.total > 0 } else null
+        if (scorer == null && bi == null && tri == null) return { 0.0 }
+        return { word -> mixed(word.lowercase(), false, scorer, bi, tri) }
+    }
+
     /** Xác suất đã trộn của [w], với phần chung của ngữ cảnh đã tính sẵn. */
     private fun mixed(
         w: String,
