@@ -37,6 +37,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private var emojiPanel: EmojiPanel? = null
     private var dialpad: DialpadView? = null
     private var editPanel: EditPanel? = null
+    private var expandedSuggestions: SuggestionPanel? = null
     private lateinit var clipboardStore: ClipboardStore
     private val clipListener = ClipboardManager.OnPrimaryClipChangedListener { onClipChanged() }
     /** Chế độ tìm emoji: chữ gõ vào thanh tìm thay vì ô nhập. */
@@ -399,6 +400,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private fun refreshKeys() {
         if (!::keyboardView.isInitialized) return
         clearGlide()
+        if (mode != Mode.ABC && ::candidateBar.isInitialized) candidateBar.onMore = null
         keyboardView.keys = KeyPage.build(prefs.layout, mode, symbolPage, engine.config, prefs.swipeGrid, prefs.symbolPages, enterLabel)
         updateShift()
     }
@@ -413,6 +415,10 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     /** Thay lưới phím bằng một bảng (emoji, dialpad) có cùng chiều cao; null = về lưới phím. */
     private fun showPanel(panel: View?) {
+        if (panel !== expandedSuggestions) {
+            expandedSuggestions = null
+            candidateBar.onMore = null
+        }
         while (root.childCount > 1) root.removeViewAt(1)
         if (panel == null) {
             root.addView(keyboardView, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
@@ -420,6 +426,29 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         } else {
             root.addView(panel, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, panelHeight()))
         }
+    }
+
+    private fun closeMoreSuggestions() {
+        if (expandedSuggestions == null || !::root.isInitialized) return
+        expandedSuggestions = null
+        while (root.childCount > 1) root.removeViewAt(1)
+        root.addView(keyboardView, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+    }
+
+    private fun offerMore(choices: List<SuggestionPanel.Choice>, visible: Int) {
+        val distinct = choices.distinctBy { it.text }
+        candidateBar.onMore = if (mode != Mode.ABC || secureField || distinct.size <= visible) null else (showMore@ {
+            if (mode != Mode.ABC || secureField) { candidateBar.onMore = null; return@showMore }
+            closeMoreSuggestions()
+            val guarded = distinct.map { choice ->
+                SuggestionPanel.Choice(choice.text, choice.onForget?.let { forget ->
+                    { closeMoreSuggestions(); forget() }
+                }) { closeMoreSuggestions(); choice.onPick() }
+            }
+            val panel = SuggestionPanel(this, Theme.resolve(this, prefs.themeMode, prefs.accent), guarded) { closeMoreSuggestions() }
+            expandedSuggestions = panel
+            showPanel(panel)
+        })
     }
 
     /** Chiều cao lưới phím, tính được cả khi lưới chưa từng được đo (mở thẳng dialpad). */
@@ -481,6 +510,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
+        closeMoreSuggestions()
         clearGlide()
         suggestionSpace = null
         if (!restarting) capsOverride = null
@@ -527,6 +557,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     override fun onFinishInput() {
         super.onFinishInput()
+        closeMoreSuggestions()
         clearGlide()
         if (::keyboardView.isInitialized) keyboardView.cancelGlide()
         spaceGestures.cancel()
@@ -594,28 +625,33 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private fun updateBar() {
         updateShift()
         if (!::candidateBar.isInitialized) return
+        closeMoreSuggestions()
+        candidateBar.onMore = null
         if (emojiSearch) {
             val q = engine.text()
             val results = (if (q.isEmpty()) prefs.recentEmoji.take(20) else EmojiData.get(this).search(q, 30))
                 .map(::preferredEmoji).distinct()
             // Chạm ô tìm (có ✕), ⌫ khi ô tìm trống, ↵ hoặc ☺ đều bỏ tìm
-            candidateBar.showSuggestions("🔍 " + q.ifEmpty { "tìm emoji…" } + "  ✕", results, onTyped = { cancelEmojiSearch() }) { insertEmoji(it); stopEmojiSearch() }
+            candidateBar.showSuggestions("🔍 " + q.ifEmpty { "tìm emoji…" } + "  ✕", results.take(6), onTyped = { cancelEmojiSearch() }) { insertEmoji(it); stopEmojiSearch() }
+            offerMore(results.map { emoji -> SuggestionPanel.Choice(emoji) { insertEmoji(emoji); stopEmojiSearch() } }, 6)
             return
         }
         if (glideSuggestions.isNotEmpty()) {
-            candidateBar.showPredictions(glideSuggestions, emptyList(), onPick = { word ->
+            val pickGlide: (String) -> Unit = { word ->
                 val auto = upperNext() && !predictions.predictor.personal.usuallyCapitalized(word)
                 clearGlide()
                 if (!engine.isEmpty) {
                     replaceComposing(word)
-                    return@showPredictions
+                } else {
+                    commitSyllable("$word ")
+                    pushContext(word, auto)
+                    suggestionSpace = "$word "
+                    if (capsOverride == CapsOverride.LOWER) capsOverride = null
+                    updateBar()
                 }
-                commitSyllable("$word ")
-                pushContext(word, auto)
-                suggestionSpace = "$word "
-                if (capsOverride == CapsOverride.LOWER) capsOverride = null
-                updateBar()
-            }, onPickEmoji = {}, onForget = {})
+            }
+            candidateBar.showPredictions(glideSuggestions.take(6), emptyList(), onPick = pickGlide, onPickEmoji = {}, onForget = {})
+            offerMore(glideSuggestions.map { word -> SuggestionPanel.Choice(word) { pickGlide(word) } }, 6)
             return
         }
         if ((hasSelection() || cursorMode) && engine.isEmpty) {
@@ -633,26 +669,35 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         } else if (!engine.isEmpty && engine.hasVowel() && !engine.isValid()) {
             // Âm tiết chưa hợp lệ: giữ đúng chữ đang gõ ở ô đầu, kèm gợi ý sửa (biến thể dấu lúc này vô nghĩa).
             val typed = engine.text()
-            val fixes = corrector?.suggest(engine.rawText(), engine.rawCaps()) ?: emptyList()
-            candidateBar.showSuggestions(typed, fixes) { replaceComposing(it) }
+            val fixes = corrector?.suggest(engine.rawText(), engine.rawCaps(), 24) ?: emptyList()
+            candidateBar.showSuggestions(typed, fixes.take(5)) { replaceComposing(it) }
+            offerMore(fixes.map { word -> SuggestionPanel.Choice(word) { replaceComposing(word) } }, 5)
         } else if (!engine.isEmpty) {
             val typed = engine.text()
             val variants = engine.candidates()
             // Gợi ý hoàn thành trùng một biến thể dấu thì chỉ hiện một lần (ở biến thể dấu)
-            val completions = if (prefs.predictions) predictions.predictor.next(recent.toList(), typed, 2)
+            val completions = if (prefs.predictions) predictions.predictor.next(recent.toList(), typed, 24)
                 .map { casedCompletion(it, typed) }.filter { c -> variants.none { it.text == c } } else emptyList()
             val emoji = emojiFor(typed)
-            candidateBar.show(variants, completions, emoji, onPickText = { replaceComposing(it) }, onPickEmoji = { insertEmoji(it) })
+            candidateBar.show(variants, completions.take(2), emoji, onPickText = { replaceComposing(it) }, onPickEmoji = { insertEmoji(it) })
+            offerMore(completions.map { word -> SuggestionPanel.Choice(word) { replaceComposing(word) } } +
+                variants.map { candidate -> SuggestionPanel.Choice(candidate.text) { engine.setTone(candidate.tone); replaceComposing(engine.text()) } } +
+                emoji.map { e -> SuggestionPanel.Choice(e) { insertEmoji(e) } }, 2 + variants.size + emoji.size)
         } else if (prefs.predictions && mode == Mode.ABC && telexEnabled && afterSpace()) {
-            val next = predictions.predictor.next(recent.toList(), "", 3).map { casedPrediction(it) }
+            val next = predictions.predictor.next(recent.toList(), "", 24).map { casedPrediction(it) }
             val emoji = recent.lastOrNull()?.let { emojiFor(it) } ?: emptyList()
             if (next.isEmpty() && emoji.isEmpty()) showWordAtCursorSuggestions()
-            else candidateBar.showPredictions(next, emoji, onPick = { pick ->
-                // Gợi ý được viết hoa vì đầu câu (không phải tên riêng đã học) thì học như chữ thường
-                val auto = (capsLockActive() || capsSentenceStart()) && !predictions.predictor.personal.usuallyCapitalized(pick)
-                commitSyllable("$pick "); pushContext(pick, auto)
-                suggestionSpace = "$pick "
-            }, onPickEmoji = { insertEmoji(it) }, onForget = { forget(it) })
+            else {
+                val pickNext: (String) -> Unit = { pick ->
+                    // Gợi ý được viết hoa vì đầu câu (không phải tên riêng đã học) thì học như chữ thường
+                    val auto = (capsLockActive() || capsSentenceStart()) && !predictions.predictor.personal.usuallyCapitalized(pick)
+                    commitSyllable("$pick "); pushContext(pick, auto)
+                    suggestionSpace = "$pick "
+                }
+                candidateBar.showPredictions(next.take(3), emoji, onPick = pickNext, onPickEmoji = { insertEmoji(it) }, onForget = { forget(it) })
+                offerMore(next.map { word -> SuggestionPanel.Choice(word, { forget(word) }) { pickNext(word) } } +
+                    emoji.map { e -> SuggestionPanel.Choice(e) { insertEmoji(e) } }, 3 + emoji.size)
+            }
         } else {
             showWordAtCursorSuggestions()
         }
@@ -707,16 +752,19 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         val word = head + tail
         if (word.isEmpty() || head.isEmpty()) { candidateBar.clear(); return }
         val (keys, caps) = TelexDecomposer.keysOf(word, engine.config) ?: run { candidateBar.clear(); return }
-        val fixes = corrector?.suggest(keys, caps, 4) ?: emptyList()
+        val fixes = corrector?.suggest(keys, caps, 24) ?: emptyList()
         if (fixes.isEmpty()) { candidateBar.clear(); return }
-        candidateBar.showSuggestions(word, fixes) { fix ->
-            val c = currentInputConnection ?: return@showSuggestions
+        val pickFix: (String) -> Unit = pick@ { fix ->
+            val c = currentInputConnection ?: return@pick
             c.beginBatchEdit()
             c.deleteSurroundingText(head.length, tail.length)
             c.commitText(fix, 1)
             c.endBatchEdit()
             history.record(EditHistory.Op.Delete(word)); history.record(EditHistory.Op.Insert(fix))
+            updateBar()
         }
+        candidateBar.showSuggestions(word, fixes.take(4), onPick = pickFix)
+        offerMore(fixes.map { fix -> SuggestionPanel.Choice(fix) { pickFix(fix) } }, 4)
     }
 
     /** Chốt âm tiết đang soạn rồi chèn thêm [extra]. */
@@ -1057,7 +1105,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         suggestionSpace = null
         val words = predictions.predictor.glideWords(recent.toList())
         val typed = engine.text()
-        glideSuggestions = glideDecoder.suggest(points, centers, words, engine.config).map {
+        glideSuggestions = glideDecoder.suggest(points, centers, words, engine.config, max = 24).map {
             if (typed.isEmpty()) casedPrediction(it) else casedCompletion(it, typed)
         }
         if (glideSuggestions.isEmpty()) flash("Chưa nhận ra từ, thử lướt lại")

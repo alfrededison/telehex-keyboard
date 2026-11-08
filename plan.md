@@ -73,7 +73,7 @@ Mỗi tính năng có commit riêng, kiểm thử trước khi commit; cập nh�
 
 1. [x] **Giới tính emoji mặc định**: nguyên bản / nữ / nam, kết hợp tông da; chỉ đổi sang
    biến thể Unicode hợp lệ và font vẽ được. Áp dụng nhất quán khi chọn từ bảng/tìm/gợi ý.
-2. [ ] **Nút xem thêm gợi ý**: `…` hiện khi có thêm ứng viên, mở rộng ngay trong vùng bàn phím;
+2. [x] **Nút xem thêm gợi ý**: `…` hiện khi có thêm ứng viên, mở rộng ngay trong vùng bàn phím;
    chọn từ giữ hành vi chèn hiện có. Giữ gợi ý vẫn xoá khỏi từ điển cá nhân.
 3. [ ] **Gợi ý EN**: từ điển tiếng Anh offline nhỏ, hoàn thành từ đang gõ, giữ hoa/thường;
    chạm để chèn. Không học chung với tiếng Việt, không hiện ở ô mật khẩu/email/mã.

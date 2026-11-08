@@ -59,6 +59,8 @@ Bàn phím **không bao giờ tự đổi chữ** đã gõ. Thanh trên bàn ph�
 - phương án sửa cho từ đã gõ khi đặt con trỏ vào từ;
 - emoji theo từ khoá (gõ "cười" → 😂).
 
+Nút **…** hiện khi còn ứng viên: mở lưới gợi ý cuộn được trong vùng phím, chạm **← Bàn phím** để quay lại. Giữ gợi ý từ đã học trong lưới vẫn xoá khỏi từ điển cá nhân.
+
 Chạm một gợi ý thì chèn luôn kèm khoảng trắng; gõ dấu câu (`. , ! ? : ; … ) ] }`) ngay sau đó thì khoảng trắng này bị xoá ("Tối" rồi `,` → "Tối,").
 
 Chuỗi phím không thể là tiếng Việt thì hiện đúng phím đã gõ (`windows` không thành `ưindows`) và được tô nhạt.

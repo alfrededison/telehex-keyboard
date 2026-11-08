@@ -3,6 +3,7 @@
 ## 0.5.2 — unreleased
 
 - Giới tính emoji mặc định Nguyên bản / Nữ / Nam, kết hợp tông da, dùng trong bảng emoji, tìm và gợi ý. Giữ emoji đã chọn rõ giới tính; thiếu biến thể hoặc font không hỗ trợ thì giữ nguyên.
+- Nút … mở thêm ứng viên sửa lỗi, hoàn thành, dự đoán, gõ vuốt và tìm emoji trong lưới cuộn, giữ nguyên chiều cao bàn phím. Chọn từ hoặc quay lại để đóng; giữ gợi ý đã học vẫn xoá được.
 
 ## 0.5.1 — 2026-11-08
 

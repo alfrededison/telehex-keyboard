@@ -41,6 +41,17 @@ class CandidateBar(context: Context) : LinearLayout(context) {
         contentDescription = "Xoá"
         background = backspaceBg
     }
+    private val more = TextView(context).apply {
+        text = "…"
+        textSize = 24f
+        gravity = Gravity.CENTER
+        contentDescription = "Xem thêm gợi ý"
+        visibility = GONE
+        setOnClickListener { onMore?.invoke() }
+    }
+
+    var onMore: (() -> Unit)? = null
+        set(value) { field = value; more.visibility = if (value == null) GONE else VISIBLE }
 
     var theme: Theme = Theme.LIGHT
         set(value) { field = value; applyColors() }
@@ -67,6 +78,7 @@ class CandidateBar(context: Context) : LinearLayout(context) {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
         addView(scroll, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
+        addView(more, LinearLayout.LayoutParams(dp(44), dp(44)))
         addView(backspace, LinearLayout.LayoutParams(dp(52), dp(38)).apply { marginEnd = dp(6) })
         layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52))
         backspace.setOnClickListener { onBackspace?.invoke() } // trình đọc màn hình (performClick)
@@ -106,6 +118,7 @@ class CandidateBar(context: Context) : LinearLayout(context) {
     private fun applyColors() {
         setBackgroundColor(theme.barBg)
         backspace.imageTintList = ColorStateList.valueOf(theme.chipFg)
+        more.setTextColor(theme.chipFg)
     }
 
     private fun scrollToStart() = scroll.scrollTo(0, 0)
@@ -119,7 +132,7 @@ class CandidateBar(context: Context) : LinearLayout(context) {
         onPickText: (String) -> Unit = {},
         onPickEmoji: (String) -> Unit = {},
     ) {
-        row.removeAllViews()
+        clear()
         for (c in completions) chip(c, selected = false) { onPickText(c) }
         for (e in emoji) chip(e, selected = false) { onPickEmoji(e) }
         for (c in candidates) {
@@ -144,11 +157,11 @@ class CandidateBar(context: Context) : LinearLayout(context) {
         scrollToStart()
     }
 
-    fun clear() = row.removeAllViews()
+    fun clear() { row.removeAllViews(); onMore = null }
 
     /** Gợi ý âm tiết tiếp theo sau khi chạm cách; giữ một ô để xoá khỏi từ điển cá nhân. */
     fun showPredictions(next: List<String>, emoji: List<String>, onPick: (String) -> Unit, onPickEmoji: (String) -> Unit, onForget: (String) -> Unit) {
-        row.removeAllViews()
+        clear()
         for (n in next) chip(n, selected = false, onLongClick = { onForget(n) }) { onPick(n) }
         for (e in emoji) chip(e, selected = false) { onPickEmoji(e) }
         scrollToStart()
@@ -156,7 +169,7 @@ class CandidateBar(context: Context) : LinearLayout(context) {
 
     /** Chữ đang gõ (ô đầu, giữ nguyên) + các gợi ý sửa; chạm gợi ý để thay. */
     fun showSuggestions(typed: String, fixes: List<String>, onTyped: () -> Unit = {}, onPick: (String) -> Unit) {
-        row.removeAllViews()
+        clear()
         chip(typed, selected = true) { onTyped() }
         for (f in fixes) chip(f, selected = false) { onPick(f) }
         scrollToStart()
@@ -188,7 +201,7 @@ class CandidateBar(context: Context) : LinearLayout(context) {
 
     /** Thanh chỉnh sửa thay cho gợi ý khi có vùng chọn hoặc đang ở chế độ con trỏ. */
     fun showEditBar(actions: List<EditAction>) {
-        row.removeAllViews()
+        clear()
         for (a in actions) {
             val tv = TextView(context).apply {
                 text = if (a.gestureHint.isEmpty()) a.label else "${a.label}\n${a.gestureHint}"
