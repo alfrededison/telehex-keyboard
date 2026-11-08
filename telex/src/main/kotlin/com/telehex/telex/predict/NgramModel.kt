@@ -1,6 +1,6 @@
 package com.telehex.telex.predict
 
-/** Mô hình dự đoán âm tiết tiếp theo. Ngữ cảnh là các âm tiết trước đó (chữ thường), gần nhất ở cuối. */
+/** Dự đoán token tiếp theo (âm tiết VI hoặc từ EN). Ngữ cảnh viết thường, gần nhất ở cuối. */
 interface NgramModel {
     /** Các ứng viên (chữ thường) kèm điểm (xác suất ước lượng, càng cao càng tốt). */
     fun predict(context: List<String>, max: Int): List<Scored>

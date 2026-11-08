@@ -50,7 +50,6 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private var corrector: Corrector? = null
     private lateinit var predictions: PredictionStore
     private val glideDecoder = GlideDecoder()
-    private val englishPredictor = EnglishPredictor()
     private var englishSuggestionsAllowed = false
     private var glideSuggestions: List<String> = emptyList()
     /** Các âm tiết vừa chốt trong ô nhập hiện tại (ngữ cảnh dự đoán), gần nhất ở cuối. */
@@ -113,7 +112,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         engine = TelexEngine(prefs.telexConfig())
         spaceGestures = SpaceGestures(spaceHost)
         rebuildCorrector()
-        predictions = PredictionStore(this).also { it.loadAsync() }
+        predictions = loadPredictions()
         clipboardStore = ClipboardStore(this)
         clipboard().addPrimaryClipChangedListener(clipListener)
         touchOffsets = prefs.touchOffsets.mapValues { floatArrayOf(it.value[0] * density(), it.value[1] * density()) }.toMutableMap()
@@ -125,6 +124,10 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         if (::keyboardView.isInitialized) keyboardView.removeCallbacks(savePersonal)
         predictions.close(save = personalDirty)
         super.onDestroy()
+    }
+
+    private fun loadPredictions(): PredictionStore = PredictionStore(this).also { store ->
+        store.loadAsync { if (predictions === store && ::candidateBar.isInitialized && isInputViewShown) updateBar() }
     }
 
     /** Lưu clipboard history; bỏ qua nội dung nhạy cảm và khi đang ở ô mật khẩu. */
@@ -315,7 +318,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             personalDirty = false
             if (::keyboardView.isInitialized) keyboardView.removeCallbacks(savePersonal)
             predictions.discard()
-            predictions = PredictionStore(this).also { it.loadAsync() }
+            predictions = loadPredictions()
             clipboardStore = ClipboardStore(this)
             return
         }
@@ -716,22 +719,23 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             candidateBar.clear()
             return
         }
-        val before = ic.getTextBeforeCursor(64, 0)?.toString().orEmpty()
-        val after = ic.getTextAfterCursor(64, 0)?.toString().orEmpty()
-        val token = EnglishPredictor.tokenAtCursor(before, after)
-        if (token == null) { candidateBar.clear(); return }
-        val suggestions = englishPredictor.complete(token.head, capsLock = capsLockActive())
+        val before = ic.getTextBeforeCursor(160, 0)?.toString() ?: run { candidateBar.clear(); return }
+        val after = ic.getTextAfterCursor(64, 0)?.toString() ?: run { candidateBar.clear(); return }
+        val query = EnglishPredictor.queryAtCursor(before, after)
+        if (query == null) { candidateBar.clear(); return }
+        val token = query.token
+        val suggestions = if (token.head.isEmpty()) predictions.englishPredictor.next(query.context,
+            capsLock = capsLockActive(), capitalize = capsSentenceStart())
+        else predictions.englishPredictor.complete(token.head, capsLock = capsLockActive(), context = query.context)
         if (suggestions.isEmpty()) { candidateBar.clear(); return }
         val space = if (after.drop(token.tail.length).startsWith(" ")) " " else ""
         val pick: (String) -> Unit = pick@ { word ->
             val connection = currentInputConnection ?: return@pick
             // Gợi ý chỉ thay đúng token đã hiển thị, kể cả khi editor đổi con trỏ mà callback đến trễ.
-            if (!english || !englishSuggestionsAllowed || secureField || hasSelection() ||
-                EnglishPredictor.tokenAtCursor(
-                    connection.getTextBeforeCursor(64, 0)?.toString().orEmpty(),
-                    connection.getTextAfterCursor(64, 0)?.toString().orEmpty(),
-                ) != token ||
-                connection.getTextAfterCursor(token.tail.length + space.length, 0)?.toString() != token.tail + space) {
+            if (!english || !prefs.predictions || !englishSuggestionsAllowed || secureField || hasSelection() ||
+                cursorMode || mode != Mode.ABC || emojiSearch ||
+                connection.getTextBeforeCursor(160, 0)?.toString() != before ||
+                connection.getTextAfterCursor(64, 0)?.toString() != after) {
                 updateBar(); return@pick
             }
             val inserted = "$word "

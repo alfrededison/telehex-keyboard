@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import com.telehex.telex.predict.BinaryNgramModel
+import com.telehex.telex.predict.EnglishPredictor
 import com.telehex.telex.predict.NgramModel
 import com.telehex.telex.predict.PersonalModel
 import com.telehex.telex.predict.Predictor
@@ -24,14 +25,18 @@ import java.util.concurrent.TimeUnit
  * được giữ lại, ghép vào khi nạp xong. Mọi hàm public gọi từ luồng chính.
  */
 class PredictionStore(private val context: Context) {
+    enum class Language(val code: String) { VI("vi"), EN("en") }
     private val personalFile = File(context.filesDir, "personal.tsv")
     private val packFile = File(context.filesDir, "vi.ngram")
+    private val englishPackFile = File(context.filesDir, "en.ngram")
     private val main = Handler(Looper.getMainLooper())
     private val io: ExecutorService = Executors.newSingleThreadExecutor { r ->
         Thread(r, "telehex-predictions").apply { isDaemon = true; priority = Thread.MIN_PRIORITY }
     }
 
     val predictor: Predictor = Predictor()
+    var englishPredictor = EnglishPredictor(emptyList())
+        private set
 
     private var loaded = false
     @Volatile private var discarded = false
@@ -44,8 +49,10 @@ class PredictionStore(private val context: Context) {
     private val pending = ArrayList<(PersonalModel) -> Unit>()
 
     /** Nạp gói ngôn ngữ và mô hình cá nhân trên luồng nền, gắn vào [predictor] khi xong. */
-    fun loadAsync() {
+    fun loadAsync(onLoaded: () -> Unit = {}) {
         io.execute {
+            val englishWords = context.assets.open("en-frequency.txt").bufferedReader().use { it.readLines() }
+            val english = EnglishPredictor(englishWords, loadBase(englishPackFile, "en.ngram"))
             val base = loadBase()
             // "Chưa có file" khác "có file mà đọc lỗi": chỉ trường hợp đầu mới được bắt đầu từ mô hình rỗng
             // rồi ghi ra. Nội dung hỏng không làm đọc lỗi (read bỏ qua dòng hỏng); lỗi ở đây thường tạm thời.
@@ -58,6 +65,7 @@ class PredictionStore(private val context: Context) {
             }
             main.post {
                 if (discarded) return@post
+                englishPredictor = english
                 readFailed = failed
                 predictor.base = base
                 predictor.personal = personal
@@ -67,6 +75,7 @@ class PredictionStore(private val context: Context) {
                 loaded = true
                 // Những gì học/quên trong lúc nạp chưa được ghi lần nào
                 if (learnedWhileLoading) saveAsync()
+                if (!io.isShutdown) onLoaded()
             }
         }
     }
@@ -134,48 +143,56 @@ class PredictionStore(private val context: Context) {
     private fun bump() { Prefs(context).modelsVersion = System.currentTimeMillis() }
 
     /** Mô hình gốc: file người dùng nạp (mmap) trước, rồi asset đóng gói. */
-    private fun loadBase(): NgramModel? {
-        if (packFile.exists()) {
+    private fun loadBase(file: File = packFile, assetName: String = "vi.ngram"): NgramModel? {
+        if (file.exists()) {
             runCatching {
-                FileInputStream(packFile).use { fis ->
+                FileInputStream(file).use { fis ->
                     val ch = fis.channel
                     return BinaryNgramModel(ch.map(FileChannel.MapMode.READ_ONLY, 0, ch.size()))
                 }
             }
         }
         return runCatching {
-            context.assets.openFd("vi.ngram").use { afd ->
+            context.assets.openFd(assetName).use { afd ->
                 FileInputStream(afd.fileDescriptor).channel.map(FileChannel.MapMode.READ_ONLY, afd.startOffset, afd.length)
             }
         }.map { BinaryNgramModel(it) }.getOrNull()
     }
 
     /** Nạp gói ngôn ngữ từ file người dùng chọn; kiểm tra định dạng trước khi thay. */
-    fun importPack(uri: Uri): Result<Unit> = runCatching {
-        val tmp = File(context.filesDir, "vi.ngram.tmp")
+    private fun fileFor(language: Language): File = if (language == Language.VI) packFile else englishPackFile
+
+    fun importPack(uri: Uri, language: Language = Language.VI): Result<Unit> = runCatching {
+        val destination = fileFor(language)
+        val tmp = File(context.filesDir, "${destination.name}.tmp")
         try {
             context.contentResolver.openInputStream(uri)!!.use { input -> tmp.outputStream().use { input.copyTo(it) } }
             FileInputStream(tmp).use { fis ->
                 val ch = fis.channel
-                BinaryNgramModel(ch.map(FileChannel.MapMode.READ_ONLY, 0, ch.size())) // ném lỗi nếu sai/hỏng định dạng
+                val model = BinaryNgramModel(ch.map(FileChannel.MapMode.READ_ONLY, 0, ch.size()))
+                if (language == Language.EN) require(model.vocabulary.all { it.length <= 32 && EN_WORD.matches(it) }) {
+                    "Gói EN chứa từ không hợp lệ; hãy dựng với --language en"
+                }
             }
-            check(tmp.renameTo(packFile)) { "Không ghi được file" }
+            check(tmp.renameTo(destination)) { "Không ghi được file" }
         } finally {
             tmp.delete()
         }
         bump()
     }
 
-    fun removePack() {
-        packFile.delete()
+    fun removePack(language: Language = Language.VI) {
+        fileFor(language).delete()
         bump()
     }
 
     /** Có gói ngôn ngữ để dùng không (file đã nạp hoặc asset đóng gói), không cần nạp nó. */
-    fun hasBase(): Boolean = packFile.exists() || runCatching { context.assets.openFd("vi.ngram").close() }.isSuccess
-    fun hasPack(): Boolean = packFile.exists()
+    fun hasBase(language: Language = Language.VI): Boolean = hasPack(language) ||
+        runCatching { context.assets.openFd("${language.code}.ngram").close() }.isSuccess
+    fun hasPack(language: Language = Language.VI): Boolean = fileFor(language).exists()
 
     companion object {
+        private val EN_WORD = Regex("[a-z]+(?:'[a-z]+)*")
         /**
          * Trần số cặp + bộ ba trong mô hình cá nhân (khoảng 15 MB bộ nhớ, ứng với vài trăm nghìn âm
          * tiết đã gõ). Vượt trần thì mọi số đếm chia đôi: thói quen cũ nhạt dần, thói quen mới giữ ưu thế.

@@ -18,7 +18,8 @@ from build_ngram import sentences  # noqa: E402
 
 class Model:
     def __init__(self, path):
-        data = open(path, "rb").read()
+        with open(path, "rb") as f:
+            data = f.read()
         assert data[:4] == b"THNG" and data[4] == 1
         pos = 5
         n = struct.unpack_from("<I", data, pos)[0]; pos += 4
@@ -48,8 +49,9 @@ class Model:
         ids = [self.index.get(w) for w in ctx[-2:]]
         c1 = ids[-1] if ids else None
         c2 = ids[-2] if len(ids) >= 2 else None
-        cands = set()
+        cands = {}  # Giữ thứ tự thêm như LinkedHashSet ở runtime khi xác suất bằng nhau.
         bi = {}
+        bi_candidates = []
         if c1 is not None:
             lo, hi = bisect_left(self.bw1, c1), bisect_right(self.bw1, c1)
             # Mọi hàng để chấm điểm; ứng viên là 50 hàng xác suất cao nhất (giống BinaryNgramModel.kt),
@@ -57,20 +59,23 @@ class Model:
             for i in range(lo, hi):
                 bi[self.bw2[i]] = self.p(self.bq[i])
             for i in sorted(range(lo, hi), key=lambda i: self.bq[i])[:50]:
-                cands.add(self.bw2[i])
+                bi_candidates.append(self.bw2[i])
         tri = {}
         if c1 is not None and c2 is not None:
             lo, hi = bisect_left(self.tkey, (c2, c1)), bisect_right(self.tkey, (c2, c1))
             for i in range(lo, hi):
                 tri[self.tw3[i]] = self.p(self.tq[i])
             for i in sorted(range(lo, hi), key=lambda i: self.tq[i])[:50]:
-                cands.add(self.tw3[i])
+                cands[self.tw3[i]] = None
+        for w in bi_candidates:
+            cands[w] = None
         # Như BinaryNgramModel.kt: unigram phổ biến chỉ bù khi ứng viên theo ngữ cảnh còn ít. Điểm ở đó
         # còn được chia theo các bậc có dữ liệu, nhưng phép chia đó không đổi thứ hạng trong một ngữ cảnh.
         if len(cands) < 2 * k:
-            cands.update(self.top)
+            for w in self.top:
+                cands[w] = None
         scored = [(0.1 * self.p(self.uni[w]) + 0.3 * bi.get(w, 0) + 0.6 * tri.get(w, 0), w) for w in cands]
-        scored.sort(reverse=True)
+        scored.sort(key=lambda item: item[0], reverse=True)
         return [self.vocab[w] for _, w in scored[:k]]
 
 
@@ -84,16 +89,18 @@ def keystrokes(word):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("model"); ap.add_argument("test"); ap.add_argument("--max-sentences", type=int, default=2000)
+    ap.add_argument("--language", choices=("vi", "en"), default="vi")
+    ap.add_argument("--unigram-only", action="store_true", help="Đo mốc so sánh không dùng ngữ cảnh")
     a = ap.parse_args()
     m = Model(a.model)
     n = top1 = top3 = 0
     keys_total = keys_saved = 0
-    for si, sent in enumerate(sentences([a.test])):
+    for si, sent in enumerate(sentences([a.test], a.language)):
         if si >= a.max_sentences:
             break
         for i, w in enumerate(sent):
             ctx = sent[max(0, i - 2):i]
-            pred = m.predict(ctx)
+            pred = m.predict([] if a.unigram_only else ctx)
             n += 1
             cost = keystrokes(w) + 1
             keys_total += cost
@@ -102,7 +109,9 @@ def main():
             if w in pred:
                 top3 += 1
                 keys_saved += cost - 1
-    print(f"âm tiết: {n}  top-1: {top1 / n:.3f}  top-3: {top3 / n:.3f}  keystroke savings: {keys_saved / keys_total:.3f}")
+    if not n:
+        ap.error("Tập test không có token")
+    print(f"tokens: {n}  top-1: {top1 / n:.3f}  top-3: {top3 / n:.3f}  keystroke savings: {keys_saved / keys_total:.3f}")
 
 
 if __name__ == "__main__":

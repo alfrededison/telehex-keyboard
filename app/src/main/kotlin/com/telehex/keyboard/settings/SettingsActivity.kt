@@ -34,6 +34,7 @@ import android.widget.TextView
 import androidx.core.view.ViewCompat
 import com.telehex.keyboard.R
 import com.telehex.keyboard.data.Prefs
+import com.telehex.keyboard.data.PredictionStore
 import com.telehex.keyboard.ime.Accent
 import com.telehex.keyboard.layout.Profile
 
@@ -197,27 +198,39 @@ class SettingsActivity : Activity() {
 
         sec = section("predictions", "Gợi ý (không tự sửa)", "Gợi ý từ và slide to type", R.drawable.ic_settings_predictions)
         sec.add(TextView(this).apply {
-            text = "Bàn phím không bao giờ tự đổi chữ đã gõ. Gợi ý âm tiết tiếp theo học từ chính bạn, hoàn toàn trên máy. Giữ một gợi ý để xoá nó khỏi từ điển cá nhân."
+            text = "Bàn phím không bao giờ tự đổi chữ đã gõ. Gợi ý tiếng Việt học từ chính bạn; giữ một gợi ý để xoá khỏi từ điển cá nhân. Tiếng Anh có sẵn từ điển; nạp thêm gói EN để gợi ý theo ngữ cảnh và từ tiếp theo, không học dữ liệu gõ. Mọi gợi ý đều chạy trên máy."
             textSize = 13f
         })
-        sec.add(switch("Gợi ý âm tiết tiếp theo", prefs.predictions) { prefs.predictions = it })
+        sec.add(switch("Gợi ý từ/âm tiết tiếp theo (VI và EN)", prefs.predictions) { prefs.predictions = it })
         sec.add(switch("Slide to type: lướt qua các phím chữ để gợi ý từ", prefs.glideTyping) { prefs.glideTyping = it })
         sec.add(TextView(this).apply {
             text = "Lướt qua ít nhất 3 phím chữ khác nhau, dùng chữ không dấu (t → i → e → n → g) hoặc chuỗi Telex; nhả tay rồi chạm từ gợi ý để chèn. Mỗi lần lướt một âm tiết. Chỉ qua 1–2 phím thì vẫn là cử chỉ thường, gồm vuốt lên/xuống để gõ hoa/ký tự phụ. Dùng ở chế độ tiếng Việt."
             textSize = 13f
         })
         sec.add(switch("Chế độ ẩn danh (không học)", prefs.incognito) { prefs.incognito = it })
-        val store = com.telehex.keyboard.data.PredictionStore(this)
+        val store = PredictionStore(this)
         val packStatus = TextView(this).apply { text = packStatusText(store) }
         sec.add(packStatus)
-        sec.addButton("Nạp gói ngôn ngữ (.ngram)…") {
+        sec.addButton("Nạp gói tiếng Việt (.ngram)…") {
             startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE); type = "*/*"
             }, REQ_PACK)
         }
-        sec.addButton("Xoá gói ngôn ngữ đã nạp") { store.removePack(); packStatus.text = packStatusText(store) }
+        sec.addButton("Xoá gói tiếng Việt đã nạp") { store.removePack(); packStatus.text = packStatusText(store) }
+        val englishPackStatus = TextView(this).apply { text = packStatusText(store, PredictionStore.Language.EN) }
+        sec.add(englishPackStatus)
+        sec.addButton("Nạp gói tiếng Anh (.ngram)…") {
+            startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE); type = "*/*"
+            }, REQ_EN_PACK)
+        }
+        sec.addButton("Xoá gói tiếng Anh đã nạp") {
+            store.removePack(PredictionStore.Language.EN)
+            englishPackStatus.text = packStatusText(store, PredictionStore.Language.EN)
+        }
         sec.addButton("Xoá dữ liệu đã học") { store.clearPersonal(); android.widget.Toast.makeText(context, "Đã xoá từ điển cá nhân", android.widget.Toast.LENGTH_SHORT).show() }
         packStatusView = packStatus
+        englishPackStatusView = englishPackStatus
         predictionStore = store
 
         sec = section("touch_accuracy", "Chống bấm nhầm", "Độ chính xác khi chạm phím", R.drawable.ic_settings_touch)
@@ -337,12 +350,17 @@ class SettingsActivity : Activity() {
     }
 
     private var packStatusView: TextView? = null
-    private var predictionStore: com.telehex.keyboard.data.PredictionStore? = null
+    private var englishPackStatusView: TextView? = null
+    private var predictionStore: PredictionStore? = null
 
-    private fun packStatusText(store: com.telehex.keyboard.data.PredictionStore): String = when {
-        store.hasPack() -> "Gói ngôn ngữ: đã nạp từ file."
-        store.hasBase() -> "Gói ngôn ngữ: dùng bản đóng gói sẵn."
-        else -> "Gói ngôn ngữ: chưa có (chỉ dùng từ điển cá nhân). Dựng bằng tools/build_ngram.py rồi nạp ở đây."
+    private fun packStatusText(store: PredictionStore, language: PredictionStore.Language = PredictionStore.Language.VI): String {
+        val name = if (language == PredictionStore.Language.VI) "tiếng Việt" else "tiếng Anh"
+        return when {
+            store.hasPack(language) -> "Gói $name: đã nạp từ file."
+            store.hasBase(language) -> "Gói $name: dùng bản đóng gói sẵn."
+            language == PredictionStore.Language.EN -> "Gói tiếng Anh: chưa có (hoàn thành từ theo độ phổ biến). Nạp en.ngram để gợi ý theo ngữ cảnh và từ tiếp theo."
+            else -> "Gói tiếng Việt: chưa có (chỉ dùng từ điển cá nhân và cụm từ có sẵn). Dựng bằng tools/build_ngram.py rồi nạp ở đây."
+        }
     }
 
     @Deprecated("Dùng API cũ để không thêm dependency")
@@ -359,12 +377,14 @@ class SettingsActivity : Activity() {
             if (r.isSuccess) recreate()
             return
         }
-        if (requestCode == REQ_PACK && resultCode == RESULT_OK) {
+        if ((requestCode == REQ_PACK || requestCode == REQ_EN_PACK) && resultCode == RESULT_OK) {
             val uri = data?.data ?: return
             val store = predictionStore ?: return
-            val r = store.importPack(uri)
-            android.widget.Toast.makeText(this, if (r.isSuccess) "Đã nạp gói ngôn ngữ" else "Không nạp được: ${r.exceptionOrNull()?.message}", android.widget.Toast.LENGTH_LONG).show()
-            packStatusView?.text = packStatusText(store)
+            val language = if (requestCode == REQ_EN_PACK) PredictionStore.Language.EN else PredictionStore.Language.VI
+            val r = store.importPack(uri, language)
+            android.widget.Toast.makeText(this, if (r.isSuccess) "Đã nạp gói ${if (language == PredictionStore.Language.EN) "tiếng Anh" else "tiếng Việt"}" else "Không nạp được: ${r.exceptionOrNull()?.message}", android.widget.Toast.LENGTH_LONG).show()
+            if (language == PredictionStore.Language.EN) englishPackStatusView?.text = packStatusText(store, language)
+            else packStatusView?.text = packStatusText(store)
         }
     }
 
@@ -553,6 +573,6 @@ class SettingsActivity : Activity() {
     }
 
     companion object {
-        private const val REQ_PACK = 11; private const val REQ_BACKUP = 12; private const val REQ_RESTORE = 13
+        private const val REQ_PACK = 11; private const val REQ_BACKUP = 12; private const val REQ_RESTORE = 13; private const val REQ_EN_PACK = 14
     }
 }

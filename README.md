@@ -59,7 +59,7 @@ Bàn phím **không bao giờ tự đổi chữ** đã gõ. Thanh trên bàn ph�
 - phương án sửa cho từ đã gõ khi đặt con trỏ vào từ, dùng ngữ cảnh thực tế ngay trước từ đó;
 - emoji theo từ khoá (gõ "cười" → 😂).
 
-Ở **EN**, thanh gợi ý hoàn thành từ đang gõ bằng từ điển tiếng Anh nhỏ có sẵn, giữ hoa/thường và chỉ thay khi chạm. Không học chung với tiếng Việt; tắt ở ô mật khẩu, email, URL và ô yêu cầu không gợi ý. Chọn gợi ý chèn khoảng trắng; dấu câu ngay sau đó bỏ khoảng trắng này.
+Ở **EN**, thanh gợi ý hoàn thành từ theo ngữ cảnh bằng từ điển **50.000 từ** có sẵn và mô hình **n-gram 1–3 từ** nếu đã nạp gói EN. Khi có gói EN, sau khoảng trắng sẽ gợi ý từ tiếp theo dựa trên hai từ trước con trỏ; đầu ô/câu dùng unigram của mô hình. Chưa nạp gói thì hoàn thành từ theo độ phổ biến. Giữ hoa/thường và chỉ chèn khi chạm, kèm khoảng trắng; dấu câu ngay sau đó bỏ khoảng trắng này. Chạy offline, không học dữ liệu gõ hay trộn với tiếng Việt; tắt ở ô mật khẩu, email, URL, ô yêu cầu không gợi ý và khi tắt Gợi ý trong Cài đặt. Nguồn dữ liệu, giới hạn và cách dựng lại: [docs/english-dictionary.md](docs/english-dictionary.md).
 
 Nút **…** hiện khi còn ứng viên: mở lưới gợi ý cuộn được trong vùng phím, chạm **← Bàn phím** để quay lại. Giữ gợi ý từ đã học trong lưới vẫn xoá khỏi từ điển cá nhân.
 
@@ -71,7 +71,7 @@ Chuỗi phím không thể là tiếng Việt thì hiện đúng phím đã gõ 
 
 ### Gói ngôn ngữ (tuỳ chọn)
 
-Gợi ý âm tiết tiếp theo dùng thêm một mô hình n-gram âm tiết nếu có. APK không đóng gói sẵn mô hình, và app không có quyền INTERNET nên không tự tải. Bạn tự dựng từ corpus tiếng Việt rồi nạp trong Cài đặt → "Nạp gói ngôn ngữ (.ngram)…". Hướng dẫn đầy đủ gồm nguồn corpus và giấy phép, cách tải, làm sạch, dựng, đo chất lượng và nạp: [docs/language-pack.md](docs/language-pack.md).
+Gợi ý âm tiết tiếp theo dùng thêm một mô hình n-gram âm tiết nếu có. APK không đóng gói sẵn mô hình tiếng Việt, và app không có quyền INTERNET nên không tự tải. Bạn tự dựng từ corpus tiếng Việt rồi nạp trong Cài đặt → "Nạp gói tiếng Việt (.ngram)…". Hướng dẫn đầy đủ gồm nguồn corpus và giấy phép, cách tải, làm sạch, dựng, đo chất lượng và nạp: [docs/language-pack.md](docs/language-pack.md).
 
 ## Tuỳ biến
 

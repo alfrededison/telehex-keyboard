@@ -29,6 +29,8 @@ jobs:
         run: ./gradlew --no-daemon :telex:test :app:testDebugUnitTest :app:lintDebug
       - name: Version numbering across version changes and tags
         run: python3 tools/test_version.py
+      - name: Vietnamese and English n-gram pipeline
+        run: python3 tools/test_ngram.py
       - name: Signing configuration and certificate guards
         run: python3 tools/test_signing.py
       - name: Release script tags the release and bumps to the next dev version

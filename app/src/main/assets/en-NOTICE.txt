@@ -1,0 +1,13 @@
+The English word list in app/src/main/assets/en-frequency.txt
+is derived from wordfreq 3.1.1 by Robyn Speer (Copyright 2022 Robyn Speer):
+https://github.com/rspeer/wordfreq and https://pypi.org/project/wordfreq/3.1.1/.
+This filtered, frequency-ranked list is licensed CC BY-SA 4.0:
+https://creativecommons.org/licenses/by-sa/4.0/.
+Upstream data credits: Google Books Ngrams (http://books.google.com/ngrams),
+the Leeds Internet Corpus, Wikipedia, ParaCrawl, OPUS OpenSubtitles 2018
+(https://www.opensubtitles.org/), and the freely available SUBTLEX word lists
+by Marc Brysbaert et al. (http://crr.ugent.be/programs-data/subtitle-frequencies).
+See https://github.com/rspeer/wordfreq/blob/master/NOTICE.md for upstream notices.
+TeleHex retains the first 50,000 unique ASCII words and contractions, with
+curly apostrophes normalized, using tools/build_english_dictionary.py.
+

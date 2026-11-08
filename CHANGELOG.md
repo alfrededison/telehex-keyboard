@@ -2,12 +2,13 @@
 
 ## 0.6.1 — unreleased
 
+- Gợi ý tiếng Anh offline: từ điển 50.000 từ theo độ phổ biến, kết hợp mô hình n-gram 1–3 từ để xếp hạng hoàn thành theo ngữ cảnh và dự đoán từ tiếp theo. Từ điển có sẵn trong APK; gói en.ngram tự dựng/nạp và xoá riêng với VI. Giữ hoa/thường, hỗ trợ … và chạm để chèn; không tự sửa hay học chung với tiếng Việt. Tắt ở ô mật khẩu/email/URL/mã và khi tắt Gợi ý.
+
 ## 0.6.0 — 2026-11-08
 
 - Hướng dẫn trong Cài đặt › Cử chỉ chia thành các gạch đầu dòng, nhóm theo phím chữ (vuốt lên đảo hoa/thường, vuốt xuống nhập ký tự phụ), phím cách, vùng chọn và hai ngón để dễ đọc.
 - Vuốt xuống phím ⚙ để mở bảng điều hướng và clipboard history, có nhãn phụ 📋. Chạm hoặc giữ rồi nhả ⚙ đều mở Cài đặt; bỏ chức năng riêng của thao tác giữ phím này.
 - Gợi ý sửa lỗi xét hai âm tiết trước từ bằng mô hình cá nhân/gói ngôn ngữ, áp dụng khi đang gõ và khi đặt con trỏ vào từ. Giới hạn ảnh hưởng ngữ cảnh để giữ ưu tiên lỗi gõ gần; thiếu dữ liệu thì giữ xếp hạng cũ.
-- Chế độ EN gợi ý hoàn thành từ bằng từ điển tiếng Anh offline nhỏ, giữ hoa/thường và hỗ trợ nút …; chỉ thay khi chạm. Không trộn dữ liệu học tiếng Việt, không hiện ở ô mật khẩu/email/URL hoặc ô yêu cầu không gợi ý.
 - Giới tính emoji mặc định Nguyên bản / Nữ / Nam, kết hợp tông da, dùng trong bảng emoji, tìm và gợi ý. Giữ emoji đã chọn rõ giới tính; thiếu biến thể hoặc font không hỗ trợ thì giữ nguyên.
 - Nút … mở thêm ứng viên sửa lỗi, hoàn thành, dự đoán, gõ vuốt và tìm emoji trong lưới cuộn, giữ nguyên chiều cao bàn phím. Chọn từ hoặc quay lại để đóng; giữ gợi ý đã học vẫn xoá được.
 

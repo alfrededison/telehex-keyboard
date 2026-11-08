@@ -21,7 +21,7 @@ class TestInputActivity : Activity() {
         val text = EditText(this).apply {
             id = android.view.View.generateViewId()
             hint = "Thử gõ"
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            inputType = intent.getIntExtra("inputType", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE)
             minLines = 3
             textSize = 22f
         }

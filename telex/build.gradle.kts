@@ -18,3 +18,10 @@ kotlin {
 dependencies {
     testImplementation(libs.junit)
 }
+
+// Test dữ liệu ứng dụng mà không đưa dữ liệu đó vào artifact/runtime của module thuật toán.
+tasks.processTestResources {
+    from("../app/src/main/assets") {
+        include("en-frequency.txt")
+    }
+}

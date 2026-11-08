@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Dựng mô hình n-gram âm tiết (1–3) cho TeleHex từ corpus text tiếng Việt.
+"""Dựng mô hình n-gram (1–3) cho TeleHex từ corpus text tiếng Việt hoặc tiếng Anh.
 
 Cách dùng:
   python3 tools/build_ngram.py corpus1.txt corpus2.txt ... -o app/src/main/assets/vi.ngram
+  python3 tools/build_ngram.py en-train.txt --language en -o en.ngram
 
 Đầu vào: file text thuần (UTF-8), ví dụ dump Wikipedia tiếng Việt đã bóc markup
 (CC-BY-SA-4.0: mô hình sinh ra phải ghi công và giữ cùng điều khoản) hoặc corpus tin tức mở.
@@ -24,23 +25,34 @@ from collections import Counter, defaultdict
 VI = "a-zA-Zàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ" \
      "ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ"
 TOKEN = re.compile(f"[{VI}]+|[.!?\n]")
+EN_TOKEN = re.compile(r"\w+(?:['’]\w+)*|[.!?\n]", re.UNICODE)
+EN_WORD = re.compile(r"[a-z]+(?:'[a-z]+)*")
 BOS = "<s>"
 
 
-def sentences(paths):
-    for path in paths:
-        with open(path, encoding="utf-8", errors="ignore") as f:
-            buf = []
-            for line in f:
-                for tok in TOKEN.findall(unicodedata.normalize("NFC", line)):
-                    if tok in ".!?\n":
-                        if buf:
-                            yield buf
-                            buf = []
-                    else:
-                        buf.append(tok.lower())
+def text_sentences(text, language="vi"):
+    """EN giữ contraction; token ngoài bảng chữ ngắt ngữ cảnh thay vì sinh từ giả."""
+    token = EN_TOKEN if language == "en" else TOKEN
+    buf = []
+    for tok in token.findall(unicodedata.normalize("NFC", text)):
+        tok = tok.lower().replace("’", "'")
+        boundary = tok in ".!?\n" or (language == "en" and
+                    (len(tok) > 32 or not EN_WORD.fullmatch(tok)))
+        if boundary:
             if buf:
                 yield buf
+                buf = []
+        else:
+            buf.append(tok)
+    if buf:
+        yield buf
+
+
+def sentences(paths, language="vi"):
+    for path in paths:
+        with open(path, encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                yield from text_sentences(line, language)
 
 
 def q8(p):
@@ -53,6 +65,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("corpus", nargs="+")
     ap.add_argument("-o", "--out", required=True)
+    ap.add_argument("--language", choices=("vi", "en"), default="vi")
     ap.add_argument("--max-vocab", type=int, default=12000)
     ap.add_argument("--min-bigram", type=int, default=3)
     ap.add_argument("--min-trigram", type=int, default=4)
@@ -60,14 +73,14 @@ def main():
     args = ap.parse_args()
 
     uni, bi, tri = Counter(), Counter(), Counter()
-    for sent in sentences(args.corpus):
+    for sent in sentences(args.corpus, args.language):
         words = [BOS, BOS] + sent
         for i in range(2, len(words)):
             w = words[i]
             uni[w] += 1
             bi[(words[i - 1], w)] += 1
             tri[(words[i - 2], words[i - 1], w)] += 1
-    print(f"đọc xong: {sum(uni.values())} âm tiết, {len(uni)} loại", file=sys.stderr)
+    print(f"đọc xong: {sum(uni.values())} tokens, {len(uni)} loại", file=sys.stderr)
 
     vocab = sorted(w for w, _ in uni.most_common(args.max_vocab))
     vset = set(vocab)

@@ -1,6 +1,8 @@
-# Dựng gói ngôn ngữ (`.ngram`)
+# Dựng gói tiếng Việt (`.ngram`)
 
-Gợi ý âm tiết tiếp theo trên thanh gợi ý trộn ba nguồn: mô hình cá nhân học từ chính bạn trên máy, một bảng cụm từ nhỏ có sẵn trong app, và một mô hình n-gram âm tiết dựng từ văn bản tiếng Việt (gói ngôn ngữ). APK không kèm gói ngôn ngữ, và app không có quyền INTERNET nên không tự tải. Bạn dựng gói trên máy tính theo hướng dẫn này, rồi chép file `.ngram` sang điện thoại và nạp trong Cài đặt.
+Tiếng Anh có từ điển sẵn và gói n-gram tự nạp riêng; xem [english-dictionary.md](english-dictionary.md).
+
+Gợi ý âm tiết tiếp theo trên thanh gợi ý trộn ba nguồn: mô hình cá nhân học từ chính bạn trên máy, một bảng cụm từ nhỏ có sẵn trong app, và một mô hình n-gram âm tiết dựng từ văn bản tiếng Việt (gói ngôn ngữ). APK không kèm gói tiếng Việt, và app không có quyền INTERNET nên không tự tải. Bạn dựng gói trên máy tính theo hướng dẫn này, rồi chép file `.ngram` sang điện thoại và nạp trong Cài đặt.
 
 Không có gói ngôn ngữ thì bàn phím vẫn gợi ý được, nhưng chỉ từ những gì bạn đã gõ và bảng cụm từ.
 
@@ -122,7 +124,7 @@ Kết quả gồm tỉ lệ âm tiết đúng ở gợi ý đầu (top-1), nằm
 ## 6. Nạp vào bàn phím
 
 1. Chép `vi.ngram` sang điện thoại, ví dụ vào thư mục Download.
-2. Mở app TeleHex → Cài đặt → "Nạp gói ngôn ngữ (.ngram)…" → chọn file.
+2. Mở app TeleHex → Cài đặt → "Nạp gói tiếng Việt (.ngram)…" → chọn file.
 3. App kiểm tra cấu trúc file trước khi dùng. File sai định dạng, bị cắt ngắn hoặc trỏ tới từ không có trong từ vựng sẽ bị từ chối mà không làm hỏng bàn phím. App không có checksum, nên không phát hiện được phần xác suất bị hỏng lặng lẽ.
 
 Muốn bỏ thì chọn "Xoá gói ngôn ngữ đã nạp". Để đóng gói sẵn vào APK khi tự build, đặt file vào `app/src/main/assets/vi.ngram`. Repo bỏ qua mọi file `*.ngram` để không lỡ commit; chỉ commit (bằng `git add -f`) khi giấy phép của corpus cho phép phát hành.

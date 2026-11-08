@@ -63,7 +63,7 @@ Mặc định dùng composing text. App trong danh sách dự phòng dùng
 - [x] Dự đoán âm tiết tiếp theo và hoàn thành tiền tố từ mô hình cá nhân/gói n-gram.
 - [x] Ngữ cảnh trước con trỏ, học tên riêng, xoá từ đã học, chế độ ẩn danh.
 - [x] Pipeline n-gram 3 bậc, Kneser–Ney, lượng tử hoá, mmap và script đo chất lượng.
-- [x] APK không kèm `.ngram`; người dùng tự dựng và nạp qua trình chọn file.
+- [x] Gói n-gram VI/EN do người dùng tự dựng và nạp/xoá riêng qua trình chọn file; APK chỉ kèm từ điển EN.
 - [x] Tìm/gợi ý emoji tiếng Việt từ CLDR, lọc theo font máy, tông da mặc định.
 - [x] Gõ tắt hai cột, sao lưu/khôi phục zip, voice qua IME ngoài.
 - [x] CI test/lint, dev APK và release có ký, ghim chứng chỉ và version tái lập từ tag.
@@ -71,8 +71,9 @@ Mặc định dùng composing text. App trong danh sách dự phòng dùng
   biến thể Unicode hợp lệ và font vẽ được. Áp dụng nhất quán khi chọn từ bảng/tìm/gợi ý.
 - [x] **Nút xem thêm gợi ý**: `…` hiện khi có thêm ứng viên, mở rộng ngay trong vùng bàn phím;
   chọn từ giữ hành vi chèn hiện có. Giữ gợi ý vẫn xoá khỏi từ điển cá nhân.
-- [x] **Gợi ý EN**: từ điển tiếng Anh offline nhỏ, hoàn thành từ đang gõ, giữ hoa/thường;
-  chạm để chèn. Không học chung với tiếng Việt, không hiện ở ô mật khẩu/email/mã.
+- [x] **Gợi ý EN**: 50.000 từ theo độ phổ biến có sẵn + gói n-gram 1–3 từ tự nạp, chạy offline;
+  hoàn thành theo ngữ cảnh và gợi ý từ tiếp theo, giữ hoa/thường, chạm để chèn. Không học chung
+  với tiếng Việt, không hiện ở ô mật khẩu/email/URL/mã. Có pipeline dựng và đo trên tập test riêng.
 - [x] **Sửa lỗi xét ngữ cảnh**: kết hợp chi phí sửa, độ phổ biến và xác suất n-gram cá nhân/gốc;
   áp dụng cả khi đang gõ và khi đặt con trỏ vào từ. Không có dữ liệu thì giữ thứ tự dự phòng.
   Test cùng lỗi với hai ngữ cảnh và kiểm tra độ trễ.

@@ -27,26 +27,32 @@ class BinaryNgramModel(buffer: ByteBuffer) : NgramModel {
     private val triW1: Int; private val triW2: Int; private val triW3: Int; private val triQ: Int
 
     init {
+        require(buf.limit() >= 17) { "File mô hình bị cắt ngắn" }
         require(buf.get(0) == 'T'.code.toByte() && buf.get(1) == 'H'.code.toByte() && buf.get(2) == 'N'.code.toByte() && buf.get(3) == 'G'.code.toByte()) { "Không phải file n-gram TeleHex" }
         require(buf.get(4).toInt() == 1) { "Phiên bản mô hình không hỗ trợ" }
         var pos = 5
         val n = buf.getInt(pos); pos += 4
+        require(n >= 0 && n <= (buf.limit() - 17) / 2) { "Số từ vựng không hợp lệ" }
         vocab = Array(n) { "" }
         index = HashMap(n * 2)
         for (i in 0 until n) {
             val len = buf.get(pos).toInt() and 0xFF; pos += 1
+            require(len > 0 && pos <= buf.limit() - len) { "Từ vựng bị cắt ngắn" }
             val bytes = ByteArray(len)
             for (j in 0 until len) bytes[j] = buf.get(pos + j)
             pos += len
             vocab[i] = String(bytes, Charsets.UTF_8)
             index[vocab[i]] = i
         }
+        require(pos <= buf.limit() - n - 8) { "File mô hình bị cắt ngắn" }
         uniQ = pos; pos += n
         biN = buf.getInt(pos); pos += 4
+        require(biN >= 0 && biN <= (buf.limit() - pos - 4) / 9) { "Bigram bị cắt ngắn" }
         biW1 = pos; pos += 4 * biN
         biW2 = pos; pos += 4 * biN
         biQ = pos; pos += biN
         triN = buf.getInt(pos); pos += 4
+        require(triN >= 0 && triN <= (buf.limit() - pos) / 13) { "Trigram bị cắt ngắn" }
         triW1 = pos; pos += 4 * triN
         triW2 = pos; pos += 4 * triN
         triW3 = pos; pos += 4 * triN
@@ -60,8 +66,8 @@ class BinaryNgramModel(buffer: ByteBuffer) : NgramModel {
         ) { "Mô hình hỏng (trigram)" }
     }
 
-    /** Từ vựng (cho test). */
-    internal val vocabulary: List<String> get() = vocab.asList()
+    /** Từ vựng cho bộ hoàn thành từ và kiểm tra ngôn ngữ khi nạp gói. */
+    val vocabulary: List<String> get() = vocab.asList()
 
     private fun uniP(w: Int): Double = Q2P[buf.get(uniQ + w).toInt() and 0xFF]
 

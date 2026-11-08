@@ -2,22 +2,108 @@ package com.telehex.telex.predict
 
 import org.junit.Assert.*
 import org.junit.Test
+import java.nio.ByteBuffer
 
 class EnglishPredictorTest {
-    private val predictor = EnglishPredictor()
+    private val predictor = EnglishPredictor(words)
+
+    companion object {
+        private val words = EnglishPredictorTest::class.java.getResourceAsStream("/en-frequency.txt")!!
+            .bufferedReader().use { it.readLines() }
+        private val contextualFixture by lazy {
+            val bytes = EnglishPredictorTest::class.java.getResourceAsStream("/tiny-en.ngram")!!.use { it.readBytes() }
+            EnglishPredictor(words, BinaryNgramModel(ByteBuffer.wrap(bytes)))
+        }
+    }
 
     @Test fun completesCommonWordsOfflineAndKeepsExactWordsUntouched() {
-        assertEquals(listOf("hello", "help", "helpful", "helping", "helped"), predictor.complete("hel"))
+        assertEquals(listOf("help", "held", "hell", "helped", "helping"), predictor.complete("hel", max = 5))
+        assertTrue(predictor.complete("hel").contains("hello"))
         assertFalse(predictor.complete("hello").contains("hello"))
         assertTrue(predictor.complete("xyzzy").isEmpty())
     }
 
     @Test fun preservesTypedCaseAndHonorsCapsLock() {
-        assertEquals("Hello", predictor.complete("Hel").first())
-        assertEquals("HELLO", predictor.complete("HEL").first())
-        assertEquals("HELLO", predictor.complete("h", capsLock = true).first { it == "HELLO" })
-        assertEquals("hEllo", predictor.complete("hEl").first())
+        assertEquals("Help", predictor.complete("Hel").first())
+        assertEquals("HELP", predictor.complete("HEL").first())
+        assertEquals("HELP", predictor.complete("hel", capsLock = true).first())
+        assertEquals("hElp", predictor.complete("hEl").first())
         assertEquals("don't", predictor.complete("don").first())
+        assertEquals("don't", predictor.complete("don'").first())
+        assertEquals("don’t", predictor.complete("don’").first())
+        assertEquals("don't", EnglishPredictor(listOf("don’t")).complete("don'").first())
+    }
+
+    @Test fun completesVocabularyBeyondTheOldCuratedList() {
+        for ((prefix, expected) in mapOf("archit" to "architecture", "algor" to "algorithm",
+            "accomm" to "accommodation", "opport" to "opportunity", "resched" to "rescheduled")) {
+            assertEquals(prefix, expected, predictor.complete(prefix).first())
+        }
+    }
+
+    @Test fun indexedSearchKeepsFrequencyOrderAndLimitsAcrossTheAlphabet() {
+        val words = EnglishPredictor::class.java.getResourceAsStream("/en-frequency.txt")!!
+            .bufferedReader().use { it.readLines() }
+        assertEquals(50000, words.size)
+        for (prefix in ('a'..'z').map { it.toString() } + listOf("app", "writ", "zz", "can'")) {
+            val expected = words.filter { it.startsWith(prefix) && it.length > prefix.length }
+            for (limit in listOf(1, 3, 24)) assertEquals(prefix, expected.take(limit), predictor.complete(prefix, max = limit))
+        }
+    }
+
+    @Test fun contextCanPromoteACompletionBeyondTheFirstPageAndUnknownContextKeepsFrequencyOrder() {
+        val words = (1..100).map { "app" + "a".repeat(it) }.filter { it.length <= 32 } + "appointment"
+        val model = object : NgramModel {
+            override fun predict(context: List<String>, max: Int) = emptyList<NgramModel.Scored>()
+            override fun probability(context: List<String>, next: String): Double =
+                if (context == listOf("book", "an") && next == "appointment") 0.9 else 0.0
+        }
+        val contextual = EnglishPredictor(words, model)
+        assertFalse(contextual.complete("app", max = 3).contains("appointment"))
+        assertEquals("appointment", contextual.complete("app", max = 3, context = listOf("book", "an")).first())
+        assertEquals(contextual.complete("app"), contextual.complete("app", context = listOf("unseenword")))
+    }
+
+    @Test fun importedModelPredictsNextWordsAndUsesContextWhileCompleting() {
+        val bundled = contextualFixture
+        assertEquals("you", bundled.next(listOf("thank")).first())
+        assertEquals("to", bundled.next(listOf("looking", "forward")).first())
+        assertEquals("you", bundled.next(listOf("how", "are")).first())
+        assertEquals("you", bundled.complete("y", context = listOf("thank")).first())
+        assertEquals("YOU", bundled.next(listOf("thank"), capsLock = true).first())
+        assertEquals("You", bundled.next(listOf("thank"), capitalize = true).first())
+        assertTrue(bundled.next(emptyList(), max = 0).isEmpty())
+        assertTrue(bundled.next(emptyList(), max = 2).size <= 2)
+        assertTrue(predictor.next(listOf("thank")).isEmpty())
+    }
+
+    @Test fun contextAndQueriesKeepContractionsAndStopAtSentenceAndNonEnglishBoundaries() {
+        assertEquals(listOf("i'm", "very"), EnglishPredictor.contextBefore("Earlier. I’m very "))
+        assertEquals(listOf("we", "don't"), EnglishPredictor.contextBefore("we don't "))
+        assertEquals(emptyList<String>(), EnglishPredictor.contextBefore("hello! "))
+        assertEquals(listOf("again"), EnglishPredictor.contextBefore("see café again "))
+        assertEquals(listOf("now"), EnglishPredictor.contextBefore("read foo123 now "))
+        assertEquals(EnglishPredictor.Query(EnglishPredictor.Token("hel", "lo"), listOf("say")),
+            EnglishPredictor.queryAtCursor("say hel", "lo!"))
+        assertEquals(EnglishPredictor.Query(EnglishPredictor.Token("", ""), listOf("thank")),
+            EnglishPredictor.queryAtCursor("thank ", ""))
+        assertNotEquals(EnglishPredictor.queryAtCursor("thank ", ""), EnglishPredictor.queryAtCursor("see ", ""))
+        assertNotNull(EnglishPredictor.queryAtCursor("", ""))
+        for ((before, after) in listOf("" to "word", "hello " to "word", "user@hel" to "", "foo_hel" to "", "hello!" to "")) {
+            assertNull("$before|$after", EnglishPredictor.queryAtCursor(before, after))
+        }
+    }
+
+    @Test fun interactiveLookupStaysBoundedWithTheFullDictionary() {
+        val bundled = contextualFixture
+        repeat(3) { for (prefix in listOf("a", "s", "t", "app")) bundled.complete(prefix, context = listOf("i", "am")) }
+        val durations = (1..100).map { i ->
+            val start = System.nanoTime()
+            assertTrue(bundled.complete(('a' + i % 26).toString(), context = listOf("i", "am")).size <= 24)
+            (System.nanoTime() - start) / 1_000_000.0
+        }.sorted()
+        println("EN completion p95: ${durations[94]} ms; max: ${durations.last()} ms")
+        assertTrue("p95 too slow: ${durations[94]} ms", durations[94] < 100)
     }
 
     @Test fun boundsResultsAndRejectsNonEnglishOrIdentifiers() {
