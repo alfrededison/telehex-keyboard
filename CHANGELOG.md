@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.2 — unreleased
+## 0.6.0 — 2026-11-08
 
 - Hướng dẫn trong Cài đặt › Cử chỉ chia thành các gạch đầu dòng, nhóm theo phím chữ (vuốt lên đảo hoa/thường, vuốt xuống nhập ký tự phụ), phím cách, vùng chọn và hai ngón để dễ đọc.
 - Vuốt xuống phím ⚙ để mở bảng điều hướng và clipboard history, có nhãn phụ 📋. Chạm hoặc giữ rồi nhả ⚙ đều mở Cài đặt; bỏ chức năng riêng của thao tác giữ phím này.
