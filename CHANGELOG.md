@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.5.2 — unreleased
+
 ## 0.5.1 — 2026-11-08
 
 - Gõ tắt dùng bảng hai cột Viết tắt / Nội dung, tự lưu và bỏ khoảng trắng thừa ở hai đầu. Phím Tiếp chuyển ô và thêm dòng; có nút xoá từng dòng, không cần gõ dấu `=`.
