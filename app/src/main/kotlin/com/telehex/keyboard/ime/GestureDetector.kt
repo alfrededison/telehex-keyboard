@@ -38,15 +38,25 @@ class GestureDetector(
     private val pointers = HashMap<Int, Pointer>()
     private var multi = false
     private val finished = ArrayList<Finished>(2)
+    private var sequence = 0
 
     val activeCount: Int get() = pointers.size
 
     /** Bỏ theo dõi một pointer (view đã tự xử lý nó, ví dụ kéo đổi chỗ phím): `up` của nó bị bỏ qua. */
     fun drop(pointerId: Int) { pointers.remove(pointerId) }
 
+    /** Kết thúc luồng chạm cũ khi đổi lớp, đóng bàn phím hoặc Android bắt đầu luồng mới. */
+    fun cancel(listener: Listener) {
+        val ids = (pointers.keys + finished.map { it.id }).toSet()
+        pointers.clear(); finished.clear(); multi = false
+        sequence++
+        for (id in ids) listener.onCancel(id)
+    }
+
     fun onTouch(event: MotionEvent, keyAt: (Float, Float) -> Key?, listener: Listener): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                if (event.actionMasked == MotionEvent.ACTION_DOWN) cancel(listener)
                 val i = event.actionIndex
                 val id = event.getPointerId(i)
                 val x = event.getX(i); val y = event.getY(i)
@@ -77,26 +87,35 @@ class GestureDetector(
                 if (pointers.isEmpty()) resolveMulti(listener)
             }
             MotionEvent.ACTION_CANCEL -> {
-                for (id in pointers.keys.toList()) listener.onCancel(id)
-                for (f in finished) listener.onCancel(f.id)
-                pointers.clear(); finished.clear(); multi = false
+                cancel(listener)
             }
         }
         return true
     }
 
     private fun resolveMulti(listener: Listener) {
-        val gestures = finished.map { it.gesture }.toSet()
-        val two = finished.size >= 2 && gestures.size == 1 &&
+        // Callback có thể đổi lớp và huỷ luồng chạm. Tách danh sách trước khi gọi ra ngoài,
+        // rồi bỏ các phím còn lại nếu lớp/cử chỉ đã đổi trong callback đầu tiên.
+        val resolved = finished.toList()
+        multi = false
+        val current = sequence
+        val gestures = resolved.map { it.gesture }.toSet()
+        val two = resolved.size >= 2 && gestures.size == 1 &&
             gestures.first().let { it == Gesture.SWIPE_LEFT || it == Gesture.SWIPE_RIGHT || it == Gesture.LONG_PRESS }
         if (two) {
-            for (f in finished) listener.onCancel(f.id)
-            listener.onTwoFinger(gestures.first())
+            for (f in resolved) {
+                if (sequence != current) return
+                finished.remove(f)
+                listener.onCancel(f.id)
+            }
+            if (sequence == current) listener.onTwoFinger(gestures.first())
         } else {
-            for (f in finished) listener.onUp(f.id, f.key, f.gesture, f.dx, f.dy, f.dt)
+            for (f in resolved) {
+                if (sequence != current) break
+                finished.remove(f)
+                listener.onUp(f.id, f.key, f.gesture, f.dx, f.dy, f.dt)
+            }
         }
-        finished.clear()
-        multi = false
     }
 
     fun classify(dx: Float, dy: Float, dt: Long): Gesture {

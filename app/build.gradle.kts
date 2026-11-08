@@ -27,6 +27,7 @@ android {
         applicationId = "com.telehex.keyboard"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
+        testInstrumentationRunner = "android.test.InstrumentationTestRunner"
         versionCode = resolvedVersionCode
         versionName = resolvedVersionName
     }
@@ -73,4 +74,7 @@ dependencies {
     implementation(project(":telex"))
     implementation(libs.androidx.core.ktx)
     testImplementation(libs.junit)
+    // Platform instrumentation libraries are needed only by the device tests.
+    androidTestCompileOnly(files("${android.sdkDirectory}/platforms/android-${android.compileSdk}/optional/android.test.base.jar"))
+    androidTestCompileOnly(files("${android.sdkDirectory}/platforms/android-${android.compileSdk}/optional/android.test.runner.jar"))
 }

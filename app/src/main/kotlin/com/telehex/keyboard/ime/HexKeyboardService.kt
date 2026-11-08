@@ -566,7 +566,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         super.onFinishInput()
         closeMoreSuggestions()
         clearGlide()
-        if (::keyboardView.isInitialized) keyboardView.cancelGlide()
+        if (::keyboardView.isInitialized) keyboardView.cancelTouches()
         spaceGestures.cancel()
         currentInputConnection?.let { sink.detach(it) }
         engine.reset()

@@ -14,6 +14,7 @@ import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import com.telehex.keyboard.layout.HexGeometry
+import com.telehex.keyboard.layout.KeyCode
 import com.telehex.telex.predict.GlideDecoder.Point
 import kotlin.math.hypot
 
@@ -63,7 +64,10 @@ open class KeyboardView @JvmOverloads constructor(
         set(value) { field = value; invalidate() }
 
     var keys: List<Key> = emptyList()
-        set(value) { field = value; rebuild(); invalidate() }
+        set(value) {
+            if (field != value) cancelTouches()
+            field = value; rebuild(); invalidate()
+        }
 
     /** Nhãn chữ cái viết hoa (chữ sắp gõ sẽ hoa) hay thường, như Gboard. */
     var shifted: Boolean = true
@@ -120,8 +124,9 @@ open class KeyboardView @JvmOverloads constructor(
             key ?: return
             pressed[pointerId] = key
             lastDown?.let { downPoints[pointerId] = it }
-            if (gestures.activeCount == 1 && canLift?.invoke(key) == true) {
-                drag = Drag(pointerId, key, lastDown?.get(0) ?: 0f, lastDown?.get(1) ?: 0f)
+            val liftSource = lastDown?.let { keyAtPosition(it[0], it[1]) } ?: key
+            if (gestures.activeCount == 1 && canLift?.invoke(liftSource) == true) {
+                drag = Drag(pointerId, liftSource, lastDown?.get(0) ?: 0f, lastDown?.get(1) ?: 0f)
                 postDelayed(liftKey, dragHoldMs)
             }
             if (hapticEnabled) performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
@@ -150,8 +155,17 @@ open class KeyboardView @JvmOverloads constructor(
             invalidate()
             val down = downPoints.remove(pointerId)
             key ?: return
-            if (gesture == Gesture.TAP && down != null) learnOffset(key, down[0], down[1])
-            listener?.onKeyUp(key, gesture, dx, dy, dt)
+            // Ngón cái có thể chạm mép nút chức năng rồi lăn sang chữ trước khi nhấc.
+            // Lần chạm ngắn kết thúc trên chữ phải gõ chữ đó, không bật ⚙/123 đã chạm lúc đầu.
+            val released = if (gesture == Gesture.TAP && down != null &&
+                KeyCode.isFunction(key.code) && !key.isSpace) {
+                keyAtPosition(down[0] + dx, down[1] + dy)?.takeIf { it.isLetter } ?: key
+            } else key
+            if (gesture == Gesture.TAP && down != null) {
+                if (released != key) learnOffset(released, down[0] + dx, down[1] + dy)
+                else learnOffset(key, down[0], down[1])
+            }
+            listener?.onKeyUp(released, gesture, dx, dy, dt)
         }
 
         override fun onCancel(pointerId: Int) {
@@ -240,7 +254,7 @@ open class KeyboardView @JvmOverloads constructor(
                     return false
                 }
                 d.x = x; d.y = y
-                val k = keyAt(x, y)
+                val k = keyAtPosition(x, y)
                 if (k != d.key) d.left = true
                 d.over = k?.takeIf { it != d.key && canDrop(it) }
                 invalidate()
@@ -248,8 +262,12 @@ open class KeyboardView @JvmOverloads constructor(
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
                 if (event.getPointerId(event.actionIndex) != d.pointerId) return false
-                if (!d.lifted || !d.left) { cancelDrag(); return false }
-                val to = d.over
+                if (!d.lifted) { cancelDrag(); return false }
+                val i = event.actionIndex
+                val target = keyAtPosition(event.getX(i), event.getY(i))
+                if (target != d.key) d.left = true
+                if (!d.left) { cancelDrag(); return false }
+                val to = target?.takeIf { it != d.key && canDrop(it) }
                 abandonPointer(d)
                 cancelDrag()
                 if (to != null) listener?.onKeySwap(d.key, to)
@@ -269,9 +287,19 @@ open class KeyboardView @JvmOverloads constructor(
     }
 
     override fun onDetachedFromWindow() {
+        cancelTouches()
+        super.onDetachedFromWindow()
+    }
+
+    /** Không để phím/cử chỉ đang dở của bố cục hoặc ô nhập cũ chạy ở lần gõ tiếp theo. */
+    fun cancelTouches() {
         cancelDrag()
         cancelGlide()
-        super.onDetachedFromWindow()
+        gestures.cancel(gestureListener)
+        downPoints.clear(); pressed.clear()
+        lastDown = null
+        swallowUntilUp = true
+        invalidate()
     }
 
     /** Ngưỡng vuốt (px) và long-press (ms), đặt từ Cài đặt. */
@@ -328,8 +356,19 @@ open class KeyboardView @JvmOverloads constructor(
     var touchOffsets: MutableMap<String, FloatArray>? = null
     var onTouchOffsetsChanged: (() -> Unit)? = null
 
+    /** Ô đang hiển thị, không bù độ lệch hay nới vùng theo âm tiết (dùng khi kéo đổi chỗ). */
+    private fun keyAtPosition(x: Float, y: Float): Key? =
+        geometry?.cellAt(x, y)?.let { cellToKey[it] }
+
     fun keyAt(x: Float, y: Float): Key? {
         val g = geometry ?: return null
+        val physical = keyAtPosition(x, y) ?: return null
+        // Phím chức năng/dấu câu/cách luôn theo hình vẽ. Không để dữ liệu học từ chữ
+        // kích hoạt ⚙/123 ở ô chữ, nhất là sau khi đổi chỗ gần các nút này.
+        if (!physical.isLetter) return physical
+        val center = centerOf(physical) ?: return physical
+        // Chạm rõ giữa phím phải gõ đúng nhãn; chỉ bù/nới vùng ở phần ngoài.
+        if (hypot(x - center.x, y - center.y) <= g.w * 0.25f) return physical
         var px = x; var py = y
         val offsets = touchOffsets
         if (offsets != null && offsets.isNotEmpty()) {
@@ -341,8 +380,8 @@ open class KeyboardView @JvmOverloads constructor(
             offsets[first?.code]?.let { o -> px = x - o[0]; py = y - o[1] }
         }
         val near = g.nearestCells(px, py)
-        if (near.isEmpty()) return null
-        val best = cellToKey[near[0].first] ?: return null
+        if (near.isEmpty()) return physical
+        val best = cellToKey[near[0].first]?.takeIf { it.isLetter } ?: return physical
         val check = validNextLetter
         if (check != null && near.size == 2 && near[1].second < near[0].second * 1.8f) {
             val second = cellToKey[near[1].first]
@@ -500,6 +539,7 @@ open class KeyboardView @JvmOverloads constructor(
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val a = event.actionMasked
+        if (a == MotionEvent.ACTION_DOWN) cancelTouches()
         if (a == MotionEvent.ACTION_DOWN || a == MotionEvent.ACTION_POINTER_DOWN) {
             val i = event.actionIndex
             lastDown = floatArrayOf(event.getX(i), event.getY(i))

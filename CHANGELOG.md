@@ -2,6 +2,10 @@
 
 ## 0.7.1 — unreleased
 
+- Huỷ phím và cử chỉ còn chờ khi đổi lớp/bố cục hoặc đóng bàn phím, tránh thực thi lại nút chức năng ở lần gõ đầu tiên sau khi chỉnh sửa.
+- Chạm sát ⚙/123 rồi nhấc tay trên phím chữ sẽ gõ chữ tại điểm nhấc tay, tránh mất chữ đầu và bật nhầm Cài đặt/lớp số khi gõ nhanh cạnh nút chức năng.
+- Sửa nhận nhầm ⚙/123 khi chạm phím chữ sau khi kéo đổi chỗ: vùng chạm học chỉ điều chỉnh giữa các phím chữ, giữ đúng tâm phím; kéo thả dùng ô đang hiển thị và vị trí nhả tay cuối cùng.
+
 ## 0.7.0 — 2026-11-08
 
 - Tách nhóm xoá dữ liệu đã học bằng đường phân cách, ghi rõ chỉ xoá dữ liệu cá nhân tiếng Việt và giữ các gói ngôn ngữ đã nạp.
