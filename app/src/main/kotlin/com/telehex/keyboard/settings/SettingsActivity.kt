@@ -15,6 +15,9 @@ import android.graphics.drawable.RippleDrawable
 import android.os.Bundle
 import android.provider.Settings
 import android.text.InputType
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.BulletSpan
 import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -223,10 +226,40 @@ class SettingsActivity : Activity() {
         sec.addButton("Xoá dữ liệu độ lệch đã học") { prefs.touchOffsets = emptyMap() }
 
         sec = section("gestures", "Cử chỉ", "Vuốt, giữ và chạm đúp", R.drawable.ic_settings_gestures)
-        sec.add(TextView(this).apply {
-            text = "Phím cách: vuốt trái = xoá (ngắn: 1 ký tự, dài: theo từ, có bôi đen xem trước); giữ rồi kéo = di con trỏ; chạm đúp rồi giữ-kéo = chọn; vuốt phải = dán; vuốt lên = đổi hoa/thường; vuốt xuống = bật/tắt EN (tắt Telex); khi có vùng chọn: vuốt lên = chép, vuốt trái = cắt. Hai ngón vuốt trái/phải = undo/redo, hai ngón giữ = chọn hết."
-            textSize = 13f
-        })
+        listOf(
+            "Phím chữ" to listOf(
+                "Vuốt lên: gõ chữ hoa nếu nhãn đang thường, gõ chữ thường nếu nhãn đang hoa.",
+                "Vuốt xuống: nhập ký tự phụ hiện bên dưới phím (số, emoji, ký hiệu).",
+            ),
+            "Phím cách" to listOf(
+                "Vuốt trái ngắn: xoá 1 ký tự.",
+                "Vuốt trái dài: xoá theo từ, có bôi đen xem trước.",
+                "Giữ rồi kéo: di con trỏ.",
+                "Chạm đúp rồi giữ-kéo: chọn văn bản.",
+                "Vuốt phải: dán.",
+                "Vuốt lên: đổi hoa/thường.",
+                "Vuốt xuống: bật/tắt EN (tắt Telex).",
+            ),
+            "Phím cách khi có vùng chọn" to listOf(
+                "Vuốt lên: chép.",
+                "Vuốt trái: cắt.",
+            ),
+            "Hai ngón" to listOf(
+                "Vuốt trái/phải: undo/redo.",
+                "Giữ: chọn hết.",
+            ),
+        ).forEach { (title, instructions) ->
+            sec.add(label(title))
+            instructions.forEach { instruction ->
+                sec.add(TextView(this).apply {
+                    text = SpannableString(instruction).apply {
+                        setSpan(BulletSpan(dp(8)), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    }
+                    textSize = 13f
+                    setPadding(0, dp(3), 0, dp(3))
+                })
+            }
+        }
         sec.add(slider("Ngưỡng vuốt", "dp", 12, 60, prefs.swipeThresholdDp) { prefs.swipeThresholdDp = it })
         sec.add(slider("Giữ phím cách trước khi kéo (con trỏ)", "ms", 150, 800, prefs.holdMs) { prefs.holdMs = it })
         sec.add(slider("Giữ lâu (long-press)", "ms", 250, 1000, prefs.longPressMs) { prefs.longPressMs = it })

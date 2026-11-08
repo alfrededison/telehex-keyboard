@@ -2,6 +2,7 @@
 
 ## 0.5.2 — unreleased
 
+- Hướng dẫn trong Cài đặt › Cử chỉ chia thành các gạch đầu dòng, nhóm theo phím chữ (vuốt lên đảo hoa/thường, vuốt xuống nhập ký tự phụ), phím cách, vùng chọn và hai ngón để dễ đọc.
 - Vuốt xuống phím ⚙ để mở bảng điều hướng và clipboard history, có nhãn phụ 📋. Chạm hoặc giữ rồi nhả ⚙ đều mở Cài đặt; bỏ chức năng riêng của thao tác giữ phím này.
 - Gợi ý sửa lỗi xét hai âm tiết trước từ bằng mô hình cá nhân/gói ngôn ngữ, áp dụng khi đang gõ và khi đặt con trỏ vào từ. Giới hạn ảnh hưởng ngữ cảnh để giữ ưu tiên lỗi gõ gần; thiếu dữ liệu thì giữ xếp hạng cũ.
 - Giới tính emoji mặc định Nguyên bản / Nữ / Nam, kết hợp tông da, dùng trong bảng emoji, tìm và gợi ý. Giữ emoji đã chọn rõ giới tính; thiếu biến thể hoặc font không hỗ trợ thì giữ nguyên.
