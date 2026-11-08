@@ -13,29 +13,18 @@ import com.telehex.telex.ToneRules
 class EmojiData private constructor(
     val categories: List<Category>,
     private val entries: List<Entry>,
-    private val modifierBases: Set<String>,
+    modifierBases: Set<String>,
     private val paint: Paint,
 ) {
     class Category(val id: String, val name: String, val icon: String, val emoji: List<String>)
     class Entry(val emoji: String, val name: String, val keywords: List<String>, val searchText: String)
 
+    private val variants = EmojiVariants(entries.map { it.emoji }.toSet(), modifierBases, ::canDraw)
+
+    fun withPreferences(emoji: String, gender: Int, tone: Int): String = variants.apply(emoji, gender, tone)
+
     /** Font của máy vẽ được [emoji] thành một hình (cho emoji không lấy từ danh mục, như gợi ý có sẵn). */
     fun canDraw(emoji: String): Boolean = synchronized(paint) { paint.hasGlyph(emoji) }
-
-    /** Emoji nhận tông da (Emoji_Modifier_Base). */
-    fun acceptsSkinTone(emoji: String): Boolean = emoji in modifierBases
-
-    /** Áp tông da (1..5) vào emoji nếu nhận và font vẽ được bản có tông da; 0 = giữ nguyên. */
-    fun withSkinTone(emoji: String, tone: Int): String {
-        if (tone !in 1..5 || !acceptsSkinTone(emoji)) return emoji
-        val modifier = String(Character.toChars(0x1F3FA + tone))
-        // Chèn modifier ngay sau code point đầu (bỏ FE0F nếu có), giữ phần ZWJ phía sau
-        val first = emoji.offsetByCodePoints(0, 1)
-        var rest = emoji.substring(first)
-        if (rest.startsWith("️")) rest = rest.substring(1)
-        val toned = emoji.substring(0, first) + modifier + rest
-        return if (canDraw(toned)) toned else emoji
-    }
 
     /** Tìm theo tên / từ khoá tiếng Việt; bỏ dấu thanh khi so để gõ dở vẫn ra. */
     fun search(query: String, max: Int = 40): List<String> {

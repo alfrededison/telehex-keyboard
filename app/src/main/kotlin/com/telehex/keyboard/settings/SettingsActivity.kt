@@ -128,7 +128,7 @@ class SettingsActivity : Activity() {
             })
         })
 
-        sec = section("emoji_clipboard", "Emoji và clipboard", "Tông da và lịch sử sao chép", R.drawable.ic_settings_emoji)
+        sec = section("emoji_clipboard", "Emoji và clipboard", "Tông da, giới tính và lịch sử sao chép", R.drawable.ic_settings_emoji)
         sec.add(label("Tông da mặc định (cho emoji nhận tông da)"))
         sec.add(RadioGroup(this).apply {
             orientation = RadioGroup.HORIZONTAL
@@ -137,6 +137,16 @@ class SettingsActivity : Activity() {
             val buttons = tones.map { label -> RadioButton(context).apply { text = label; id = View.generateViewId() }.also { addView(it) } }
             check(buttons[prefs.skinTone.coerceIn(0, 5)].id)
             setOnCheckedChangeListener { _, id -> prefs.skinTone = buttons.indexOfFirst { it.id == id } }
+        })
+        sec.add(label("Giới tính mặc định (cho emoji trung tính có biến thể)"))
+        sec.add(RadioGroup(this).apply {
+            orientation = RadioGroup.HORIZONTAL
+            isSaveEnabled = false
+            val buttons = listOf("Nguyên bản", "Nữ", "Nam").map { label ->
+                RadioButton(context).apply { text = label; id = View.generateViewId() }.also { addView(it) }
+            }
+            check(buttons[prefs.emojiGender].id)
+            setOnCheckedChangeListener { _, id -> prefs.emojiGender = buttons.indexOfFirst { it.id == id } }
         })
         sec.add(switch("Lưu clipboard history (giữ phím ⚙ để mở; mục thường hết hạn sau 1 giờ, mục ghim giữ lâu)", prefs.clipboardHistory) { prefs.clipboardHistory = it })
 

@@ -27,6 +27,7 @@ class EmojiPanel(context: Context, private val theme: Theme, private val data: E
     var listener: Listener? = null
     /** Danh sách Gần đây; chỉ áp dụng khi mở lại tab để không xê dịch dưới ngón tay. */
     var recent: List<String> = emptyList()
+    var formatEmoji: (String) -> String = { it }
 
     private var currentTab = RECENT
     private val grid = GridView(context)
@@ -44,7 +45,7 @@ class EmojiPanel(context: Context, private val theme: Theme, private val data: E
                 textSize = 26f
                 layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(44))
             }
-            tv.text = items[position]
+            tv.text = formatEmoji(items[position])
             return tv
         }
     }

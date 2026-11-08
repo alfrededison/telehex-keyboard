@@ -75,8 +75,9 @@ Gợi ý âm tiết tiếp theo dùng thêm một mô hình n-gram âm tiết n�
 - **Profile**: mỗi profile giữ đủ ba lớp Chữ, Vuốt xuống, 123. Màn chỉnh sửa luôn sửa profile đang dùng; Lưu là áp ngay cho bàn phím. Menu ⋮ có Tạo mới, Nhân bản (gồm cả thay đổi chưa lưu), Đổi tên, Xoá, Bỏ thay đổi. Có sẵn "Mặc định", "Cân bằng hai ngón" (chia đều tải cho hai ngón cái, tăng gõ luân phiên, giữ 12 chữ ở chỗ cũ) và "Công thái học" (nhanh nhất theo mô hình, nhưng sắp xếp lại toàn bộ chữ); ba profile này khoá 🔒, sửa thì lưu thành profile mới. Đổi nhanh profile ngay trong Cài đặt › Bàn phím.
 - **Ký tự vuốt xuống** cho từng ô phím: số, ký hiệu, emoji hoặc đoạn văn bản ngắn (≤ 8 ký tự). Ở chế độ **Vuốt xuống** của màn chỉnh sửa phím, chạm một phím để chọn ký tự, kéo để đổi chỗ.
 - **App tự bật EN**: chọn app (Termux, app code…) trong Cài đặt › Telex để luôn mở bàn phím ở chế độ EN.
-- Kiểu đặt dấu cũ/mới (hòa/hoà), "L cũng là dấu huyền" (`lal` → là), tự viết hoa đầu câu, rung, âm thanh, giao diện sáng/tối, màu nhấn, chế độ một tay, tông da emoji, gõ tắt, clipboard history, chế độ ẩn danh, vùng chạm động (tắt mặc định), học độ lệch chạm.
+- Kiểu đặt dấu cũ/mới (hòa/hoà), "L cũng là dấu huyền" (`lal` → là), tự viết hoa đầu câu, rung, âm thanh, giao diện sáng/tối, màu nhấn, chế độ một tay, tông da và giới tính emoji mặc định, gõ tắt, clipboard history, chế độ ẩn danh, vùng chạm động (tắt mặc định), học độ lệch chạm.
 - **Sao lưu / khôi phục** mọi thứ ra một file zip.
+- **Emoji**: Cài đặt › Emoji và clipboard cho chọn giới tính mặc định Nguyên bản / Nữ / Nam. Chỉ emoji trung tính có biến thể hợp lệ và máy vẽ được mới đổi; emoji đã chọn rõ giới tính giữ nguyên. Kết hợp được với tông da, áp dụng cho bảng emoji, tìm kiếm và gợi ý.
 - **Giọng nói**: nút 🎤 trong bảng sửa văn bản chuyển sang IME giọng nói đã bật (ví dụ FUTO Voice Input chạy offline).
 
 ## Build

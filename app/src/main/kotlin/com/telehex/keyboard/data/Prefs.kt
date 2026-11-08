@@ -108,6 +108,11 @@ class Prefs(context: Context) {
         get() = sp.getInt(KEY_SKIN_TONE, 0)
         set(v) = sp.edit().putInt(KEY_SKIN_TONE, v).apply()
 
+    /** 0 nguyên bản, 1 nữ, 2 nam; chỉ đổi emoji trung tính có biến thể tương ứng. */
+    var emojiGender: Int
+        get() = sp.getInt(KEY_EMOJI_GENDER, 0).coerceIn(0, 2)
+        set(v) = sp.edit().putInt(KEY_EMOJI_GENDER, v.coerceIn(0, 2)).apply()
+
     /** Lưu clipboard history. */
     var clipboardHistory: Boolean
         get() = sp.getBoolean(KEY_CLIPBOARD, true)
@@ -365,6 +370,7 @@ class Prefs(context: Context) {
         const val KEY_MODELS_VERSION = "models_version"
         const val KEY_ONE_HANDED = "one_handed"
         const val KEY_SKIN_TONE = "skin_tone"
+        const val KEY_EMOJI_GENDER = "emoji_gender"
         const val KEY_CLIPBOARD = "clipboard_history"
         const val KEY_SHORTCUTS = "shortcuts"
         const val KEY_PREDICTIONS = "predictions"
@@ -395,7 +401,7 @@ class Prefs(context: Context) {
             KEY_STEP_DP to Int::class, KEY_DOUBLE_TAP_MS to Int::class,
             KEY_PREDICTIONS to Boolean::class, KEY_GLIDE to Boolean::class, KEY_INCOGNITO to Boolean::class,
             KEY_DYNAMIC_ZONES to Boolean::class, KEY_LEARN_OFFSETS to Boolean::class,
-            KEY_ONE_HANDED to Int::class, KEY_SKIN_TONE to Int::class, KEY_CLIPBOARD to Boolean::class,
+            KEY_ONE_HANDED to Int::class, KEY_SKIN_TONE to Int::class, KEY_EMOJI_GENDER to Int::class, KEY_CLIPBOARD to Boolean::class,
             KEY_SHORTCUTS to String::class, KEY_AUTO_CAP to Boolean::class,
             KEY_SWIPE_GRID to String::class, KEY_SYMBOL_PAGES to String::class,
             KEY_PROFILES to String::class, KEY_ACTIVE_PROFILE to String::class,

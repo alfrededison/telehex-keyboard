@@ -2,6 +2,8 @@
 
 ## 0.5.2 — unreleased
 
+- Giới tính emoji mặc định Nguyên bản / Nữ / Nam, kết hợp tông da, dùng trong bảng emoji, tìm và gợi ý. Giữ emoji đã chọn rõ giới tính; thiếu biến thể hoặc font không hỗ trợ thì giữ nguyên.
+
 ## 0.5.1 — 2026-11-08
 
 - Gõ tắt dùng bảng hai cột Viết tắt / Nội dung, tự lưu và bỏ khoảng trắng thừa ở hai đầu. Phím Tiếp chuyển ô và thêm dòng; có nút xoá từng dòng, không cần gõ dấu `=`.

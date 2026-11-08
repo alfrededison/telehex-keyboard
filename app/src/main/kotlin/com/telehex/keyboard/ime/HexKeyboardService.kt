@@ -237,11 +237,14 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     }
 
     private fun insertEmoji(emoji: String) {
-        val e = EmojiData.get(this).withSkinTone(emoji, prefs.skinTone)
+        val e = preferredEmoji(emoji)
         commitSyllable(e)
         prefs.recentEmoji = listOf(emoji) + prefs.recentEmoji.filter { it != emoji }
         emojiPanel?.recent = prefs.recentEmoji
     }
+
+    private fun preferredEmoji(emoji: String): String =
+        EmojiData.get(this).withPreferences(emoji, prefs.emojiGender, prefs.skinTone)
 
     private fun incognito(): Boolean = noLearning || prefs.incognito || !telexEnabled
 
@@ -451,6 +454,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         }
         mode = Mode.EMOJI
         panel.recent = prefs.recentEmoji
+        panel.formatEmoji = ::preferredEmoji
         panel.open()
         showPanel(panel)
     }
@@ -592,7 +596,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         if (!::candidateBar.isInitialized) return
         if (emojiSearch) {
             val q = engine.text()
-            val results = if (q.isEmpty()) prefs.recentEmoji.take(20) else EmojiData.get(this).search(q, 30)
+            val results = (if (q.isEmpty()) prefs.recentEmoji.take(20) else EmojiData.get(this).search(q, 30))
+                .map(::preferredEmoji).distinct()
             // Chạm ô tìm (có ✕), ⌫ khi ô tìm trống, ↵ hoặc ☺ đều bỏ tìm
             candidateBar.showSuggestions("🔍 " + q.ifEmpty { "tìm emoji…" } + "  ✕", results, onTyped = { cancelEmojiSearch() }) { insertEmoji(it); stopEmojiSearch() }
             return
@@ -637,7 +642,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             val completions = if (prefs.predictions) predictions.predictor.next(recent.toList(), typed, 2)
                 .map { casedCompletion(it, typed) }.filter { c -> variants.none { it.text == c } } else emptyList()
             val emoji = emojiFor(typed)
-            candidateBar.show(variants, completions, emoji, onPickText = { replaceComposing(it) }, onPickEmoji = { commitSyllable(it) })
+            candidateBar.show(variants, completions, emoji, onPickText = { replaceComposing(it) }, onPickEmoji = { insertEmoji(it) })
         } else if (prefs.predictions && mode == Mode.ABC && telexEnabled && afterSpace()) {
             val next = predictions.predictor.next(recent.toList(), "", 3).map { casedPrediction(it) }
             val emoji = recent.lastOrNull()?.let { emojiFor(it) } ?: emptyList()
@@ -647,7 +652,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                 val auto = (capsLockActive() || capsSentenceStart()) && !predictions.predictor.personal.usuallyCapitalized(pick)
                 commitSyllable("$pick "); pushContext(pick, auto)
                 suggestionSpace = "$pick "
-            }, onPickEmoji = { commitSyllable(it) }, onForget = { forget(it) })
+            }, onPickEmoji = { insertEmoji(it) }, onForget = { forget(it) })
         } else {
             showWordAtCursorSuggestions()
         }
@@ -658,8 +663,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         if (curated.isEmpty() && word.length < 3) return emptyList() // khỏi nạp EmojiData
         val data = EmojiData.get(this)
         val drawable = curated.filter { data.canDraw(it) }
-        if (drawable.isNotEmpty()) return drawable
-        return if (word.length >= 3) data.exactKeyword(word, 2) else emptyList()
+        if (drawable.isNotEmpty()) return drawable.map(::preferredEmoji).distinct()
+        return if (word.length >= 3) data.exactKeyword(word, 2).map(::preferredEmoji).distinct() else emptyList()
     }
 
     private fun afterSpace(): Boolean {

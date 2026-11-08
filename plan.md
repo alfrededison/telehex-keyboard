@@ -71,7 +71,7 @@ Mặc định dùng composing text. App trong danh sách dự phòng dùng
 
 Mỗi tính năng có commit riêng, kiểm thử trước khi commit; cập nhật trạng thái khi hoàn tất.
 
-1. [ ] **Giới tính emoji mặc định**: nguyên bản / nữ / nam, kết hợp tông da; chỉ đổi sang
+1. [x] **Giới tính emoji mặc định**: nguyên bản / nữ / nam, kết hợp tông da; chỉ đổi sang
    biến thể Unicode hợp lệ và font vẽ được. Áp dụng nhất quán khi chọn từ bảng/tìm/gợi ý.
 2. [ ] **Nút xem thêm gợi ý**: `…` hiện khi có thêm ứng viên, mở rộng ngay trong vùng bàn phím;
    chọn từ giữ hành vi chèn hiện có. Giữ gợi ý vẫn xoá khỏi từ điển cá nhân.
