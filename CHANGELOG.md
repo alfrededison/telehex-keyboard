@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.1 — unreleased
+## 0.7.0 — 2026-11-08
 
 - Tách nhóm xoá dữ liệu đã học bằng đường phân cách, ghi rõ chỉ xoá dữ liệu cá nhân tiếng Việt và giữ các gói ngôn ngữ đã nạp.
 - Thêm asset từ vựng/tần suất tiếng Việt: bổ sung hoàn thành âm tiết khi chưa nạp gói VI và vốn từ cho gõ vuốt; chuyển bảng cụm từ cũ sang asset, giữ thứ tự ưu tiên. Gói vi.ngram vẫn tự dựng và nạp riêng.
