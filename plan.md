@@ -1,7 +1,8 @@
 # Kế hoạch TeleHex
 
-Tài liệu này mô tả trạng thái hiện tại và công việc còn lại. README là hướng dẫn sử dụng;
-CHANGELOG ghi thay đổi theo phiên bản. Mã Android hiện tại là nguồn tham chiếu cho hành vi và hình học.
+Tài liệu này mô tả trạng thái hiện tại và công việc còn lại. README là hướng dẫn sử dụng.
+Lịch sử thay đổi và mốc phiên bản chỉ ghi trong CHANGELOG.
+Mã Android hiện tại là nguồn tham chiếu cho hành vi và hình học.
 
 ## 1. Nguyên tắc
 
@@ -66,28 +67,23 @@ Mặc định dùng composing text. App trong danh sách dự phòng dùng
 - [x] Tìm/gợi ý emoji tiếng Việt từ CLDR, lọc theo font máy, tông da mặc định.
 - [x] Gõ tắt hai cột, sao lưu/khôi phục zip, voice qua IME ngoài.
 - [x] CI test/lint, dev APK và release có ký, ghim chứng chỉ và version tái lập từ tag.
+- [x] **Giới tính emoji mặc định**: nguyên bản / nữ / nam, kết hợp tông da; chỉ đổi sang
+  biến thể Unicode hợp lệ và font vẽ được. Áp dụng nhất quán khi chọn từ bảng/tìm/gợi ý.
+- [x] **Nút xem thêm gợi ý**: `…` hiện khi có thêm ứng viên, mở rộng ngay trong vùng bàn phím;
+  chọn từ giữ hành vi chèn hiện có. Giữ gợi ý vẫn xoá khỏi từ điển cá nhân.
+- [x] **Sửa lỗi xét ngữ cảnh**: kết hợp chi phí sửa, độ phổ biến và xác suất n-gram cá nhân/gốc;
+  áp dụng cả khi đang gõ và khi đặt con trỏ vào từ. Không có dữ liệu thì giữ thứ tự dự phòng.
+  Test cùng lỗi với hai ngữ cảnh và kiểm tra độ trễ.
 
-## 4. Đợt triển khai tiếp theo
+## 4. Để sau
 
-Mỗi tính năng có commit riêng, kiểm thử trước khi commit; cập nhật trạng thái khi hoàn tất.
-
-1. [x] **Giới tính emoji mặc định**: nguyên bản / nữ / nam, kết hợp tông da; chỉ đổi sang
-   biến thể Unicode hợp lệ và font vẽ được. Áp dụng nhất quán khi chọn từ bảng/tìm/gợi ý.
-2. [x] **Nút xem thêm gợi ý**: `…` hiện khi có thêm ứng viên, mở rộng ngay trong vùng bàn phím;
-   chọn từ giữ hành vi chèn hiện có. Giữ gợi ý vẫn xoá khỏi từ điển cá nhân.
-3. [ ] **Gợi ý EN**: từ điển tiếng Anh offline nhỏ, hoàn thành từ đang gõ, giữ hoa/thường;
-   chạm để chèn. Không học chung với tiếng Việt, không hiện ở ô mật khẩu/email/mã.
-4. [x] **Sửa lỗi xét ngữ cảnh**: kết hợp chi phí sửa, độ phổ biến và xác suất n-gram cá nhân/gốc;
-   áp dụng cả khi đang gõ và khi đặt con trỏ vào từ. Không có dữ liệu thì giữ thứ tự dự phòng.
-   Test cùng lỗi với hai ngữ cảnh và kiểm tra độ trễ.
-
-## 5. Để sau
-
+- [ ] Gợi ý EN: từ điển lớn và mô hình n-gram tiếng Anh; phát triển riêng trên
+  branch `feature/english-predictions`.
 - [ ] Bàn phím chia đôi cho màn hình ngang.
 - [ ] Bàn phím nổi.
 - [ ] Nạp mô hình transformer nhỏ do người dùng cung cấp (GGUF/llama.cpp).
 
-## 6. Ý tưởng chưa chốt
+## 5. Ý tưởng chưa chốt
 
 - Bố cục riêng cho tablet/màn hình gập; cân nhắc giới hạn chiều rộng và căn giữa trước khi chia đôi.
 - Vẽ dấu: thử nghiệm nếu có lợi hơn việc chọn 6 biến thể dấu.
@@ -96,7 +92,7 @@ Mỗi tính năng có commit riêng, kiểm thử trước khi commit; cập nh�
 Không bổ sung cử chỉ vuốt trái rồi giữ để xoá liên tục: thao tác này đã có trên nút ⌫.
 Enter tuân theo imeOptions hoặc chèn xuống dòng; không có tuỳ chọn ép gửi tin cho app chat.
 
-## 7. Kiểm tra và phát hành
+## 6. Kiểm tra và phát hành
 
 - `./gradlew :telex:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug`.
 - Kiểm thử UI trên emulator, quay một video cho mỗi kịch bản đạt; lưu `test-recordings/`,
