@@ -148,7 +148,7 @@ class SettingsActivity : Activity() {
             check(buttons[prefs.emojiGender].id)
             setOnCheckedChangeListener { _, id -> prefs.emojiGender = buttons.indexOfFirst { it.id == id } }
         })
-        sec.add(switch("Lưu clipboard history (giữ phím ⚙ để mở; mục thường hết hạn sau 1 giờ, mục ghim giữ lâu)", prefs.clipboardHistory) { prefs.clipboardHistory = it })
+        sec.add(switch("Lưu clipboard history (vuốt xuống phím ⚙ để mở; mục thường hết hạn sau 1 giờ, mục ghim giữ lâu)", prefs.clipboardHistory) { prefs.clipboardHistory = it })
 
         sec = section("telex", "Telex", "Kiểu gõ tiếng Việt và chế độ EN", R.drawable.ic_settings_telex)
         sec.add(label("Kiểu đặt dấu"))

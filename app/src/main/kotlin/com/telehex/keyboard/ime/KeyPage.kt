@@ -45,7 +45,7 @@ object KeyPage {
             keys += when {
                 code == KeyCode.EMOJI -> Key(code, cell, "☺", kind = KeyKind.FUNCTION)
                 code == KeyCode.NUMBERS -> Key(code, cell, if (mode == Mode.SYMBOLS) "ABC" else "123", kind = KeyKind.FUNCTION)
-                code == KeyCode.SETTINGS -> Key(code, cell, "⚙", kind = KeyKind.FUNCTION)
+                code == KeyCode.SETTINGS -> Key(code, cell, "⚙", hint = "📋", kind = KeyKind.FUNCTION)
                 code == KeyCode.PAGE -> Key(code, cell, "$symbolPage/2", kind = KeyKind.FUNCTION)
                 code == KeyCode.DIAL -> Key(code, cell, "1234", kind = KeyKind.FUNCTION)
                 code == KeyCode.ENTER -> Key(code, cell, enterLabel, kind = KeyKind.ENTER)

@@ -12,7 +12,7 @@ import com.telehex.keyboard.data.ClipboardStore
 /**
  * Bảng sửa văn bản (cho ai không muốn dùng cử chỉ): bên trái là lưới phím lục giác [EditPadView]
  * (mũi tên, đầu/cuối dòng, chọn từ/chọn hết, cut/copy/paste, undo/redo, giọng nói); bên phải là
- * clipboard history (chạm để dán, giữ để ghim / xoá). Mở bằng cách giữ phím ⚙, chiếm chỗ lưới phím như bảng emoji.
+ * clipboard history (chạm để dán, giữ để ghim / xoá). Mở bằng cách vuốt xuống phím ⚙, chiếm chỗ lưới phím như bảng emoji.
  */
 class EditPanel(context: Context, private val theme: Theme) : LinearLayout(context) {
 

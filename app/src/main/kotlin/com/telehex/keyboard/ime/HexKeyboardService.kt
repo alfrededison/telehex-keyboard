@@ -1139,7 +1139,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             code == KeyCode.PAGE -> { symbolPage = if (symbolPage == 2) 1 else 2; refreshKeys() }
             code == KeyCode.EMOJI -> openEmoji()
             code == KeyCode.DIAL -> { commitSyllable(); openDial() }
-            code == KeyCode.SETTINGS -> if (gesture == Gesture.LONG_PRESS) openEditPanel() else openSettings()
+            code == KeyCode.SETTINGS -> if (gesture == Gesture.SWIPE_DOWN) openEditPanel() else openSettings()
             code == KeyCode.ABC -> openAbc()
             code == KeyCode.BACKSPACE -> deleteBackward()
             code == "," || code == "." ->
@@ -1157,7 +1157,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     /**
      * Chỉ phím ký tự nhấc lên được: chữ và `,` `.` ở lớp chữ, ký tự ở lớp 123. Giữ lâu các phím này nhả ra chỉ
-     * gõ ký tự, nên không đụng long-press của ⚙ / 123.
+     * gõ ký tự, nên không đụng vuốt xuống ⚙ hay long-press của 123.
      */
     private fun canLift(key: Key): Boolean = when (mode) {
         Mode.ABC -> key.isLetter || key.code == "," || key.code == "."
