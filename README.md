@@ -92,7 +92,7 @@ Yêu cầu JDK 17+, Android SDK 36.
 ## Phát hành
 
 - **Phiên bản chỉ viết ở một nơi**: dòng `appVersion` trong `app/build.gradle.kts`. `tools/version.sh` tính versionCode cố định từ X.Y.Z: bản release là `X·10^7 + Y·10^5 + Z·10^3 + 999`, bản dev `X.Y.Z-dev.N` là `… + N` với N đếm commit từ lần đổi `appVersion`. Build từ tag ở đâu cũng ra cùng số (cần cho F-Droid).
-- **Bản dev**: mỗi push lên `main` có đổi mã thay prerelease `dev` trên GitHub bằng APK `TeleHex-X.Y.Z-dev.N.apk` + `.sha256`, ký bằng key dự án nên các bản dev cài đè được lên nhau. Bản dev chỉ cài đè được lên bản release khi `appVersion` đã được tăng sau release (versionCode của `X.Y.Z-dev.N` luôn thấp hơn của `X.Y.Z`); workflow dev dừng nếu tag `v<appVersion>` đã tồn tại để nhắc việc này. Push chỉ sửa tài liệu (`*.md`, `prototype/`, LICENSE, NOTICE) không chạy gì. Commit "Start … development" ngay sau tag release chỉ đổi số phiên bản nên không build, mà xoá prerelease `dev` cũ (bản đó thấp hơn bản release); commit mã tiếp theo sẽ phát hành lại `dev`. Workflow `ci` chỉ chạy cho pull request, vì trên `main` workflow dev đã chạy đủ test và lint.
+- **Bản dev**: mỗi push lên `main` có đổi mã thay prerelease `dev` trên GitHub bằng APK `TeleHex-X.Y.Z-dev.N.apk` + `.sha256`, ký bằng key dự án nên các bản dev cài đè được lên nhau. Bản dev chỉ cài đè được lên bản release khi `appVersion` đã được tăng sau release (versionCode của `X.Y.Z-dev.N` luôn thấp hơn của `X.Y.Z`); workflow dev dừng nếu tag `v<appVersion>` đã tồn tại để nhắc việc này. Push chỉ sửa tài liệu (`*.md`, LICENSE, NOTICE) không chạy gì. Commit "Start … development" ngay sau tag release chỉ đổi số phiên bản nên không build, mà xoá prerelease `dev` cũ (bản đó thấp hơn bản release); commit mã tiếp theo sẽ phát hành lại `dev`. Workflow `ci` chỉ chạy cho pull request, vì trên `main` workflow dev đã chạy đủ test và lint.
 - **Bản release**: ghi thay đổi vào mục `## <appVersion> — unreleased` của CHANGELOG.md, rồi chạy
 
   ```
@@ -112,7 +112,7 @@ shasum -a 256 -c TeleHex-v0.1.0.apk.sha256
 apksigner verify --print-certs TeleHex-v0.1.0.apk   # SHA-256 phải trùng signing/release-cert.sha256
 ```
 
-Thiết kế chi tiết: [plan.md](plan.md). Prototype HTML tham chiếu: [prototype/](prototype/). Lịch sử thay đổi: [CHANGELOG.md](CHANGELOG.md).
+Thiết kế và kế hoạch: [plan.md](plan.md). Lịch sử thay đổi: [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 

@@ -1,6 +1,6 @@
 package com.telehex.telex
 
-/** Quy tắc nguyên âm và vị trí đặt dấu. Port từ prototype (`vIdx`, `toneIndex`, `spell`). */
+/** Quy tắc nguyên âm và vị trí đặt dấu tiếng Việt. */
 object ToneRules {
     const val VOWELS = "aăâeêioôơuưy"
     private const val MODIFIED = "ăâêôơư"

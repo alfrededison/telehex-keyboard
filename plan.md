@@ -1,7 +1,7 @@
 # Kế hoạch TeleHex
 
 Tài liệu này mô tả trạng thái hiện tại và công việc còn lại. README là hướng dẫn sử dụng;
-CHANGELOG ghi thay đổi theo phiên bản. Prototype trong `prototype/` chỉ là tham chiếu lịch sử.
+CHANGELOG ghi thay đổi theo phiên bản. Mã Android hiện tại là nguồn tham chiếu cho hành vi và hình học.
 
 ## 1. Nguyên tắc
 
