@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.7.2 — unreleased
+## 0.7.2 — 2026-11-09
 
 - Clipboard history không còn nằm trong bản sao lưu tự động của Android hay khi chuyển sang máy mới; mục thường quá 1 giờ bị xoá ngay khi bàn phím khởi động hoặc hiện lên, không đợi lần chép kế tiếp.
 - Chuẩn bị phát hành trên Google Play: build kèm file AAB ký cùng key với APK trên GitHub, nên hai nguồn cài cập nhật đè lên nhau được. Thêm chính sách quyền riêng tư.
