@@ -110,36 +110,6 @@ class LayoutModel(val rows: List<List<String?>>) {
             )
         )
 
-        /**
-         * Chia đều tải cho hai ngón cái (~50/50) và tăng gõ luân phiên (~62% → ~68%), tối ưu bằng
-         * mô hình Fitts hai ngón trên tần suất phím Telex. Giữ 12 chữ ở chỗ của bố cục mặc định đến 0.7.0
-         * (W R Y Q E F P S L Z X C); A (phím nhiều nhất) ở cột giữa cho ngón nào rảnh gõ; E bên trái, U I O bên phải.
-         */
-        val BALANCED: LayoutModel = LayoutModel(
-            listOf(
-                listOf("w", "r", "y", KeyCode.SETTINGS, "b", "k", KeyCode.NUMBERS),
-                listOf("q", "e", "g", "f", "j", "u", "p"),
-                listOf("d", "s", "h", "v", "i", "o", "l"),
-                listOf("z", "x", "c", "a", "t", "n", "m"),
-                listOf(KeyCode.EMOJI, ",", null, null, null, ".", KeyCode.ENTER),
-            )
-        )
-
-        /**
-         * Nhanh nhất theo mô hình Fitts hai ngón, tối ưu tự do trên văn bản tiểu thuyết (~250 nghìn âm tiết):
-         * ~180 ms/phím so với ~190 của [BALANCED] và ~208 của bố cục mặc định đến 0.7.0, gõ luân phiên ~71%,
-         * tải hai ngón ~50/50. Không giữ QWERTY nên phải học lại.
-         */
-        val ERGONOMIC: LayoutModel = LayoutModel(
-            listOf(
-                listOf("l", "v", "b", KeyCode.SETTINGS, "q", "p", KeyCode.NUMBERS),
-                listOf("m", "w", "r", "x", "y", "u", "e"),
-                listOf("f", "n", "s", "j", "a", "i", "k"),
-                listOf("z", "d", "h", "c", "t", "o", "g"),
-                listOf(KeyCode.EMOJI, ",", null, null, null, ".", KeyCode.ENTER),
-            )
-        )
-
         fun fromJson(json: String): LayoutModel? = runCatching {
             val arr = JSONArray(json)
             val rows = (0 until arr.length()).map { r ->

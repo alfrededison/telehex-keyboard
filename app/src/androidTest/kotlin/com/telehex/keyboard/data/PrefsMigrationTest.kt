@@ -85,6 +85,15 @@ class PrefsMigrationTest : InstrumentationTestCase() {
         assertLive(Profile.DEFAULT, p)
     }
 
+    fun testRemovedBuiltInKeepsItsLayersAsMine() {
+        storeLive(legacyProfile, "Cân bằng hai ngón")
+        val p = prefs()
+        p.ensureProfiles()
+        assertEquals(Profile.MINE, p.activeProfile.name)
+        assertTrue(p.userProfiles.single().sameLayers(legacyProfile))
+        assertLive(legacyProfile, p)
+    }
+
     fun testUserProfileIsLeftAlone() {
         val mine = legacyProfile.named("Long")
         storeLive(mine, mine.name)

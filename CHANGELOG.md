@@ -3,6 +3,7 @@
 ## 0.7.1 — unreleased
 
 - Bố cục mặc định gần QWERTY hơn: ⚙ sát mép trái, hai hàng trên đọc zigzag ⚙ Q W E R T G Y H U I O P 123, hàng giữa A S D F … J K L. Lớp 123 theo hai trang ký hiệu của Gboard (phím 1/2 ở ô ⚙, trang 2 có `<` `>` thay `,` `.`); vuốt xuống Q…P ra 1…0. Đang dùng "Mặc định" thì tự chuyển sang bố cục mới.
+- Bỏ hai profile có sẵn "Cân bằng hai ngón" và "Công thái học"; ai đang dùng thì giữ nguyên bố cục thành profile "Của tôi".
 - Huỷ phím và cử chỉ còn chờ khi đổi lớp/bố cục hoặc đóng bàn phím, tránh thực thi lại nút chức năng ở lần gõ đầu tiên sau khi chỉnh sửa.
 - Chạm sát ⚙/123 rồi nhấc tay trên phím chữ sẽ gõ chữ tại điểm nhấc tay, tránh mất chữ đầu và bật nhầm Cài đặt/lớp số khi gõ nhanh cạnh nút chức năng.
 - Sửa nhận nhầm ⚙/123 khi chạm phím chữ sau khi kéo đổi chỗ: vùng chạm học chỉ điều chỉnh giữa các phím chữ, giữ đúng tâm phím; kéo thả dùng ô đang hiển thị và vị trí nhả tay cuối cùng.

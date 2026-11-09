@@ -43,16 +43,11 @@ class Profile(val name: String, val letters: LayoutModel, val swipe: CellGrid, v
 
         val DEFAULT = Profile("Mặc định", LayoutModel.DEFAULT, KeyLayers.DEFAULT_SWIPE, SymbolPages.DEFAULT)
 
-        /** Profile có sẵn, hiện trước profile người dùng tạo. */
-        val BUILT_IN: List<Profile> = listOf(
-            DEFAULT,
-            builtIn("Cân bằng hai ngón", LayoutModel.BALANCED),
-            builtIn("Công thái học", LayoutModel.ERGONOMIC),
-        )
-
-        /** Lớp 123 như mặc định; vuốt xuống theo phím trên [letters] (số dưới Q…P). */
-        private fun builtIn(name: String, letters: LayoutModel) =
-            Profile(name, letters, CellGrid.fromCodes(letters) { KeyLayers.DEFAULT_SWIPE_BY_CODE[it] }, SymbolPages.DEFAULT)
+        /**
+         * Profile có sẵn, hiện trước profile người dùng tạo. "Cân bằng hai ngón" và "Công thái học" bỏ ở 0.7.1: ai đang
+         * dùng thì [adopt] giữ nguyên bố cục thành profile "Của tôi".
+         */
+        val BUILT_IN: List<Profile> = listOf(DEFAULT)
 
         fun nameTaken(name: String, taken: Collection<String>) = taken.any { it.equals(name, ignoreCase = true) }
 
