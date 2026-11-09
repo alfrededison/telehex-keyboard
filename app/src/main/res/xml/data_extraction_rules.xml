@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+: clipboard history (có thể chứa mật khẩu, OTP) không lên bản sao lưu đám mây
+     hay chuyển sang máy mới. Sao lưu thủ công trong Cài đặt chỉ mang các mục đã ghim. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="clipboard.json" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="clipboard.json" />
+    </device-transfer>
+</data-extraction-rules>

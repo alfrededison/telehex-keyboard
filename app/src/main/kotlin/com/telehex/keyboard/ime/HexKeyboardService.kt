@@ -558,6 +558,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
+        clipboardStore.expire()
         seedContext()
         applyTheme()
         if (mode == Mode.DIAL) openDial() else { mode = Mode.ABC; showPanel(null) }

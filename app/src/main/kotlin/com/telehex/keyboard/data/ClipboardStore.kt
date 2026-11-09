@@ -15,7 +15,8 @@ class ClipboardStore(context: Context, private val ttlMs: Long = 60L * 60 * 1000
     private val file = File(context.filesDir, "clipboard.json")
     private val items = ArrayList<Item>()
 
-    init { load() }
+    // Mục hết hạn bị xoá khỏi file ngay khi nạp, không đợi lần chép hay lần mở bảng clipboard kế tiếp.
+    init { load(); expire() }
 
     fun all(): List<Item> {
         expire()
@@ -55,7 +56,8 @@ class ClipboardStore(context: Context, private val ttlMs: Long = 60L * 60 * 1000
         return arr
     }
 
-    private fun expire() {
+    /** Xoá các mục thường đã quá hạn (và ghi lại file nếu có mục bị xoá). */
+    fun expire() {
         val now = System.currentTimeMillis()
         if (items.removeAll { !it.pinned && now - it.time > ttlMs }) save()
     }

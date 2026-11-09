@@ -2,6 +2,8 @@
 
 ## 0.7.2 — unreleased
 
+- Clipboard history không còn nằm trong bản sao lưu tự động của Android hay khi chuyển sang máy mới; mục thường quá 1 giờ bị xoá ngay khi bàn phím khởi động hoặc hiện lên, không đợi lần chép kế tiếp.
+
 ## 0.7.1 — 2026-11-09
 
 - Bố cục mặc định gần QWERTY hơn: ⚙ sát mép trái, hai hàng trên đọc zigzag ⚙ Q W E R T G Y H U I O P 123, hàng giữa A S D F … J K L. Lớp 123 theo hai trang ký hiệu của Gboard (phím 1/2 ở ô ⚙, trang 2 có `<` `>` thay `,` `.`); vuốt xuống Q…P ra 1…0. Đang dùng "Mặc định" thì tự chuyển sang bố cục mới.
