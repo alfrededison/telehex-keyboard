@@ -108,6 +108,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     override fun onCreate() {
         super.onCreate()
         prefs = Prefs(this)
+        // Profile có sẵn đổi ở bản mới (hay đã bỏ): áp ngay, đừng chờ mở Cài đặt
+        prefs.ensureProfiles()
         prefs.registerListener(this)
         engine = TelexEngine(prefs.telexConfig())
         spaceGestures = SpaceGestures(spaceHost)

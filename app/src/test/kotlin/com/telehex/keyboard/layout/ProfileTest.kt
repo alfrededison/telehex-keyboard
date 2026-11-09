@@ -16,9 +16,9 @@ class ProfileTest {
 
     @Test
     fun adoptPicksMatchingBuiltIn() {
-        val (user, active) = Profile.adopt(Profile.BUILT_IN[1].named(""), emptyList())
+        val (user, active) = Profile.adopt(Profile.BUILT_IN[0].named(""), emptyList())
         assertTrue(user.isEmpty())
-        assertEquals(Profile.BUILT_IN[1].name, active)
+        assertEquals(Profile.BUILT_IN[0].name, active)
     }
 
     @Test
@@ -32,7 +32,7 @@ class ProfileTest {
     fun adoptReusesMatchingUserProfileAndAvoidsNameClash() {
         val mine = custom.named(Profile.MINE)
         assertEquals(Profile.MINE, Profile.adopt(custom, listOf(mine)).second)
-        val other = Profile(Profile.MINE, LayoutModel.BALANCED, KeyLayers.DEFAULT_SWIPE, SymbolPages.DEFAULT)
+        val other = Profile(Profile.MINE, LayoutModel.DEFAULT.withSwapped(2 to 0, 2 to 1), KeyLayers.DEFAULT_SWIPE, SymbolPages.DEFAULT)
         val (user, active) = Profile.adopt(custom, listOf(other))
         assertEquals("${Profile.MINE} 2", active)
         assertEquals(2, user.size)
@@ -44,7 +44,7 @@ class ProfileTest {
         val (user, active) = Profile.saveEdit(edited, Profile.DEFAULT, emptyList())
         assertEquals(Profile.MINE, active.name)
         assertTrue(user.single().sameLayers(edited))
-        assertEquals("e", active.letters[1, 0])
+        assertEquals("w", active.letters[1, 0])
         val (user2, active2) = Profile.saveEdit(edited, Profile.DEFAULT, user)
         assertEquals("${Profile.MINE} 2", active2.name)
         assertEquals(2, user2.size)

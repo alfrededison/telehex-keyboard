@@ -86,7 +86,7 @@ class LayoutEditorView(context: Context) : KeyboardView(context) {
     /** Kéo phím chức năng ở lớp chữ có thể che một ô của lớp khác: dời giá trị bị che sang ô trống. */
     private fun reconcileLayers() {
         swipe = KeyLayers.reconcile(layout, listOf(swipe), KeyLayers::swipeUsable).single()
-        symbols = KeyLayers.reconcile(layout, symbols, KeyLayers::symbolUsable)
+        symbols = KeyLayers.reconcileSymbols(layout, symbols)
     }
 
     private fun changed() { rebuildKeys(); onChanged?.invoke() }

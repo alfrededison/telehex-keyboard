@@ -42,7 +42,7 @@ Mặc định dùng composing text. App trong danh sách dự phòng dùng
 - [x] Vuốt lên đảo hoa/thường, vuốt xuống ký tự phụ; tự viết hoa và khoá hoa.
 - [x] EN bật/tắt bằng vuốt xuống phím cách, mặc định theo app và ô email.
 - [x] Gõ vuốt offline: một âm tiết mỗi lượt, ít nhất 3 phím chữ khác nhau; chạm gợi ý để chèn.
-- [x] Profile Mặc định / Cân bằng hai ngón / Công thái học và profile cá nhân.
+- [x] Profile Mặc định (gần QWERTY, lớp 123 theo Gboard) / Cân bằng hai ngón / Công thái học và profile cá nhân.
 - [x] Editor ba lớp, đổi chỗ phím bằng giữ-kéo ngay trên bàn phím.
 - [x] Snippet vuốt xuống tối đa 8 đơn vị UTF-16; phím chức năng không làm mất đường vào Cài đặt.
 - [x] Một tay, sáng/tối, màu nhấn, rung/âm thanh, padding đáy, học độ lệch chạm.

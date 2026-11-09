@@ -16,9 +16,13 @@ class LayoutModelTest {
     }
 
     @Test
-    fun builtInProfilesKeepFunctionKeysAndPageKeyInPlace() {
-        val fixed = listOf(KeyCode.SETTINGS, KeyCode.NUMBERS, KeyCode.EMOJI, KeyCode.ENTER, ",", ".", "z")
-        for (p in Profile.BUILT_IN) for (code in fixed)
-            assertEquals("${p.name}: $code", LayoutModel.DEFAULT.find(code), p.letters.find(code))
+    fun defaultReadsLikeQwerty() {
+        val l = LayoutModel.DEFAULT
+        // Hàng 1 sát mép trái, hàng 0 lệch ½ ô: đọc từ trái sang là zigzag giữa hai hàng
+        val zigzag = (0 until LayoutModel.COLS).flatMap { c -> listOf(l[1, c], l[0, c]) }
+        assertEquals(listOf(KeyCode.SETTINGS) + "qwertgyhuiop".map { "$it" } + KeyCode.NUMBERS, zigzag)
+        assertEquals("asdfjkl".map { "$it" }, l.rows[2])
+        assertEquals("zxcvbnm".map { "$it" }, l.rows[3])
+        assertEquals(listOf(KeyCode.EMOJI, ",", null, null, null, ".", KeyCode.ENTER), l.rows[4])
     }
 }

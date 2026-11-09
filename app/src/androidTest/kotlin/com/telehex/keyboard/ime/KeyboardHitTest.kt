@@ -44,7 +44,7 @@ class KeyboardHitTest : InstrumentationTestCase() {
     }
 
     fun testNearbyLetterSwapsCannotActivateFunctionsAtTheirEdges() = onMain {
-        for ((a, b) in listOf("t" to "f", "i" to "p")) {
+        for ((a, b) in listOf("q" to "w", "o" to "p")) {
             val profile = Profile.DEFAULT.swapLetters(Profile.DEFAULT.letters.find(a)!!, Profile.DEFAULT.letters.find(b)!!)
             val view = KeyboardView(instrumentation.targetContext)
             view.keys = KeyPage.build(profile.letters, Mode.ABC, 1, TelexConfig(), profile.swipe, profile.symbols, "↵")
@@ -79,7 +79,7 @@ class KeyboardHitTest : InstrumentationTestCase() {
             view.hapticEnabled = false
             view.canLift = { it.isLetter }
             view.dragHoldMs = 1
-            view.validNextLetter = { it == 'f' }
+            view.validNextLetter = { it == 'g' }
             view.listener = object : KeyboardView.Listener {
                 override fun onKeyDown(key: Key) {}
                 override fun onKeyMove(key: Key, dx: Float, dy: Float, dt: Long) {}
@@ -99,10 +99,10 @@ class KeyboardHitTest : InstrumentationTestCase() {
             val field = KeyboardView::class.java.getDeclaredField("liftKey").apply { isAccessible = true }
             (field.get(view) as Runnable).run()
         }
-        // This point is visibly T, but dynamic zones choose the valid F during normal typing.
+        // This point is visibly R, but dynamic zones choose the valid G during normal typing.
         send(MotionEvent.ACTION_MOVE, g.centerX(1, 2) + g.w * .45f, g.centerY(1))
         send(MotionEvent.ACTION_UP, g.centerX(1, 2) + g.w * .45f, g.centerY(1))
-        assertEquals("a" to "t", swapped)
+        assertEquals("a" to "r", swapped)
         swapped = null
         send(MotionEvent.ACTION_DOWN, g.centerX(2, 0), g.centerY(2))
         onMain {
@@ -111,7 +111,7 @@ class KeyboardHitTest : InstrumentationTestCase() {
         }
         send(MotionEvent.ACTION_MOVE, g.centerX(1, 2), g.centerY(1))
         send(MotionEvent.ACTION_UP, g.centerX(1, 3), g.centerY(1))
-        assertEquals("a" to "f", swapped)
+        assertEquals("a" to "g", swapped)
     }
 
     fun testStationaryHoldNeverSwapsAdaptiveSource() = onMain {
@@ -123,11 +123,11 @@ class KeyboardHitTest : InstrumentationTestCase() {
             val g = HexGeometry(1080f, view.dp(8f), view.dp(6f), view.dp(3f))
             view.hapticEnabled = false
             view.canLift = { it.isLetter }
-            if (dynamic) view.validNextLetter = { it == 'f' }
-            else view.touchOffsets = mutableMapOf("t" to floatArrayOf(-g.w * .2f, 0f))
+            if (dynamic) view.validNextLetter = { it == 'g' }
+            else view.touchOffsets = mutableMapOf("r" to floatArrayOf(-g.w * .2f, 0f))
             val x = g.centerX(1, 2) + g.w * .45f
             val y = g.centerY(1)
-            assertEquals("f", view.keyAt(x, y)?.code)
+            assertEquals("g", view.keyAt(x, y)?.code)
             var lifted: String? = null
             var typed: String? = null
             view.listener = object : KeyboardView.Listener {
@@ -151,8 +151,8 @@ class KeyboardHitTest : InstrumentationTestCase() {
             (field.get(view) as Runnable).run()
             send(MotionEvent.ACTION_MOVE, 850)
             send(MotionEvent.ACTION_UP, 900)
-            assertEquals("t", lifted)
-            assertEquals("f", typed)
+            assertEquals("r", lifted)
+            assertEquals("g", typed)
         }
     }
 

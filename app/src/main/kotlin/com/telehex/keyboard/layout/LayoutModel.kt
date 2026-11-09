@@ -95,11 +95,16 @@ class LayoutModel(val rows: List<List<String?>>) {
         const val ROWS = 5
         const val COLS = 7
 
+        /**
+         * Gần QWERTY nhất trên lưới 7 cột: hai hàng trên đọc zigzag `⚙ Q W E R T G Y H U I O P 123` (⚙ sát mép trái,
+         * U I O P zigzag ở góc phải), hàng giữa `A S D F` bên trái và `J K L` thẳng hàng bên phải; G H lên hai hàng
+         * trên vì hàng giữa chỉ có 7 ô.
+         */
         val DEFAULT: LayoutModel = LayoutModel(
             listOf(
-                listOf("w", "r", "y", KeyCode.SETTINGS, "u", "o", KeyCode.NUMBERS),
-                listOf("q", "e", "t", "f", "h", "i", "p"),
-                listOf("a", "s", "d", "g", "j", "k", "l"),
+                listOf("q", "e", "t", "y", "u", "o", KeyCode.NUMBERS),
+                listOf(KeyCode.SETTINGS, "w", "r", "g", "h", "i", "p"),
+                listOf("a", "s", "d", "f", "j", "k", "l"),
                 listOf("z", "x", "c", "v", "b", "n", "m"),
                 listOf(KeyCode.EMOJI, ",", null, null, null, ".", KeyCode.ENTER),
             )
@@ -107,8 +112,8 @@ class LayoutModel(val rows: List<List<String?>>) {
 
         /**
          * Chia đều tải cho hai ngón cái (~50/50) và tăng gõ luân phiên (~62% → ~68%), tối ưu bằng
-         * mô hình Fitts hai ngón trên tần suất phím Telex. Giữ 12 chữ ở chỗ cũ (W R Y Q E F P S L Z X C);
-         * A (phím nhiều nhất) ở cột giữa cho ngón nào rảnh gõ; E bên trái, U I O bên phải.
+         * mô hình Fitts hai ngón trên tần suất phím Telex. Giữ 12 chữ ở chỗ của bố cục mặc định đến 0.7.0
+         * (W R Y Q E F P S L Z X C); A (phím nhiều nhất) ở cột giữa cho ngón nào rảnh gõ; E bên trái, U I O bên phải.
          */
         val BALANCED: LayoutModel = LayoutModel(
             listOf(
@@ -122,8 +127,8 @@ class LayoutModel(val rows: List<List<String?>>) {
 
         /**
          * Nhanh nhất theo mô hình Fitts hai ngón, tối ưu tự do trên văn bản tiểu thuyết (~250 nghìn âm tiết):
-         * ~180 ms/phím so với ~190 của [BALANCED] và ~208 của [DEFAULT], gõ luân phiên ~71%, tải hai ngón ~50/50.
-         * Không giữ QWERTY (chỉ Z và phím chức năng ở chỗ cũ) nên phải học lại.
+         * ~180 ms/phím so với ~190 của [BALANCED] và ~208 của bố cục mặc định đến 0.7.0, gõ luân phiên ~71%,
+         * tải hai ngón ~50/50. Không giữ QWERTY nên phải học lại.
          */
         val ERGONOMIC: LayoutModel = LayoutModel(
             listOf(

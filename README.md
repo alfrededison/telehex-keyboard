@@ -1,11 +1,11 @@
 # TeleHex – Bàn phím Telex tổ ong cho Android
 
-Bàn phím tiếng Việt gõ **Telex** trên lưới **lục giác đều 7 cột**. Giữ tinh thần QWERTY (Q-W-E-R-T-Y đọc zigzag giữa hai hàng trên) nhưng phím to hơn ~45% so với bàn phím 10 cột. Thao tác phụ (xoá, chữ hoa, ký tự phụ, con trỏ, chọn, dán…) chuyển sang cử chỉ vuốt, nên lưới chữ không có phím backspace hay shift.
+Bàn phím tiếng Việt gõ **Telex** trên lưới **lục giác đều 7 cột**. Giữ tinh thần QWERTY (Q-W-E-R-T-…-U-I-O-P đọc zigzag giữa hai hàng trên, G H chen giữa vì hàng giữa chỉ có 7 ô) nhưng phím to hơn ~45% so với bàn phím 10 cột. Thao tác phụ (xoá, chữ hoa, ký tự phụ, con trỏ, chọn, dán…) chuyển sang cử chỉ vuốt, nên lưới chữ không có phím backspace hay shift.
 
 ```
-  W   R   Y   ⚙   U   O  123
-Q   E   T   F   H   I   P
-  A   S   D   G   J   K   L
+  Q   E   T   Y   U   O  123
+⚙   W   R   G   H   I   P
+  A   S   D   F   J   K   L
 Z   X   C   V   B   N   M
   ☺   ,  \___cách___/  .   ↵
 ```
@@ -79,8 +79,8 @@ Gợi ý âm tiết tiếp theo dùng thêm một mô hình n-gram âm tiết n�
 
 ## Tuỳ biến
 
-- **Chỉnh sửa phím**: kéo một phím thả lên phím khác để đổi chỗ; phím cách và ↵ cố định. Màn này có 3 chế độ: **Chữ**, **Vuốt xuống**, **123**; mỗi lớp đổi chỗ riêng, hai lớp còn lại đứng yên theo ô. Ở chế độ 123, đang kéo thì giữ ngón trên phím 1/2 để sang trang kia. Số 1…0 mặc định ở ô của Q W R Y F H U O P L (cả lớp 123 lẫn vuốt xuống) và kéo được như mọi ký tự khác.
-- **Profile**: mỗi profile giữ đủ ba lớp Chữ, Vuốt xuống, 123. Màn chỉnh sửa luôn sửa profile đang dùng; Lưu là áp ngay cho bàn phím. Menu ⋮ có Tạo mới, Nhân bản (gồm cả thay đổi chưa lưu), Đổi tên, Xoá, Bỏ thay đổi. Có sẵn "Mặc định", "Cân bằng hai ngón" (chia đều tải cho hai ngón cái, tăng gõ luân phiên, giữ 12 chữ ở chỗ cũ) và "Công thái học" (nhanh nhất theo mô hình, nhưng sắp xếp lại toàn bộ chữ); ba profile này khoá 🔒, sửa thì lưu thành profile mới. Đổi nhanh profile ngay trong Cài đặt › Bàn phím.
+- **Chỉnh sửa phím**: kéo một phím thả lên phím khác để đổi chỗ; phím cách và ↵ cố định. Màn này có 3 chế độ: **Chữ**, **Vuốt xuống**, **123**; mỗi lớp đổi chỗ riêng, hai lớp còn lại đứng yên theo ô. Ở chế độ 123, đang kéo thì giữ ngón trên phím 1/2 để sang trang kia. Lớp 123 mặc định theo hai trang ký hiệu của Gboard: số ở hai hàng trên, phím 1/2 ở ô ⚙, trang 2 có `<` `>` thay `,` `.`; vuốt xuống Q…P ra 1…0. Mọi ký tự kéo được như nhau.
+- **Profile**: mỗi profile giữ đủ ba lớp Chữ, Vuốt xuống, 123. Màn chỉnh sửa luôn sửa profile đang dùng; Lưu là áp ngay cho bàn phím. Menu ⋮ có Tạo mới, Nhân bản (gồm cả thay đổi chưa lưu), Đổi tên, Xoá, Bỏ thay đổi. Có sẵn "Mặc định", "Cân bằng hai ngón" (chia đều tải cho hai ngón cái, tăng gõ luân phiên) và "Công thái học" (nhanh nhất theo mô hình, nhưng sắp xếp lại toàn bộ chữ); ba profile này khoá 🔒, sửa thì lưu thành profile mới. Đổi nhanh profile ngay trong Cài đặt › Bàn phím.
 - **Ký tự vuốt xuống** cho từng ô phím: số, ký hiệu, emoji hoặc đoạn văn bản ngắn (≤ 8 ký tự). Ở chế độ **Vuốt xuống** của màn chỉnh sửa phím, chạm một phím để chọn ký tự, kéo để đổi chỗ.
 - **App tự bật EN**: chọn app (Termux, app code…) trong Cài đặt › Telex để luôn mở bàn phím ở chế độ EN.
 - Kiểu đặt dấu cũ/mới (hòa/hoà), "L cũng là dấu huyền" (`lal` → là), tự viết hoa đầu câu, rung, âm thanh, giao diện sáng/tối, màu nhấn, chế độ một tay, tông da và giới tính emoji mặc định, gõ tắt, clipboard history, chế độ ẩn danh, vùng chạm động (tắt mặc định), học độ lệch chạm.

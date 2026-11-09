@@ -15,8 +15,9 @@ import org.json.JSONObject
  * Lưu trữ: layout JSON, bảng ký tự vuốt xuống, emoji gần đây, tuỳ chọn.
  * Dùng SharedPreferences để không thêm dependency.
  */
-class Prefs(context: Context) {
-    private val sp: SharedPreferences = context.getSharedPreferences("telehex", Context.MODE_PRIVATE)
+class Prefs(context: Context, fileName: String = "telehex") {
+    // fileName khác chỉ dùng trong test thiết bị, để không đụng dữ liệu thật của app
+    private val sp: SharedPreferences = context.getSharedPreferences(fileName, Context.MODE_PRIVATE)
 
     fun registerListener(l: SharedPreferences.OnSharedPreferenceChangeListener) = sp.registerOnSharedPreferenceChangeListener(l)
     fun unregisterListener(l: SharedPreferences.OnSharedPreferenceChangeListener) = sp.unregisterOnSharedPreferenceChangeListener(l)
@@ -225,7 +226,9 @@ class Prefs(context: Context) {
 
     /** Lớp chữ bàn phím đang dùng; ba lớp chỉ ghi qua [saveProfiles] để luôn khớp profile đang dùng. */
     val layout: LayoutModel
-        get() = sp.getString(KEY_LAYOUT, null)?.let { LayoutModel.fromJson(it) } ?: LayoutModel.DEFAULT
+        get() = storedLayout() ?: LayoutModel.DEFAULT
+
+    private fun storedLayout(): LayoutModel? = sp.getString(KEY_LAYOUT, null)?.let { LayoutModel.fromJson(it) }
 
     /** Dữ liệu cũ: ký tự vuốt xuống gán theo phím (phím → chuỗi). Chỉ đọc để chuyển sang [swipeGrid]. */
     private val legacyCustomKeys: Map<String, String>
@@ -238,7 +241,8 @@ class Prefs(context: Context) {
 
     /**
      * Ký tự vuốt xuống theo ô, đã khớp với lớp chữ hiện tại. Chưa có (bản cũ lưu theo phím) thì dựng từ
-     * dữ liệu cũ trên bố cục hiện tại, đưa số về chỗ mặc định mới (Q W R Y F H U O P L), rồi lưu lại.
+     * dữ liệu cũ trên bố cục hiện tại, rồi lưu lại. Bố cục đã lưu (bản cũ) thì đưa số về [KeyLayers.DIGIT_CELLS]
+     * như các bản trước; chưa lưu bố cục (cài mới, hay bản cũ dùng mặc định) thì theo bố cục mặc định mới.
      */
     val swipeGrid: CellGrid
         get() {
@@ -246,24 +250,27 @@ class Prefs(context: Context) {
             val raw = sp.getString(KEY_SWIPE_GRID, null)?.let { gridsFromJson(it, 1) }?.single() ?: run {
                 val custom = legacyCustomKeys
                 var g = CellGrid.fromCodes(l) { custom[it] ?: KeyLayers.DEFAULT_SWIPE_BY_CODE[it] }
-                g = KeyLayers.pinDigits(g)
+                if (storedLayout() != null) g = KeyLayers.pinDigits(g)
                 sp.edit().putString(KEY_SWIPE_GRID, gridsToJson(listOf(g))).apply()
                 g
             }
             return KeyLayers.reconcile(l, listOf(raw), KeyLayers::swipeUsable).single()
         }
 
-    /** Hai trang lớp 123 theo ô, đã khớp với lớp chữ. Chưa có thì dựng như cách cũ (theo chữ), đưa số về chỗ mặc định mới rồi lưu lại. */
+    /**
+     * Hai trang lớp 123 theo ô, đã khớp với lớp chữ. Chưa có thì: bố cục đã lưu (bản cũ) dựng như cách cũ (theo chữ),
+     * đưa số về [KeyLayers.DIGIT_CELLS]; chưa lưu bố cục thì lấy [SymbolPages.DEFAULT]. Rồi lưu lại.
+     */
     val symbolPages: List<CellGrid>
         get() {
             val l = layout
             val raw = sp.getString(KEY_SYMBOL_PAGES, null)?.let { gridsFromJson(it, 2) } ?: run {
-                var p = SymbolPages.fromLetters(l)
-                p = listOf(KeyLayers.pinDigits(p[0]), p[1])
+                val p = if (storedLayout() == null) SymbolPages.DEFAULT
+                else SymbolPages.fromLetters(l).let { listOf(KeyLayers.pinDigits(it[0]), it[1]) }
                 sp.edit().putString(KEY_SYMBOL_PAGES, gridsToJson(p)).apply()
                 p
             }
-            return KeyLayers.reconcile(l, raw, KeyLayers::symbolUsable)
+            return KeyLayers.reconcileSymbols(l, raw)
         }
 
     private fun gridsToJson(grids: List<CellGrid>): String =
@@ -280,11 +287,19 @@ class Prefs(context: Context) {
     /** Ba lớp bàn phím đang dùng, chưa gắn tên. */
     private fun liveLayers() = Profile("", layout, swipeGrid, symbolPages)
 
-    /** Chưa có profile đang dùng hay profile đó không còn: nhận bố cục đang dùng làm profile ([Profile.adopt]). */
-    private fun ensureProfiles() {
+    /**
+     * Ba lớp bàn phím luôn khớp một profile. Profile có sẵn đang dùng mà ba lớp khác nó (bản mới đổi profile đó, như
+     * "Mặc định" ở 0.7.1) thì bàn phím theo bản mới. Chưa có profile đang dùng hay profile đó không còn (profile có
+     * sẵn đã bỏ): nhận bố cục đang dùng làm profile ([Profile.adopt]).
+     */
+    fun ensureProfiles() {
         val active = sp.getString(KEY_ACTIVE_PROFILE, null)
         val user = readProfiles()
-        if (active != null && (Profile.BUILT_IN + user).any { it.name == active }) return
+        Profile.BUILT_IN.firstOrNull { it.name == active }?.let { builtIn ->
+            if (!builtIn.sameLayers(liveLayers())) saveProfiles(user, builtIn)
+            return
+        }
+        if (active != null && user.any { it.name == active }) return
         val (adopted, name) = Profile.adopt(liveLayers(), user)
         // Preset bản cũ (chỉ lớp chữ) không chuyển sang profile: bỏ để khỏi đi theo bản sao lưu
         sp.edit().putString(KEY_PROFILES, profilesToJson(adopted)).putString(KEY_ACTIVE_PROFILE, name).remove(LEGACY_PRESETS).apply()

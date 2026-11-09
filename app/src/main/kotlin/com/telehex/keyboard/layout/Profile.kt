@@ -16,7 +16,7 @@ class Profile(val name: String, val letters: LayoutModel, val swipe: CellGrid, v
     fun reconciled(): Profile = Profile(
         name, letters,
         KeyLayers.reconcile(letters, listOf(swipe), KeyLayers::swipeUsable).single(),
-        KeyLayers.reconcile(letters, symbols, KeyLayers::symbolUsable),
+        KeyLayers.reconcileSymbols(letters, symbols),
     )
 
     /** Đổi chỗ hai ô ở lớp chữ; giá trị vuốt xuống / 123 bị phím chức năng che thì dời sang ô trống. */
@@ -46,9 +46,13 @@ class Profile(val name: String, val letters: LayoutModel, val swipe: CellGrid, v
         /** Profile có sẵn, hiện trước profile người dùng tạo. */
         val BUILT_IN: List<Profile> = listOf(
             DEFAULT,
-            Profile("Cân bằng hai ngón", LayoutModel.BALANCED, KeyLayers.DEFAULT_SWIPE, SymbolPages.DEFAULT),
-            Profile("Công thái học", LayoutModel.ERGONOMIC, KeyLayers.DEFAULT_SWIPE, SymbolPages.DEFAULT),
+            builtIn("Cân bằng hai ngón", LayoutModel.BALANCED),
+            builtIn("Công thái học", LayoutModel.ERGONOMIC),
         )
+
+        /** Lớp 123 như mặc định; vuốt xuống theo phím trên [letters] (số dưới Q…P). */
+        private fun builtIn(name: String, letters: LayoutModel) =
+            Profile(name, letters, CellGrid.fromCodes(letters) { KeyLayers.DEFAULT_SWIPE_BY_CODE[it] }, SymbolPages.DEFAULT)
 
         fun nameTaken(name: String, taken: Collection<String>) = taken.any { it.equals(name, ignoreCase = true) }
 

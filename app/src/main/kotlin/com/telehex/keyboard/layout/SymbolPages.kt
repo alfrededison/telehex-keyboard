@@ -1,11 +1,40 @@
 package com.telehex.keyboard.layout
 
 /**
- * Lớp 123: hai trang [CellGrid] gắn theo ô, sắp xếp riêng ở màn Sắp xếp phím. Phím chức năng, dấu phẩy/chấm
- * và ô phím cách lấy từ lớp chữ nên chuyển trang không làm phím 123 / ⚙ nhảy chỗ. Phím ☺ thành phím 1234
- * (dialpad), như Gboard. Phím chuyển trang là một ô của lưới (mặc định ở chỗ chữ Z, mép trái hàng 4).
+ * Lớp 123: hai trang [CellGrid] gắn theo ô, sắp xếp riêng ở màn Sắp xếp phím. Phím chức năng và ô phím cách lấy
+ * từ lớp chữ nên chuyển trang không làm phím 123 nhảy chỗ. Phím ☺ thành phím 1234 (dialpad), như Gboard. Ô ⚙ và
+ * `,` `.` giữ được giá trị của trang ([KeyLayers.symbolUsable]): có giá trị thì thay phím của lớp chữ, trống thì
+ * giữ phím đó. Phím chuyển trang là một giá trị của lưới (mặc định ở ô ⚙; dữ liệu trước 0.7.1 ở ô chữ Z).
  */
 object SymbolPages {
+    private const val P = KeyCode.PAGE
+
+    /**
+     * Mặc định theo hai trang ký hiệu của Gboard, xếp trên bố cục [LayoutModel.DEFAULT]: số ở hai hàng trên,
+     * `@ # $ _ & - +` ở hàng chữ giữa, `* " ' : / ! ?` ở hàng Z…M; phím 1/2 ở ô ⚙; trang 2 có `<` `>` thay `,` `.`.
+     * Lưới có 26 ô cho 27 ký tự trang 1 của Gboard nên `;` sang trang 2 (bỏ ™, ∆; ₫ thay ¢, § thay ¶).
+     */
+    val DEFAULT: List<CellGrid> = listOf(
+        CellGrid(
+            listOf(
+                listOf("1", "3", "5", "7", "9", "0", ""),
+                listOf(P, "2", "4", "6", "8", "(", ")"),
+                listOf("@", "#", "$", "_", "&", "-", "+"),
+                listOf("*", "\"", "'", ":", "/", "!", "?"),
+                listOf("", "", "", "", "", "", ""),
+            )
+        ),
+        CellGrid(
+            listOf(
+                listOf("~", "|", "√", "÷", "§", "\\", ""),
+                listOf(P, "`", "•", "π", "×", "{", "}"),
+                listOf("£", "₫", "€", "¥", "^", "°", "="),
+                listOf("%", "©", "®", ";", "✓", "[", "]"),
+                listOf("", "<", "", "", "", ">", ""),
+            )
+        ),
+    )
+
     private val PAGE1_OF_LETTER: Map<String, String> = mapOf(
         "q" to "1", "w" to "2", "e" to "3", "r" to "4", "t" to "5",
         "y" to "6", "u" to "7", "i" to "8", "o" to "9", "p" to "0",
@@ -23,13 +52,10 @@ object SymbolPages {
         "x" to "€", "v" to "…", "l" to "©",
     )
 
-    /** Cách cũ: mỗi ký tự đi theo chữ của nó trên [layout]. Dùng để chuyển dữ liệu cũ và dựng mặc định. */
+    /** Cách cũ: mỗi ký tự đi theo chữ của nó trên [layout]. Chỉ dùng để chuyển dữ liệu cũ. */
     fun fromLetters(layout: LayoutModel): List<CellGrid> = listOf(PAGE1_OF_LETTER, PAGE2_OF_LETTER).map { ofLetter ->
         CellGrid.fromCodes(layout) { code -> if (KeyCode.isLetter(code)) ofLetter[code] else null }
     }
-
-    /** Mặc định: theo chữ trên bố cục mặc định, rồi đưa số (chỉ có ở trang 1) về chỗ mặc định. */
-    val DEFAULT: List<CellGrid> = fromLetters(LayoutModel.DEFAULT).let { listOf(KeyLayers.pinDigits(it[0]), it[1]) }
 
     /** Ghép một trang với phím chức năng, `,` `.` và phím cách (`null`) của lớp chữ. */
     fun render(layout: LayoutModel, page: CellGrid): List<List<String?>> =
@@ -38,7 +64,8 @@ object SymbolPages {
                 when {
                     code == null -> null
                     code == KeyCode.EMOJI -> KeyCode.DIAL
-                    KeyCode.isFunction(code) || code == "," || code == "." -> code
+                    code == KeyCode.SETTINGS || code == "," || code == "." -> page[r, c].ifEmpty { code }
+                    KeyCode.isFunction(code) -> code
                     else -> page[r, c]
                 }
             }
