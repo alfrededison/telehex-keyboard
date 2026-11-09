@@ -111,6 +111,7 @@ jobs:
           python3 tools/test_version.py
           python3 tools/test_signing.py
           python3 tools/test_release.py
+          python3 tools/test_play_whatsnew.py
           python3 tools/test_ngram.py
       - run: yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" > /dev/null
       - name: Build with the project signing key and verify its certificate

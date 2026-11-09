@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Builds out/TeleHex.apk (minified release build) and out/TeleHex.apk.sha256.
+# Builds out/TeleHex.apk (minified release build) and out/TeleHex.apk.sha256. With the project key
+# it also builds out/TeleHex.aab, the app bundle Google Play takes (signed with the same key, which
+# Play App Signing holds, so Play and GitHub installs update each other), and out/mapping.txt, the
+# R8 mapping Play uses to deobfuscate crash reports.
 #
 #   tools/release-build.sh              -> X.Y.Z-dev.N
 #   RELEASE=1 tools/release-build.sh    -> X.Y.Z
@@ -16,7 +19,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$PWD"
 # Remove the previous output first, so any failure below leaves no stale APK behind.
-rm -f out/TeleHex.apk out/TeleHex.apk.sha256 out/TeleHex.apk.idsig
+rm -f out/TeleHex.apk out/TeleHex.apk.sha256 out/TeleHex.apk.idsig out/TeleHex.aab out/mapping.txt
 
 . tools/signing.sh
 PROJECT_SIGNING=0
@@ -44,7 +47,7 @@ cleanup() {
   local status=$?
   if [ -n "$KS" ]; then rm -f "$KS"; fi
   # A failed build (for example a certificate that does not match the pin) must leave no APK behind.
-  if [ "$status" != 0 ]; then rm -f out/TeleHex.apk out/TeleHex.apk.sha256; fi
+  if [ "$status" != 0 ]; then rm -f out/TeleHex.apk out/TeleHex.apk.sha256 out/TeleHex.aab out/mapping.txt; fi
 }
 trap cleanup EXIT
 if [ "$PROJECT_SIGNING" = 1 ]; then
@@ -56,10 +59,15 @@ else
   unset ANDROID_KEYSTORE_PATH
 fi
 
-./gradlew --no-daemon -q :telex:test :app:assembleRelease
+# Play needs the bundle signed with the project key, so a debug-key build makes only the APK.
+TASKS=(:telex:test :app:assembleRelease)
+if [ "$PROJECT_SIGNING" = 1 ]; then TASKS+=(:app:bundleRelease); fi
+./gradlew --no-daemon -q "${TASKS[@]}"
 
 if [ "$PROJECT_SIGNING" = 1 ]; then
   cp app/build/outputs/apk/release/app-release.apk out/TeleHex.apk
+  cp app/build/outputs/bundle/release/app-release.aab out/TeleHex.aab
+  cp app/build/outputs/mapping/release/mapping.txt out/mapping.txt
 else
   DEBUG_KS=out/debug.keystore
   [ -e "$DEBUG_KS" ] || keytool -genkeypair -keystore "$DEBUG_KS" -storetype pkcs12 -alias telehex-debug \
@@ -71,7 +79,8 @@ fi
 "$BT/apksigner" verify --min-sdk-version 26 out/TeleHex.apk
 if [ "$PROJECT_SIGNING" = 1 ]; then
   verify_project_certificate out/TeleHex.apk "$BT/apksigner" "$ROOT/signing/release-cert.sha256"
-  echo "Project signing certificate verified"
+  verify_bundle_certificate out/TeleHex.aab keytool jarsigner "$ROOT/signing/release-cert.sha256"
+  echo "Project signing certificate verified (APK and app bundle)"
 fi
 if command -v sha256sum >/dev/null; then
   (cd out && sha256sum TeleHex.apk > TeleHex.apk.sha256)
@@ -79,3 +88,4 @@ else
   (cd out && shasum -a 256 TeleHex.apk > TeleHex.apk.sha256)
 fi
 echo "BUILD OK: $ROOT/out/TeleHex.apk ($VERSION_NAME, versionCode $VERSION_CODE)"
+if [ "$PROJECT_SIGNING" = 1 ]; then echo "Play bundle: $ROOT/out/TeleHex.aab (+ out/mapping.txt)"; fi

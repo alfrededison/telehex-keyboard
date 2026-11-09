@@ -68,6 +68,34 @@ class SigningTest(unittest.TestCase):
         tool = self.signer("a" * 64, status=1)
         self.assertNotEqual(0, self.run_check("verify_project_certificate", "app.apk", tool, self.pin).returncode)
 
+    def bundle_tools(self, fingerprint, verified="jar verified.", status=0):
+        """Fake keytool and jarsigner printing what the real ones print for a signed bundle."""
+        keytool = self.root / "keytool"
+        colons = ":".join(fingerprint[i:i + 2] for i in range(0, len(fingerprint), 2)).upper()
+        keytool.write_text("#!/bin/sh\nprintf '%s\\n' 'Certificate fingerprints:' "
+                           "'\t SHA1: 00:11' '\t SHA256: " + colons + "'\n")
+        jarsigner = self.root / "jarsigner"
+        jarsigner.write_text("#!/bin/sh\nprintf '%s\\n' '' '" + verified + "'\nexit " + str(status) + "\n")
+        for tool in (keytool, jarsigner):
+            tool.chmod(0o700)
+        return keytool, jarsigner
+
+    def test_bundle_certificate_must_match_the_pin(self):
+        keytool, jarsigner = self.bundle_tools("a" * 64)
+        self.assertEqual(0, self.run_check("verify_bundle_certificate", "app.aab", keytool, jarsigner, self.pin).returncode)
+        keytool, jarsigner = self.bundle_tools("b" * 64)
+        result = self.run_check("verify_bundle_certificate", "app.aab", keytool, jarsigner, self.pin)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("does not match", result.stderr)
+
+    def test_unsigned_or_broken_bundle_is_not_accepted(self):
+        keytool, jarsigner = self.bundle_tools("a" * 64, verified="jar is unsigned.")
+        result = self.run_check("verify_bundle_certificate", "app.aab", keytool, jarsigner, self.pin)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("not signed", result.stderr)
+        keytool, jarsigner = self.bundle_tools("a" * 64, status=1)
+        self.assertNotEqual(0, self.run_check("verify_bundle_certificate", "app.aab", keytool, jarsigner, self.pin).returncode)
+
 
 if __name__ == "__main__":
     unittest.main()

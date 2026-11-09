@@ -35,6 +35,8 @@ jobs:
         run: python3 tools/test_signing.py
       - name: Release script tags the release and bumps to the next dev version
         run: python3 tools/test_release.py
+      - name: Google Play release notes from CHANGELOG.md
+        run: python3 tools/test_play_whatsnew.py
 
   build:
     name: release APK (debug key)

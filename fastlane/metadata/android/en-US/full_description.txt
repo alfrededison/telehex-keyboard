@@ -1,0 +1,36 @@
+TeleHex is a Vietnamese Telex keyboard laid out on a 7-column hexagonal grid. The letters follow the familiar QWERTY order, but each key is about 45% larger than on a 10-column keyboard, so you mistype less.
+
+Delete, capitals, extra characters, cursor movement, selection and paste are gestures, so the letter grid needs no backspace or shift key.
+
+FULLY OFFLINE
+• The app does not request the Internet permission. What you type never leaves your phone.
+• Telex, suggestions, learned words and clipboard history are processed and stored in the app's private storage.
+• No ads, no account, no tracking. Open source (MIT).
+
+GESTURE TYPING
+• Swipe up on a letter for a capital, swipe down for the number, symbol or emoji shown under it.
+• Swipe left on the space bar to delete; swipe further to delete word by word, with a preview.
+• Hold the space bar and drag to move the cursor; double-tap and drag to select.
+• Swipe right to paste, swipe down to switch to English (no Telex).
+• Two-finger swipe to undo / redo.
+• Slide to type: glide across the letters of a syllable, then pick the suggestion.
+
+SUGGESTIONS WITHOUT AUTOCORRECT
+• TeleHex never changes what you typed on its own.
+• The six tone variants of the current syllable, one tap away.
+• Fixes for neighbouring-key slips and missing or extra keys.
+• Next-syllable suggestions learned from your own writing.
+• Emoji by keyword.
+• English mode completes words from a 50,000-word dictionary.
+
+MAKE IT YOURS
+• Hold a key and drag it onto another to swap them, right on the keyboard.
+• Several layout profiles and your own swipe-down character for every key.
+• Old or new tone placement (hòa/hoà), text shortcuts, clipboard history, one-handed mode, light/dark theme, accent colour, vibration and sound.
+• Start in English automatically in the apps you choose (terminals, code editors…).
+• Back up and restore all settings to a single file.
+
+TURN IT ON
+Open TeleHex, tap "1. Bật TeleHex trong Cài đặt hệ thống" (enable TeleHex in system settings) and select TeleHex. The app's settings are in Vietnamese. Android shows its standard warning that a keyboard may be able to collect the text you type. TeleHex has no Internet permission, so it cannot send that text anywhere.
+
+Source code and documentation: https://github.com/alfrededison/telehex-keyboard
