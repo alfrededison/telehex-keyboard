@@ -30,6 +30,9 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".settings.WelcomeActivity"
+            android:exported="false" />
+        <activity
             android:name=".settings.LayoutEditorActivity"
             android:exported="false"
             android:label="@string/title_layout_editor"

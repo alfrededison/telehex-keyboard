@@ -72,6 +72,9 @@ class SettingsActivity : Activity() {
         sec.addButton("1. Bật TeleHex trong Cài đặt hệ thống") { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }
         sec.addButton("2. Chọn TeleHex làm bàn phím hiện tại") { (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker() }
 
+        // Lần đầu mở app: màn chào hướng dẫn bật bàn phím và chọn profile, nằm trên màn Cài đặt
+        if (savedInstanceState == null) WelcomeActivity.showIfNeeded(this, prefs)
+
         sec = section("keyboard", "Bàn phím", "Bố cục, giao diện và âm thanh", R.drawable.ic_settings_keyboard)
         // Đổi nhanh profile (bố cục đủ ba lớp chữ / vuốt xuống / 123); nhãn cập nhật ở onResume
         profileButton = sec.addButton("") {

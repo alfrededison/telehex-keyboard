@@ -28,8 +28,10 @@ Ai quen bàn phím 10 cột có thể chọn profile **Truyền thống**: thứ
 ## Bật bàn phím
 
 1. Cài APK từ [Releases](../../releases) (hoặc build như dưới).
-2. Mở app TeleHex → "Bật TeleHex trong Cài đặt hệ thống" → bật TeleHex.
-3. "Chọn TeleHex làm bàn phím hiện tại" (hoặc chạm biểu tượng bàn phím ở thanh điều hướng khi đang gõ).
+2. Mở app TeleHex. Lần đầu mở, màn chào hướng dẫn hai bước: "Mở Cài đặt bàn phím" để bật TeleHex, rồi "Chọn bàn phím" để dùng TeleHex (hoặc chạm biểu tượng bàn phím ở thanh điều hướng khi đang gõ). Mỗi bước hiện ✓ khi xong.
+3. Chọn kiểu bàn phím: **Tổ ong** (profile "Mặc định") hay **Truyền thống** (QWERTY 10 cột), có hình xem trước và ô gõ thử. Đổi lại sau trong Cài đặt › Bàn phím.
+
+Sau lần đầu, hai nút bật/chọn bàn phím vẫn có trong Cài đặt › Bật bàn phím.
 
 ## Cử chỉ
 

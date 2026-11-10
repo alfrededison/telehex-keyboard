@@ -63,6 +63,11 @@ class Prefs(context: Context, fileName: String = "telehex") {
         get() = sp.getInt(KEY_EXTRA_BOTTOM, 0)
         set(v) = sp.edit().putInt(KEY_EXTRA_BOTTOM, v).apply()
 
+    /** Đã qua màn chào lần đầu (bật bàn phím, chọn profile). Không nằm trong bản sao lưu. */
+    var welcomeDone: Boolean
+        get() = sp.getBoolean(KEY_WELCOME_DONE, false)
+        set(v) = sp.edit().putBoolean(KEY_WELCOME_DONE, v).apply()
+
     /** Tăng mỗi khi gói ngôn ngữ / dữ liệu học đổi từ Cài đặt, để IME nạp lại. */
     var modelsVersion: Long
         get() = sp.getLong(KEY_MODELS_VERSION, 0)
@@ -76,7 +81,7 @@ class Prefs(context: Context, fileName: String = "telehex") {
     /** Toàn bộ tuỳ chọn dạng JSON để sao lưu (không gồm dữ liệu học, lưu riêng). */
     fun exportJson(): String {
         ensureProfiles() // bản sao lưu luôn có profile, kể cả khi chưa mở màn chỉnh sửa phím lần nào
-        return JSONObject(sp.all.filterKeys { it != KEY_TOUCH_OFFSETS && it != KEY_OFFSETS_LAYOUT }.mapValues { (_, v) ->
+        return JSONObject(sp.all.filterKeys { it != KEY_TOUCH_OFFSETS && it != KEY_OFFSETS_LAYOUT && it != KEY_WELCOME_DONE }.mapValues { (_, v) ->
             if (v is Set<*>) org.json.JSONArray(v.toList()) else v
         }).toString()
     }
@@ -433,6 +438,7 @@ class Prefs(context: Context, fileName: String = "telehex") {
         const val KEY_STEP_DP = "step_dp"
         const val KEY_DRAG_REARRANGE = "drag_rearrange"
         const val KEY_DOUBLE_TAP_MS = "double_tap_ms"
+        const val KEY_WELCOME_DONE = "welcome_done"
 
         val DEFAULT_FALLBACK_PKGS: Set<String> = setOf("com.zing.zalo", "com.facebook.orca")
 
