@@ -1,6 +1,6 @@
 # Chính sách quyền riêng tư – TeleHex
 
-*Cập nhật: 2026-11-09 · English below*
+*Cập nhật: 2026-11-10 · English below*
 
 TeleHex là bàn phím tiếng Việt mã nguồn mở, do Hieu Nguyen Duc phát triển. Chính sách này áp dụng cho ứng dụng Android TeleHex (`com.telehex.keyboard`).
 
@@ -29,7 +29,6 @@ Gỡ ứng dụng hoặc xoá dữ liệu ứng dụng sẽ xoá toàn bộ nh�
 
 - **Không có quyền Internet.**
 - Danh sách ứng dụng có biểu tượng trên màn hình chính chỉ được đọc khi bạn chọn ứng dụng trong Cài đặt › Telex (tự bật chế độ tiếng Anh) hoặc Cài đặt › Tương thích (chế độ dự phòng). Danh sách này không được lưu hay gửi đi; chỉ tên gói của ứng dụng bạn chọn được lưu lại.
-- Nút giọng nói chỉ chuyển sang bàn phím giọng nói khác mà bạn đã cài. TeleHex không ghi âm.
 
 ## Trẻ em
 
@@ -47,7 +46,7 @@ Gửi câu hỏi qua [GitHub Issues](https://github.com/alfrededison/telehex-key
 
 # Privacy Policy – TeleHex
 
-*Updated: 2026-11-09*
+*Updated: 2026-11-10*
 
 TeleHex is an open-source Vietnamese keyboard developed by Hieu Nguyen Duc. This policy covers the TeleHex Android app (`com.telehex.keyboard`).
 
@@ -76,7 +75,6 @@ Uninstalling the app or clearing its data deletes all of the above.
 
 - **No Internet permission.**
 - The list of apps with a home-screen icon is read only when you pick apps in Settings › Telex (start in English) or Settings › Compatibility (fallback mode). The list is not stored or sent; only the package names of the apps you pick are saved.
-- The voice button only switches to another voice keyboard you have installed. TeleHex does not record audio.
 
 ## Children
 

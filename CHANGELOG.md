@@ -3,6 +3,7 @@
 ## 0.7.3 — unreleased
 
 - Thêm profile có sẵn "Truyền thống" cho ai chưa quen lưới tổ ong: bố cục QWERTY 10 cột quen thuộc, phím chữ nhật, có phím ⇧ (chạm đúp khoá chữ hoa) và ⌫ (giữ để xoá liên tục), lớp 123 hai trang với hàng số 1…0 ở trên. Mọi cử chỉ, gợi ý và gõ vuốt dùng như trên lưới tổ ong. Chọn trong Cài đặt › Bàn phím.
+- Bảng sửa văn bản (vuốt xuống ⚙): nút giọng nói được thay bằng nút Profile, tô màu phím dấu thanh; chạm để hiện danh sách profile, chọn một profile là dùng ngay. Bỏ hẳn chức năng chuyển sang bàn phím giọng nói.
 
 ## 0.7.2 — 2026-11-09
 

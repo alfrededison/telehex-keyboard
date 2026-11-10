@@ -99,7 +99,7 @@ Gợi ý âm tiết tiếp theo dùng thêm một mô hình n-gram âm tiết n�
 - Kiểu đặt dấu cũ/mới (hòa/hoà), "L cũng là dấu huyền" (`lal` → là), tự viết hoa đầu câu, rung, âm thanh, giao diện sáng/tối, màu nhấn, chế độ một tay, tông da và giới tính emoji mặc định, gõ tắt, clipboard history, chế độ ẩn danh, vùng chạm động (tắt mặc định), học độ lệch chạm.
 - **Sao lưu / khôi phục** mọi thứ ra một file zip.
 - **Emoji**: Cài đặt › Emoji và clipboard cho chọn giới tính mặc định Nguyên bản / Nữ / Nam. Chỉ emoji trung tính có biến thể hợp lệ và máy vẽ được mới đổi; emoji đã chọn rõ giới tính giữ nguyên. Kết hợp được với tông da, áp dụng cho bảng emoji, tìm kiếm và gợi ý.
-- **Giọng nói**: nút 🎤 trong bảng sửa văn bản chuyển sang IME giọng nói đã bật (ví dụ FUTO Voice Input chạy offline).
+- **Đổi profile nhanh**: nút Profile (màu phím dấu thanh) trong bảng sửa văn bản (vuốt xuống ⚙) hiện danh sách profile ngay trong vùng bàn phím; chạm một profile để dùng, "← Bàn phím" để quay lại.
 
 ## Build
 

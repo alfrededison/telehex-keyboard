@@ -25,9 +25,10 @@ import kotlin.math.min
  *   ABC   ↑   Chọn từ  Chọn hết
  *     ←   →    Cắt    Chép
  *   Đầu   ↓   Cuối    Dán
- *     ↶   ↷    🎤     ⌫
+ *     ↶   ↷  Profile  ⌫
  * ```
- * Bốn mũi tên xếp thành hình thoi; nhóm chọn / clipboard tô màu nhấn. Giữ mũi tên hoặc ⌫ để lặp.
+ * Bốn mũi tên xếp thành hình thoi; nhóm chọn / clipboard tô màu nhấn; nút đổi profile tô màu phím dấu thanh.
+ * Giữ mũi tên hoặc ⌫ để lặp.
  */
 class EditPadView(context: Context, private val theme: Theme) : View(context) {
 
@@ -54,7 +55,7 @@ class EditPadView(context: Context, private val theme: Theme) : View(context) {
         Pad("paste", R.drawable.ic_edit_paste, "Dán", KeyKind.VOWEL, 2, 3),
         Pad("undo", R.drawable.ic_edit_undo, "Hoàn tác", KeyKind.FUNCTION, 3, 0),
         Pad("redo", R.drawable.ic_edit_redo, "Làm lại", KeyKind.FUNCTION, 3, 1),
-        Pad("voice", R.drawable.ic_edit_mic, "Giọng nói", KeyKind.FUNCTION, 3, 2),
+        Pad("profile", R.drawable.ic_edit_profile, "Profile", KeyKind.TONE, 3, 2),
         Pad("backspace", R.drawable.ic_edit_backspace, "", KeyKind.FUNCTION, 3, 3, repeat = true),
     )
 

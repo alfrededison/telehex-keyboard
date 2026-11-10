@@ -190,7 +190,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             "undo" -> undo()
             "redo" -> redo()
             "backspace" -> deleteBackward()
-            "voice" -> switchToVoiceIme()
+            "profile" -> openProfiles()
         }
     }
 
@@ -206,22 +206,18 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         ic.setSelection(selStart - (before.length - i), selEnd + j)
     }
 
-    /** Nhập giọng nói qua IME khác (ví dụ FUTO Voice Input chạy offline): chuyển sang IME có subtype "voice". */
-    private fun switchToVoiceIme() {
-        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-        for (ime in imm.enabledInputMethodList) {
-            for (st in imm.getEnabledInputMethodSubtypeList(ime, true)) {
-                if (st.mode == "voice") {
-                    if (Build.VERSION.SDK_INT >= 28) switchInputMethod(ime.id, st)
-                    else {
-                        val token = window.window?.attributes?.token ?: return
-                        @Suppress("DEPRECATION") imm.setInputMethodAndSubtype(token, ime.id, st)
-                    }
-                    return
-                }
-            }
-        }
-        android.widget.Toast.makeText(this, "Chưa có bàn phím giọng nói nào được bật (ví dụ FUTO Voice Input).", android.widget.Toast.LENGTH_LONG).show()
+    /**
+     * Nút Profile trong bảng sửa văn bản: danh sách profile thay lưới phím. Chọn một profile thì dùng ngay và về bàn
+     * phím để thấy bố cục mới.
+     */
+    private fun openProfiles() {
+        val theme = Theme.resolve(this, prefs.themeMode, prefs.accent)
+        val active = prefs.activeProfile.name
+        showPanel(ProfilePanel(this, theme, Profile.BUILT_IN + prefs.userProfiles, active, onClose = ::openAbc) { p ->
+            if (p.name != prefs.activeProfile.name) prefs.saveProfiles(prefs.userProfiles, p)
+            openAbc()
+            flash("Profile: ${p.name}")
+        })
     }
 
     private fun pasteText(text: String) {

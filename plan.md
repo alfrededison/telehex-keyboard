@@ -80,7 +80,8 @@ Mặc định dùng composing text. App trong danh sách dự phòng dùng
 - [x] Gói n-gram VI/EN do người dùng tự dựng và nạp/xoá riêng qua trình chọn file; APK kèm từ điển tần suất VI/EN.
 - [x] Asset tần suất tiếng Việt có nguồn/giấy phép, bổ sung hoàn thành khi thiếu gói VI và vốn từ gõ vuốt.
 - [x] Tìm/gợi ý emoji tiếng Việt từ CLDR, lọc theo font máy, tông da mặc định.
-- [x] Gõ tắt hai cột, sao lưu/khôi phục zip, voice qua IME ngoài.
+- [x] Gõ tắt hai cột, sao lưu/khôi phục zip.
+- [x] Nút Profile trong bảng sửa văn bản mở danh sách profile (thay nút giọng nói đã bỏ ở 0.7.3).
 - [x] CI test/lint, dev APK và release có ký, ghim chứng chỉ và version tái lập từ tag.
 - [x] **Giới tính emoji mặc định**: nguyên bản / nữ / nam, kết hợp tông da; chỉ đổi sang
   biến thể Unicode hợp lệ và font vẽ được. Áp dụng nhất quán khi chọn từ bảng/tìm/gợi ý.
