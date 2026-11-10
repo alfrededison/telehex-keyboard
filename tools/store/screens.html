@@ -47,6 +47,8 @@
   .h .lab.small { font-size: 26px; }
   .h .sub { font-size: 20px; font-weight: 500; line-height: 20px; height: 20px; position: relative; white-space: nowrap; }
   .h .lit { position: absolute; inset: 0; background: #0A3A80; }
+  .h.r { clip-path: none; border-radius: 10px; }
+  .h .ico { display: flex; position: relative; }
   .trails { position: absolute; left: 0; top: 0; overflow: visible; }
   .toast { left: 20px; top: 446px; width: 580px; border-radius: 24px; background: #15191E; color: white; text-align: center; padding: 16px 12px; font-size: 28px; }
   .perm { left: 0; top: 0; width: 720px; height: 1030px; background: #FFFFFF; }
@@ -71,7 +73,7 @@
   ];
   const CELL_HINT = [
     ["1", "3", "5", "6", "7", "9", ""],
-    ["📋", "2", "4", "🙏", "❤️", "8", "0"],
+    ["clip", "2", "4", "🙏", "❤️", "8", "0"],
     ["😄", "😂", "😍", "👍", "😭", "🔥", "🎉"],
     ["@", "#", "&", "-", "/", "(", ")"],
     ["", "?", "", "", "", "!", ""],
@@ -80,6 +82,10 @@
   const T = { cons: ["#FFFFFF", "#15191E"], vow: ["#DCE8FB", "#0A3A80"], tone: ["#FFE2CC", "#7A3300"], fn: ["#B9C2CC", "#1F262E"], ent: ["#15191E", "#FFFFFF"] };
   const ICON = '<svg viewBox="0 0 108 108" width="100%" height="100%"><rect width="108" height="108" rx="26" fill="#DCE8FB"/><path fill="#0A3A80" d="M54,22 L80,37 L80,71 L54,86 L28,71 L28,37 Z"/><path fill="#FFFFFF" d="M54,30 L73,41 L73,67 L54,78 L35,67 L35,41 Z"/><path fill="#0A3A80" d="M58.3432,63.173 L64.3973,64.1892 Q63.2297,67.5189 60.7108,69.2595 Q58.1919,71 54.4081,71 Q48.4189,71 45.5432,67.0865 Q43.273,63.9514 43.273,59.173 Q43.273,53.4649 46.2567,50.2324 Q49.2405,47 53.8027,47 Q58.927,47 61.8892,50.3838 Q64.8513,53.7676 64.7216,60.7514 H49.5 Q49.5648,63.4541 50.9703,64.9568 Q52.3757,66.4595 54.473,66.4595 Q55.9,66.4595 56.873,65.6811 Q57.8459,64.9027 58.3432,63.173 Z M58.6892,57.0324 Q58.6243,54.3946 57.327,53.0216 Q56.0297,51.6486 54.1703,51.6486 Q52.1811,51.6486 50.8838,53.0973 Q49.5865,54.5459 49.6081,57.0324 Z"/><path fill="#E8882F" d="M45.5,44 L51.5,37.5 Q54,35 56.5,37.5 L62.5,44 L58,44 L54,40 L50,44 Z"/></svg>';
   const BACKSPACE = '<svg width="44" height="44" viewBox="0 0 24 24"><path fill="#15191E" d="M22,3H7c-0.69,0 -1.23,0.35 -1.59,0.88L0,12l5.41,8.11c0.36,0.53 0.9,0.89 1.59,0.89h15c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM19,15.59L17.59,17 14,13.41 10.41,17 9,15.59 12.59,12 9,8.41 10.41,7 14,10.59 17.59,7 19,8.41 15.41,12 19,15.59z"/></svg>';
+  // Icon phẳng như trong app (Material Icons, Apache-2.0): phím emoji và icon clipboard dưới ⚙
+  const EMOJI = (color, size) => `<span class="ico"><svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${color}"><circle cx="15.5" cy="9.5" r="1.5"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M11.99,2C6.47,2 2,6.48 2,12s4.47,10 9.99,10C17.52,22 22,17.52 22,12S17.52,2 11.99,2zM12,20c-4.42,0 -8,-3.58 -8,-8s3.58,-8 8,-8 8,3.58 8,8 -3.58,8 -8,8zM12,16c-1.48,0 -2.75,-0.81 -3.45,-2L6.88,14c0.8,2.05 2.79,3.5 5.12,3.5s4.32,-1.45 5.12,-3.5h-1.67c-0.7,1.19 -1.97,2 -3.45,2z"/></svg></span>`;
+  const CLIP = (size) => `<span class="ico"><svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#5B6670"><path d="M19,2h-4.18C14.4,0.84 13.3,0 12,0c-1.3,0 -2.4,0.84 -2.82,2L5,2c-1.1,0 -2,0.9 -2,2v16c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2L21,4c0,-1.1 -0.9,-2 -2,-2zM12,2c0.55,0 1,0.45 1,1s-0.45,1 -1,1 -1,-0.45 -1,-1 0.45,-1 1,-1zM19,20L5,20L5,4h2v3h10L17,4h2v16z"/></svg></span>`;
+  const hintHtml = (hint) => (hint === "clip" ? `<div class="hint">${CLIP(20)}</div>` : `<div class="hint">${hint}</div>`);
   const SEND = '<svg viewBox="0 0 94 94" width="94" height="94"><circle cx="47" cy="47" r="47" fill="#0A3A80"/><path d="M30 26 L70 47 L30 68 L36 47 Z" fill="#FFFFFF"/></svg>';
 
   // Same honeycomb wall as the video, seeded so every export is identical.
@@ -103,7 +109,7 @@
     (opts.layout || LAYOUT).forEach((row, r) => row.forEach((code, c) => {
       if (!code) return;
       let kind = "cons", label = opts.upper ? code.toUpperCase() : code, hint = CELL_HINT[r][c], small = false;
-      if (code === "emoji") { kind = "fn"; label = "☺"; }
+      if (code === "emoji") { kind = "fn"; label = EMOJI(T.fn[1], 40); }
       else if (code === "123") { kind = "fn"; label = "123"; small = true; }
       else if (code === "set") { kind = "fn"; label = "⚙"; }
       else if (code === "enter") { kind = "ent"; label = "↵"; }
@@ -113,7 +119,7 @@
       const x = hx(r, c), y = hy(r);
       keys[code] = { x, y, r, c };
       const lit = opts.lit && opts.lit.includes(code) ? `<div class="lit" style="opacity:${opts.litOpacity || 0.25}"></div>` : "";
-      html += `<div class="h" style="left:${x - IW / 2}px;top:${y - IH / 2}px;width:${IW}px;height:${IH}px;background:${T[kind][0]};color:${T[kind][1]}">${lit}<div class="lab${small ? " small" : ""}${hint ? " hinted" : ""}">${label}</div>${hint ? `<div class="hint">${hint}</div>` : ""}</div>`;
+      html += `<div class="h" style="left:${x - IW / 2}px;top:${y - IH / 2}px;width:${IW}px;height:${IH}px;background:${T[kind][0]};color:${T[kind][1]}">${lit}<div class="lab${small ? " small" : ""}${hint ? " hinted" : ""}">${label}</div>${hint ? hintHtml(hint) : ""}</div>`;
     }));
     // space: three cells of the bottom row joined, zigzag top edge (HexGeometry.spacePath)
     const ox = PAD + (OFF[4] + 2) * W, oy = TOPK + 4 * P, g = GAP / 2;
@@ -121,6 +127,59 @@
     html += `<div class="h" style="left:${ox}px;top:${oy}px;width:${3 * W}px;height:${H}px;background:${T.fn[0]};color:${T.fn[1]};clip-path:polygon(${pts.map(([a, b]) => `${a}px ${b}px`).join(",")})"><div class="sub" style="margin-top:14px">${opts.english ? "cách · EN" : "cách"}</div></div>`;
     keys.space = { x: ox + 1.5 * W, y: oy + H / 2 };
     return { html, keys };
+  }
+
+  /*
+   * Bố cục Truyền thống (GridSpec.QWERTY, RectGeometry): phím chữ nhật 10/9/9/10, hàng Z căn giữa chừa ½ ô cạnh ⇧ và
+   * ⌫, dấu phẩy bên trái phím cách 4 ô. Màn 720px ứng với máy 411dp (1,75 px/dp); đáy lưới thẳng đáy lưới tổ ong.
+   */
+  const DP = 720 / 411;
+  const QW = (720 - 2 * PAD) / 10, QP = Math.min(QW * 1.44, 60 * DP), QTOP = TOPK + 4 * P + H - 4 * QP;
+  const QIX = 3 * DP * 0.9, QIY = 3 * DP * 1.8;
+  const QLEFTS = [
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5],
+    [0, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 9],
+    [0, 1, 2, 3, 4, 4, 4, 4, 8, 9],
+  ];
+  const QLAYOUT = [
+    "qwertyuiop".split(""),
+    "asdfghjkl".split(""),
+    ["shift", ..."zxcvbnm".split(""), "back"],
+    ["123", "emoji", "set", ",", "space", null, null, null, ".", "enter"],
+  ];
+  // KeyLayers.DEFAULT_SWIPE_BY_CODE: ký tự vuốt xuống theo phím
+  const SWIPE = Object.assign(
+    Object.fromEntries("qwertyuiop".split("").map((ch, i) => [ch, String((i + 1) % 10)])),
+    Object.fromEntries("asdfghjkl".split("").map((ch, i) => [ch, ["😄", "😂", "😍", "👍", "🙏", "❤️", "😭", "🔥", "🎉"][i]])),
+    Object.fromEntries("zxcvbnm".split("").map((ch, i) => [ch, "@#&-/()"[i]])),
+    { ",": "?", ".": "!", set: "clip" },
+  );
+
+  function qwertyKeyboard(opts = {}) {
+    let html = "";
+    QLAYOUT.forEach((row, r) => row.forEach((code, c) => {
+      if (!code) return;
+      const n = code === "space" ? 4 : 1;
+      let kind = "cons", label = opts.upper ? code.toUpperCase() : code, hint = SWIPE[code] || "", small = false;
+      if (code === "space") { kind = "fn"; label = ""; }
+      else if (code === "shift") { kind = opts.upper ? "vow" : "fn"; label = opts.upper ? "⬆" : "⇧"; }
+      else if (code === "back") { kind = "fn"; label = `<span class="ico">${BACKSPACE.replace('fill="#15191E"', `fill="${T.fn[1]}"`).replace(/width="44" height="44"/, 'width="40" height="40"')}</span>`; }
+      else if (code === "emoji") { kind = "fn"; label = EMOJI(T.fn[1], 40); }
+      else if (code === "123") { kind = "fn"; label = "123"; small = true; }
+      else if (code === "set") { kind = "fn"; label = "⚙"; }
+      else if (code === "enter") { kind = "ent"; label = "↵"; }
+      else if (code === "," || code === ".") { kind = "fn"; label = code; }
+      else if (TONE[code]) kind = "tone";
+      else if ("aeiouyw".includes(code)) kind = "vow";
+      const left = PAD + QLEFTS[r][c] * QW + QIX, top = QTOP + r * QP + QIY;
+      const w = n * QW - 2 * QIX, h = QP - 2 * QIY;
+      const body = code === "space"
+        ? `<div class="sub">cách</div>`
+        : `<div class="lab${small ? " small" : ""}${hint ? " hinted" : ""}">${label}</div>${hint ? hintHtml(hint) : ""}`;
+      html += `<div class="h r" style="left:${left}px;top:${top}px;width:${w}px;height:${h}px;background:${T[kind][0]};color:${T[kind][1]}">${body}</div>`;
+    }));
+    return { html, keys: {} };
   }
 
   function trail(points, color = "#0A3A80") {
@@ -156,7 +215,7 @@
   // 1. Hero: the 0.7.1 layout with the QWERTY zigzag highlighted
   {
     const kb = keyboard({ upper: true, lit: "qwertyuiop".split(""), litOpacity: 0.2 });
-    shot("hero", "Bàn phím Telex<br><em>tổ ong</em>", "Phím to hơn, vẫn thứ tự QWERTY",
+    shot("hero", "Bàn phím Telex<br><em>tổ ong</em>", "Phím rộng hơn, vẫn thứ tự QWERTY",
       chatScreen({ field: '<span class="ph">Nhắn tin</span>' + cur, kb }),
       `<div class="abs logo">${ICON}</div>`);
   }
@@ -188,7 +247,14 @@
       chatScreen({ field: "Đi ăn phở nhé" + cur, kb, overlay: trail([[p.x, p.y], [z.x, z.y]]), reply: true })
         .replace('<div class="abs nav">', '<div class="abs toast">Đã đổi z ↔ p · lưu vào “Của tôi”</div><div class="abs nav">'));
   }
-  // 6. Privacy: no automatic correction, processing stays on the device
+  // 6. Traditional profile for people used to a 10-column keyboard; switched from the Profile button
+  {
+    const kb = qwertyKeyboard({ upper: true });
+    shot("traditional", "Quen bàn phím<br><em>10 cột?</em>", "Chọn bố cục Truyền thống, có ⇧ và ⌫",
+      chatScreen({ field: '<span class="ph">Nhắn tin</span>' + cur, kb })
+        .replace('<div class="abs nav">', '<div class="abs toast">Profile: Truyền thống</div><div class="abs nav">'));
+  }
+  // 7. Privacy: no automatic correction, processing stays on the device
   {
     const perm = `
       <div class="abs perm">

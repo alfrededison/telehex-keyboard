@@ -75,7 +75,7 @@ Play Console đổi menu thường xuyên. Cách chắc chắn nhất là vào *
 | Full description | `vi/full_description.txt` (≤ 4000) |
 | App icon | `vi/images/icon.png` (512×512) |
 | Feature graphic | `vi/images/featureGraphic.png` (1024×500) |
-| Phone screenshots | `vi/images/phoneScreenshots/1.png` … `6.png` (1080×1920, theo thứ tự) |
+| Phone screenshots | `vi/images/phoneScreenshots/1.png`, `2.png`… (1080×1920, tải đủ và đúng thứ tự; đổi ảnh thì tải lại cả bộ) |
 | Video | URL YouTube của video giới thiệu (Public hoặc Unlisted, không bật quảng cáo, không giới hạn độ tuổi) |
 
 Thêm bản dịch **English (United States) – en-US** từ `en-US/` (ảnh dùng chung). Category: **Tools**. Contact: email nhà phát triển; website: `https://github.com/alfrededison/telehex-keyboard`.
