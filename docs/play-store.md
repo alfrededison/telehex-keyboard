@@ -21,13 +21,16 @@ Key này cũng là upload key: file AAB tải lên Play được ký bằng đú
 Play Console › **Create app**:
 
 - App name: `TeleHex – Bàn phím Telex`; ngôn ngữ mặc định: **Tiếng Việt – vi**.
+- Package name: `com.telehex.keyboard` (đúng `applicationId` trong `app/build.gradle.kts`; không đổi được sau khi tạo).
 - App; Free.
 
 Ngôn ngữ mặc định phải là `vi` (hoặc có thêm bản dịch `vi`), vì CI gửi "Có gì mới" dưới mã `vi`.
 
 ## 2. Đưa key dự án cho Play App Signing
 
-Làm ở lần tải AAB đầu tiên: **Test and release › App integrity › App signing** (hoặc hộp "App signing" hiện khi tạo bản phát hành đầu tiên) › **Use a different key / Change app signing key** › **Export and upload a key from Java keystore**.
+Làm **trước** khi tải AAB đầu tiên. Nếu tải AAB lên trước, Play sẽ tự tạo key mới.
+
+Mở **Protected with Play › Play Store protection › Manage Play app signing** (trước đây là App integrity). Nếu không thấy, gõ "app signing" vào ô tìm kiếm của Play Console. Chọn **Change key / Change app signing key**, rồi chọn **Export and upload a key from Java keystore**. Lúc tạo bản phát hành đầu tiên, trang Create release cũng có liên kết đổi key ký.
 
 1. Tải `pepk.jar` và file khoá công khai mã hoá (`encryption_public_key.pem`) từ trang đó vào `.signing/` (thư mục đã gitignore).
 2. Xem alias và mật khẩu trong `.signing/credentials.json` (`alias`, `store_password`, `key_password`).
@@ -45,7 +48,7 @@ Làm ở lần tải AAB đầu tiên: **Test and release › App integrity › 
 
    PEPK hỏi mật khẩu keystore rồi mật khẩu key.
 4. Tải `.signing/play-signing-key.zip` lên. **Không** đăng ký upload key riêng.
-5. Kiểm tra: App integrity › App signing key certificate › SHA-256 phải trùng `signing/release-cert.sha256` (Console in hoa và có dấu `:`, so phần chữ số).
+5. Kiểm tra: trên cùng trang Manage Play app signing, mục App signing key certificate › SHA-256 phải trùng `signing/release-cert.sha256` (Console in hoa và có dấu `:`, so phần chữ số).
 
 Chỉ chọn được key ký **một lần, trước khi có bản phát hành đầu tiên**. Nếu lỡ để Google tạo key mới thì bản Play và bản GitHub sẽ khác chữ ký vĩnh viễn.
 
@@ -61,7 +64,9 @@ Mỗi lần tải lên phải có versionCode lớn hơn lần trước. Số ve
 
 ## 4. Điền thông tin app
 
-**Grow users › Store presence › Main store listing** (chép từ `fastlane/metadata/android/`):
+Play Console đổi menu thường xuyên. Cách chắc chắn nhất là vào **Dashboard** của app, mục **Set up your app**: mỗi việc dưới đây có một dòng dẫn thẳng tới form. Hoặc gõ tên form vào ô tìm kiếm của Console.
+
+**Main store listing** (thường ở Grow users › Store presence; chép từ `fastlane/metadata/android/`):
 
 | Ô | File |
 |---|---|
@@ -75,7 +80,7 @@ Mỗi lần tải lên phải có versionCode lớn hơn lần trước. Số ve
 
 Thêm bản dịch **English (United States) – en-US** từ `en-US/` (ảnh dùng chung). Category: **Tools**. Contact: email nhà phát triển; website: `https://github.com/alfrededison/telehex-keyboard`.
 
-**Policy and programs › App content**:
+**App content** (thường ở Monitor and improve › Policy and programs; cũng chính là các việc trong Set up your app):
 
 | Mục | Trả lời |
 |---|---|
