@@ -66,7 +66,7 @@ Mặc định dùng composing text. App trong danh sách dự phòng dùng
 - [x] Vuốt trái ngắn trên phím cách xoá ký tự; vuốt dài chọn-để-xoá theo từ, kéo qua dòng.
 - [x] Giữ-kéo phím cách di con trỏ, chạm đúp-kéo chọn văn bản.
 - [x] Cut/copy/paste bằng cử chỉ, undo/redo hai ngón, chọn hết.
-- [x] Thanh chỉnh sửa khi chọn/con trỏ; bảng chỉnh sửa riêng khi vuốt xuống ⚙ (nhãn phụ 📋).
+- [x] Thanh chỉnh sửa khi chọn/con trỏ; bảng chỉnh sửa riêng khi vuốt xuống ⚙ (icon clipboard nhỏ).
 - [x] Giữ nút ⌫ để xoá liên tục; xoá emoji theo grapheme.
 - [x] Clipboard history, ghim, hết hạn 1 giờ, bỏ qua nội dung nhạy cảm.
 

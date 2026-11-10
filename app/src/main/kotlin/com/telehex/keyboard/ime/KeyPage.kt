@@ -1,12 +1,17 @@
 package com.telehex.keyboard.ime
 
+import com.telehex.keyboard.R
 import com.telehex.keyboard.layout.CellGrid
 import com.telehex.keyboard.layout.KeyCode
 import com.telehex.keyboard.layout.LayoutModel
 import com.telehex.keyboard.layout.SymbolPages
 import com.telehex.telex.TelexConfig
 
-/** Một phím đã sẵn sàng để vẽ: mã, các ô nó chiếm, nhãn chính, nhãn phụ, ký tự vuốt xuống, loại. */
+/**
+ * Một phím đã sẵn sàng để vẽ: mã, các ô nó chiếm, nhãn chính, nhãn phụ, ký tự vuốt xuống, loại. [icon] / [hintIcon]
+ * (drawable, 0 = không có) vẽ thay cho [label] / [hint], tô theo màu chữ của phím; [label] vẫn dùng cho trình đọc màn
+ * hình và thông báo.
+ */
 data class Key(
     val code: String,
     val cells: List<Pair<Int, Int>>,
@@ -14,6 +19,8 @@ data class Key(
     val sub: String = "",
     val hint: String = "",
     val kind: KeyKind,
+    val icon: Int = 0,
+    val hintIcon: Int = 0,
 ) {
     val isSpace: Boolean get() = code == KeyCode.SPACE
     val isLetter: Boolean get() = KeyCode.isLetter(code)
@@ -43,9 +50,11 @@ object KeyPage {
             if (code == null) { spaceCells.add(r to c); continue }
             val cell = listOf(r to c)
             keys += when {
-                code == KeyCode.EMOJI -> Key(code, cell, "☺", kind = KeyKind.FUNCTION)
+                // Icon phẳng thay cho emoji màu, như các phím chức năng khác
+                code == KeyCode.EMOJI -> Key(code, cell, "☺", kind = KeyKind.FUNCTION, icon = R.drawable.ic_key_emoji)
                 code == KeyCode.NUMBERS -> Key(code, cell, if (mode == Mode.SYMBOLS) "ABC" else "123", kind = KeyKind.FUNCTION)
-                code == KeyCode.SETTINGS -> Key(code, cell, "⚙", hint = "📋", kind = KeyKind.FUNCTION)
+                code == KeyCode.SETTINGS ->
+                    Key(code, cell, "⚙", hint = "📋", kind = KeyKind.FUNCTION, hintIcon = R.drawable.ic_edit_paste)
                 code == KeyCode.PAGE -> Key(code, cell, "$symbolPage/2", kind = KeyKind.FUNCTION)
                 code == KeyCode.DIAL -> Key(code, cell, "1234", kind = KeyKind.FUNCTION)
                 code == KeyCode.ENTER -> Key(code, cell, enterLabel, kind = KeyKind.ENTER)

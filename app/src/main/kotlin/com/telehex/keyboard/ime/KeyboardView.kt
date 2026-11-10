@@ -133,6 +133,17 @@ open class KeyboardView @JvmOverloads constructor(
     private val subPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
     private val hintPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER }
 
+    /** Icon phím (drawable đã mutate), tô màu lúc vẽ. */
+    private val icons = HashMap<Int, android.graphics.drawable.Drawable>()
+
+    private fun drawIcon(canvas: Canvas, res: Int, cx: Float, cy: Float, size: Float, color: Int) {
+        val d = icons.getOrPut(res) { context.getDrawable(res)!!.mutate() }
+        val h = size / 2
+        d.setBounds((cx - h).toInt(), (cy - h).toInt(), (cx + h).toInt(), (cy + h).toInt())
+        d.setTint(color)
+        d.draw(canvas)
+    }
+
     private val gestures = GestureDetector(threshold = dp(24f))
 
     private val downPoints = HashMap<Int, FloatArray>()
@@ -466,7 +477,7 @@ open class KeyboardView @JvmOverloads constructor(
             val cx = d.center.x
             val cy = d.center.y
             val hasSub = k.sub.isNotEmpty()
-            val hasHint = k.hint.isNotEmpty()
+            val hasHint = k.hint.isNotEmpty() || k.hintIcon != 0
             if (k.isSpace) {
                 subPaint.color = fg; subPaint.textSize = sp(11f)
                 val spaceLabel = if (capsLock) "⇪ HOA" else k.sub
@@ -480,10 +491,13 @@ open class KeyboardView @JvmOverloads constructor(
                 k.isLetter && !shifted -> k.code
                 else -> k.label
             }
-            canvas.drawText(label, cx, labelY, labelPaint)
+            if (k.icon != 0) drawIcon(canvas, k.icon, cx, cy - (if (hasSub || hasHint) sp(4f) else 0f), sp(24f), fg)
+            else canvas.drawText(label, cx, labelY, labelPaint)
             if (hasSub) {
                 subPaint.color = fg; subPaint.textSize = sp(11f)
                 canvas.drawText(k.sub, cx, labelY + sp(12f), subPaint)
+            } else if (k.hintIcon != 0) {
+                drawIcon(canvas, k.hintIcon, cx, labelY + sp(10f), sp(13f), theme.hintFg)
             } else if (hasHint) {
                 // Vuốt xuống thì ký tự nằm ở dưới, đúng hướng ngón tay
                 hintPaint.color = theme.hintFg; hintPaint.textSize = sp(11f)

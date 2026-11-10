@@ -56,7 +56,7 @@ Sau lần đầu, hai nút bật/chọn bàn phím vẫn có trong Cài đặt �
 | Hai ngón vuốt trái / phải | Undo / Redo (bàn phím tự quản lý lịch sử) |
 | Hai ngón giữ | Chọn hết |
 | Phím 1234 ở lớp ký tự (hoặc giữ phím 123) | Dialpad (tự mở ở ô số điện thoại / số / ngày giờ) |
-| Vuốt **xuống** phím ⚙ (nhãn phụ 📋) | Bảng sửa văn bản + clipboard history; chạm ⚙ mở Cài đặt |
+| Vuốt **xuống** phím ⚙ (icon clipboard nhỏ bên dưới) | Bảng sửa văn bản + clipboard history; chạm ⚙ mở Cài đặt |
 | **Giữ** một phím ký tự ~0,8 s đến khi nó nổi lên, kéo thả lên phím khác | Đổi chỗ hai phím ngay trên bàn phím (lớp chữ hoặc trang 123 đang hiện). Chỉ phím ký tự nhấc lên được; phím chức năng đổi chỗ khi phím ký tự thả lên nó; phím cách và ↵ cố định. Tự lưu vào profile đang dùng (profile có sẵn thì thành profile mới "Của tôi"), giữ độ lệch chạm đã học. Nhả tại chỗ thì vẫn gõ ký tự đó. Tắt được trong Cài đặt › Bàn phím |
 | Chạm ⚙ | Cài đặt |
 | Chạm ⇧ (profile Truyền thống) | Chữ kế tiếp đang thường thì viết hoa, đang hoa (đầu câu) thì viết thường; chạm đúp để khoá chữ hoa, chạm lần nữa để tắt |
