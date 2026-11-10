@@ -93,9 +93,18 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     /** Chữ đầu của âm tiết đang soạn được viết hoa chỉ vì đầu câu (hoặc khoá chữ hoa): học như chữ thường. */
     private var autoCappedFirst = false
 
-    /** Vuốt lên phím cách ghi đè tự viết hoa: [LOCK] đến khi vuốt lại; [LOWER] chỉ cho chữ kế tiếp. */
-    private enum class CapsOverride { LOCK, LOWER }
+    /**
+     * Ghi đè tự viết hoa (vuốt lên phím cách, phím ⇧): [LOCK] đến khi tắt; [LOWER] / [UPPER] chỉ cho chữ kế tiếp.
+     */
+    private enum class CapsOverride { LOCK, LOWER, UPPER }
     private var capsOverride: CapsOverride? = null
+    /** Lần chạm ⇧ trước (uptime ms), để chạm đúp khoá chữ hoa. */
+    private var lastShiftTap = 0L
+
+    /** Bỏ chữ hoa/thường một lần (chỉ dành cho chữ kế tiếp); giữ khoá chữ hoa. */
+    private fun clearOneShotCaps() {
+        if (capsOverride == CapsOverride.LOWER || capsOverride == CapsOverride.UPPER) capsOverride = null
+    }
     /**
      * Văn bản vừa chèn từ một gợi ý trên thanh, kết thúc bằng khoảng trắng tự thêm. Dấu câu gõ ngay
      * sau đó (phím kế tiếp) xoá khoảng trắng này: chọn "không" rồi gõ "," ra "không,".
@@ -302,7 +311,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     private fun casedPrediction(s: String): String = when {
         capsLockActive() -> s.uppercase()
-        capsSentenceStart() || predictions.predictor.personal.usuallyCapitalized(s) ->
+        capsSentenceStart() || oneShotUpper() || predictions.predictor.personal.usuallyCapitalized(s) ->
             s.replaceFirstChar { it.titlecase() }
         else -> s
     }
@@ -427,6 +436,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             expandedSuggestions = null
             candidateBar.onMore = null
         }
+        stopBackRepeat() // lưới phím rời màn hình: không để ⌫ đang giữ xoá tiếp khi quay lại
         while (root.childCount > 1) root.removeViewAt(1)
         if (panel == null) {
             root.addView(keyboardView, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
@@ -462,7 +472,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     /** Chiều cao lưới phím, tính được cả khi lưới chưa từng được đo (mở thẳng dialpad). */
     private fun panelHeight(): Int {
         val w = root.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
-        return keyboardView.expectedHeight(w)
+        return keyboardView.expectedHeight(w, prefs.layout.spec)
     }
 
     private fun openAbc() {
@@ -567,6 +577,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     override fun onFinishInput() {
         super.onFinishInput()
+        stopBackRepeat()
         closeMoreSuggestions()
         clearGlide()
         if (::keyboardView.isInitialized) keyboardView.cancelTouches()
@@ -656,7 +667,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                     commitSyllable("$word ")
                     pushContext(word, auto)
                     suggestionSpace = "$word "
-                    if (capsOverride == CapsOverride.LOWER) capsOverride = null
+                    clearOneShotCaps()
                     updateBar()
                 }
             }
@@ -877,8 +888,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private fun typeLetter(ch: Char, swipedUp: Boolean) {
         val auto = upperNext()
         val upper = auto != swipedUp
-        if (engine.isEmpty) autoCappedFirst = auto && !swipedUp
-        if (capsOverride == CapsOverride.LOWER) capsOverride = null
+        // Chữ hoa vì ⇧ là chủ ý (tên riêng): học như đã gõ; chỉ đầu câu hay khoá hoa mới học như chữ thường
+        if (engine.isEmpty) autoCappedFirst = auto && !swipedUp && capsOverride != CapsOverride.UPPER
+        clearOneShotCaps()
         // Tìm emoji đọc chữ từ engine nên vẫn gõ vào engine dù đang EN
         if (!telexEnabled && !emojiSearch) {
             commitSyllable((if (upper) ch.uppercaseChar() else ch).toString())
@@ -905,10 +917,14 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         mode != Mode.ABC || emojiSearch -> false
         capsOverride == CapsOverride.LOCK -> true
         capsOverride == CapsOverride.LOWER -> false
+        capsOverride == CapsOverride.UPPER -> true
         else -> autoCaps()
     }
 
     private fun capsLockActive(): Boolean = capsOverride == CapsOverride.LOCK && mode == Mode.ABC && !emojiSearch
+
+    /** Vừa chạm ⇧ để viết hoa chữ kế tiếp (gợi ý và gõ vuốt cũng viết hoa chữ đầu). */
+    private fun oneShotUpper(): Boolean = capsOverride == CapsOverride.UPPER && mode == Mode.ABC && !emojiSearch
 
     /**
      * Vuốt lên phím cách: đang khoá hoa thì tắt; chữ sắp gõ đang hoa (tự viết hoa đầu câu) thì chữ
@@ -924,9 +940,45 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         when (capsOverride) {
             CapsOverride.LOCK -> flash("⇪ Khoá chữ hoa")
             null -> flash("Tắt khoá chữ hoa")
-            CapsOverride.LOWER -> {}
+            CapsOverride.LOWER, CapsOverride.UPPER -> {}
         }
         updateBar() // nhãn phím + gợi ý viết hoa theo trạng thái mới
+    }
+
+    /**
+     * Phím ⇧ như Gboard: chữ kế tiếp đang thường thì viết hoa, đang hoa (cả tự viết hoa đầu câu) thì viết thường;
+     * chạm đúp thì khoá chữ hoa, chạm lần nữa để tắt.
+     */
+    private fun pressShift() {
+        if (mode != Mode.ABC || emojiSearch) return
+        val now = android.os.SystemClock.uptimeMillis()
+        val quick = now - lastShiftTap < prefs.doubleTapMs
+        lastShiftTap = now
+        capsOverride = when {
+            capsOverride == CapsOverride.LOCK -> { lastShiftTap = 0L; if (autoCaps()) CapsOverride.LOWER else null }
+            quick -> CapsOverride.LOCK
+            upperNext() -> CapsOverride.LOWER
+            else -> CapsOverride.UPPER
+        }
+        updateBar()
+    }
+
+    /** Giữ ⌫ trên lưới để xoá liên tục, như nút ⌫ trên thanh gợi ý. */
+    private var backRepeated = false
+    private val backRepeat = object : Runnable {
+        override fun run() {
+            backRepeated = true
+            // Ô tìm emoji đã trống: lần này chỉ thoát tìm, đừng xoá tiếp chữ trong ô nhập
+            val stop = emojiSearch && engine.isEmpty
+            deleteBackward()
+            if (!stop) keyboardView.postDelayed(this, 50)
+        }
+    }
+
+    /** Dừng xoá liên tục. @return true nếu đã xoá ít nhất một lần lúc giữ. */
+    private fun stopBackRepeat(): Boolean {
+        if (::keyboardView.isInitialized) keyboardView.removeCallbacks(backRepeat)
+        return backRepeated.also { backRepeated = false }
     }
 
     /**
@@ -949,7 +1001,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private fun barBackspace() {
         spaceGestures.noteOtherKey()
         suggestionSpace = null
-        if (capsOverride == CapsOverride.LOWER) capsOverride = null
+        clearOneShotCaps()
         // Ô tìm emoji đã trống: lần này chỉ thoát tìm, đừng để phần giữ lặp tiếp xoá chữ trong ô nhập
         if (emojiSearch && engine.isEmpty) candidateBar.stopBackspace()
         deleteBackward()
@@ -1102,7 +1154,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         override fun deleteBackward() = this@HexKeyboardService.deleteBackward()
         override fun deleteSelection() = this@HexKeyboardService.deleteSelection()
         override fun commitSpace() {
-            if (capsOverride == CapsOverride.LOWER) capsOverride = null
+            clearOneShotCaps()
             commitSyllable(" ")
         }
         override fun undoLastSpace(): Boolean {
@@ -1135,6 +1187,11 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     override fun onKeyDown(key: Key) {
         if (glideSuggestions.isNotEmpty()) { clearGlide(); updateBar() }
         if (key.isSpace) spaceGestures.onDown(android.os.SystemClock.uptimeMillis()) else spaceGestures.noteOtherKey()
+        // Chỉ ⌫ của lưới phím; bàn phím số tự lặp ⌫ và không báo nhả tay sau khi đã lặp
+        if (key.code == KeyCode.BACKSPACE && mode != Mode.DIAL) {
+            stopBackRepeat()
+            keyboardView.postDelayed(backRepeat, prefs.longPressMs.toLong())
+        }
     }
 
     override fun onKeyMove(key: Key, dx: Float, dy: Float, dt: Long) {
@@ -1143,6 +1200,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     override fun onKeyCancel(key: Key) {
         if (key.isSpace) spaceGestures.cancel()
+        if (key.code == KeyCode.BACKSPACE) stopBackRepeat()
     }
 
     override fun onMultiTouchStart() { spaceGestures.onMultiTouch() }
@@ -1173,11 +1231,15 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
     override fun onKeyUp(key: Key, gesture: Gesture, dx: Float, dy: Float, dt: Long) {
         val code = key.code
+        // Chỉ lần nhả ⌫ mới dừng xoá liên tục: hai ngón thì phím kia nhả trước không được ăn mất cờ đã lặp
+        val backHeld = code == KeyCode.BACKSPACE && stopBackRepeat()
+        // Phím khác chen giữa hai lần chạm ⇧ thì không còn là chạm đúp
+        if (code != KeyCode.SHIFT) lastShiftTap = 0L
         // Chỉ phím ngay sau lần chọn gợi ý mới được xoá khoảng trắng tự thêm
         val autoSpace = suggestionSpace
         suggestionSpace = null
-        // Chữ thường một lần chỉ dành cho chữ kế tiếp: phím khác (dấu câu, ↵, ⌫…) bỏ nó
-        if (capsOverride == CapsOverride.LOWER && !key.isLetter && !key.isSpace) capsOverride = null
+        // Hoa/thường một lần chỉ dành cho chữ kế tiếp: phím khác (dấu câu, ↵, ⌫…) bỏ nó
+        if (!key.isLetter && !key.isSpace && code != KeyCode.SHIFT) clearOneShotCaps()
         when {
             code == KeyCode.SPACE -> spaceGestures.onUp(gesture, android.os.SystemClock.uptimeMillis())
             code == KeyCode.ENTER -> pressEnter()
@@ -1192,7 +1254,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             code == KeyCode.DIAL -> { commitSyllable(); openDial() }
             code == KeyCode.SETTINGS -> if (gesture == Gesture.SWIPE_DOWN) openEditPanel() else openSettings()
             code == KeyCode.ABC -> openAbc()
-            code == KeyCode.BACKSPACE -> deleteBackward()
+            code == KeyCode.BACKSPACE -> if (!backHeld) deleteBackward()
+            code == KeyCode.SHIFT -> pressShift()
             code == "," || code == "." ->
                 insertChar(if (gesture == Gesture.SWIPE_DOWN && key.hint.isNotEmpty()) key.hint else code, autoSpace)
             mode == Mode.DIAL -> commitSyllable(if (gesture == Gesture.SWIPE_DOWN && key.hint.isNotEmpty()) key.hint else code)

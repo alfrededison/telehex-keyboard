@@ -19,7 +19,7 @@ class LayoutModelTest {
     fun defaultReadsLikeQwerty() {
         val l = LayoutModel.DEFAULT
         // Hàng 1 sát mép trái, hàng 0 lệch ½ ô: đọc từ trái sang là zigzag giữa hai hàng
-        val zigzag = (0 until LayoutModel.COLS).flatMap { c -> listOf(l[1, c], l[0, c]) }
+        val zigzag = (0 until 7).flatMap { c -> listOf(l[1, c], l[0, c]) }
         assertEquals(listOf(KeyCode.SETTINGS) + "qwertgyhuiop".map { "$it" } + KeyCode.NUMBERS, zigzag)
         assertEquals("asdfjkl".map { "$it" }, l.rows[2])
         assertEquals("zxcvbnm".map { "$it" }, l.rows[3])

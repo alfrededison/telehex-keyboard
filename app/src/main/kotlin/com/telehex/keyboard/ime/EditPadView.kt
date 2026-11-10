@@ -15,7 +15,7 @@ import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import com.telehex.keyboard.R
-import com.telehex.keyboard.layout.HexGeometry
+import com.telehex.keyboard.layout.KeyGeometry
 import kotlin.math.min
 
 /**
@@ -87,8 +87,8 @@ class EditPadView(context: Context, private val theme: Theme) : View(context) {
         // 4 cột lệch nửa ô xen kẽ: rộng 4.5·W, cao 3·P + H = 3.75·W (P = 0.75·H, H = W·2/√3 ≈ 1.155·W)
         val usableW = w - 2 * gap
         val usableH = h - 2 * gap
-        keyW = min(usableW / 4.5f, usableH / (3 * 0.75f * 2 / HexGeometry.SQRT3 + 2 / HexGeometry.SQRT3))
-        val hexH = keyW * 2 / HexGeometry.SQRT3
+        keyW = min(usableW / 4.5f, usableH / (3 * 0.75f * 2 / KeyGeometry.SQRT3 + 2 / KeyGeometry.SQRT3))
+        val hexH = keyW * 2 / KeyGeometry.SQRT3
         val rowP = 0.75f * hexH
         val ox = (w - 4.5f * keyW) / 2
         val oy = (h - (3 * rowP + hexH)) / 2
@@ -101,7 +101,7 @@ class EditPadView(context: Context, private val theme: Theme) : View(context) {
 
     private fun hexPath(cx: Float, cy: Float): Path {
         val iw = keyW - gap
-        val ih = iw * 2f / HexGeometry.SQRT3
+        val ih = iw * 2f / KeyGeometry.SQRT3
         return Path().apply {
             moveTo(cx, cy - ih / 2)
             lineTo(cx + iw / 2, cy - ih / 4)

@@ -2,9 +2,10 @@ package com.telehex.keyboard.layout
 
 /**
  * Lớp 123: hai trang [CellGrid] gắn theo ô, sắp xếp riêng ở màn Sắp xếp phím. Phím chức năng và ô phím cách lấy
- * từ lớp chữ nên chuyển trang không làm phím 123 nhảy chỗ. Phím ☺ thành phím 1234 (dialpad), như Gboard. Ô ⚙ và
+ * từ lớp chữ nên chuyển trang không làm phím 123 nhảy chỗ. Phím ☺ thành phím 1234 (dialpad), như Gboard. Ô ⚙, ⇧ và
  * `,` `.` giữ được giá trị của trang ([KeyLayers.symbolUsable]): có giá trị thì thay phím của lớp chữ, trống thì
- * giữ phím đó. Phím chuyển trang là một giá trị của lưới (mặc định ở ô ⚙; dữ liệu trước 0.7.1 ở ô chữ Z).
+ * giữ phím đó. Phím chuyển trang là một giá trị của lưới (mặc định ở ô ⚙, ở bố cục truyền thống là ô ⇧; dữ liệu
+ * trước 0.7.1 ở ô chữ Z).
  */
 object SymbolPages {
     private const val P = KeyCode.PAGE
@@ -35,6 +36,36 @@ object SymbolPages {
         ),
     )
 
+    /**
+     * Hai trang của bố cục truyền thống: số 1…0 ở hàng trên, phím 1/2 ở ô ⇧ (☺ thành 1234 như mọi bố cục). Hàng giữa
+     * có 9 ô nên `/` sang ô ⚙; dấu phẩy giữ chỗ cạnh phím cách. Trang 2 có `\` ở ô ⚙, `<` `>` hai bên phím cách
+     * (₫ thay ¢).
+     */
+    val QWERTY: List<CellGrid> = listOf(
+        CellGrid(
+            listOf(
+                "1 2 3 4 5 6 7 8 9 0".split(' '),
+                "@ # \$ _ & - + ( )".split(' '),
+                listOf(P) + "* \" ' : ; ! ?".split(' ') + listOf(""),
+                listOf("", "", "/", "", "", "", "", "", "", ""),
+            )
+        ),
+        CellGrid(
+            listOf(
+                "~ ` | • √ π ÷ × § ∆".split(' '),
+                "£ ₫ € ¥ ^ ° = { }".split(' '),
+                listOf(P) + "% © ® ™ ✓ [ ]".split(' ') + listOf(""),
+                listOf("", "", "\\", "<", "", "", "", "", ">", ""),
+            )
+        ),
+    )
+
+    /** Hai trang có sẵn của kiểu lưới [spec]. */
+    fun defaultFor(spec: GridSpec): List<CellGrid> = when (spec) {
+        GridSpec.HEX7 -> DEFAULT
+        GridSpec.QWERTY -> QWERTY
+    }
+
     private val PAGE1_OF_LETTER: Map<String, String> = mapOf(
         "q" to "1", "w" to "2", "e" to "3", "r" to "4", "t" to "5",
         "y" to "6", "u" to "7", "i" to "8", "o" to "9", "p" to "0",
@@ -64,7 +95,7 @@ object SymbolPages {
                 when {
                     code == null -> null
                     code == KeyCode.EMOJI -> KeyCode.DIAL
-                    code == KeyCode.SETTINGS || code == "," || code == "." -> page[r, c].ifEmpty { code }
+                    code == KeyCode.SETTINGS || code == KeyCode.SHIFT || code == "," || code == "." -> page[r, c].ifEmpty { code }
                     KeyCode.isFunction(code) -> code
                     else -> page[r, c]
                 }

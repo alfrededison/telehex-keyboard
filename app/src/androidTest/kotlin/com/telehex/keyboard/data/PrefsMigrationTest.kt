@@ -132,4 +132,50 @@ class PrefsMigrationTest : InstrumentationTestCase() {
         assertEquals(KeyLayers.DEFAULT_SWIPE.with(r, c, "x"), p.swipeGrid)
         assertEquals(SymbolPages.DEFAULT, p.symbolPages)
     }
+
+    fun testUserProfileNamedLikeANewBuiltInIsRenamedAndStaysActive() {
+        // Trước 0.7.3 người dùng có thể đặt tên profile là "Truyền thống"
+        val mine = legacyProfile.named("truyền thống")
+        storeLive(mine, mine.name)
+        raw().edit().putString(Prefs.KEY_PROFILES, profiles(mine)).commit()
+        val p = prefs()
+        p.ensureProfiles()
+        assertEquals("truyền thống 2", p.activeProfile.name)
+        assertTrue(p.userProfiles.single().sameLayers(mine))
+        assertLive(mine, p)
+    }
+
+    fun testRestoringABackupWithAShadowedNameKeepsTheUserLayers() {
+        val mine = legacyProfile.named(Profile.QWERTY.name)
+        val backup = JSONObject()
+            .put(Prefs.KEY_LAYOUT, legacy.toJson())
+            .put(Prefs.KEY_SWIPE_GRID, grids(listOf(legacySwipe)))
+            .put(Prefs.KEY_SYMBOL_PAGES, grids(legacySymbols))
+            .put(Prefs.KEY_PROFILES, profiles(mine))
+            .put(Prefs.KEY_ACTIVE_PROFILE, mine.name)
+        val p = prefs()
+        p.importJson(backup.toString())
+        assertEquals("${Profile.QWERTY.name} 2", p.activeProfile.name)
+        assertLive(mine, p)
+    }
+
+    fun testTraditionalProfileStoresItsOwnGrid() {
+        val p = prefs()
+        p.saveProfiles(emptyList(), Profile.QWERTY)
+        val again = prefs()
+        assertEquals(Profile.QWERTY.name, again.activeProfile.name)
+        assertLive(Profile.QWERTY, again)
+    }
+
+    fun testMismatchedStoredGridFallsBackToTheLayoutsDefault() {
+        // Lớp chữ truyền thống nhưng lớp vuốt xuống / 123 còn của lưới tổ ong (khôi phục dở dang)
+        raw().edit()
+            .putString(Prefs.KEY_LAYOUT, LayoutModel.QWERTY.toJson())
+            .putString(Prefs.KEY_SWIPE_GRID, grids(listOf(KeyLayers.DEFAULT_SWIPE)))
+            .putString(Prefs.KEY_SYMBOL_PAGES, grids(SymbolPages.DEFAULT))
+            .commit()
+        val p = prefs()
+        assertEquals(KeyLayers.QWERTY_SWIPE, p.swipeGrid)
+        assertEquals(SymbolPages.QWERTY, p.symbolPages)
+    }
 }

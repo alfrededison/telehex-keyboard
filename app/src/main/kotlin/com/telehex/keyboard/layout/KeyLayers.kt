@@ -1,12 +1,14 @@
 package com.telehex.keyboard.layout
 
 /**
- * Lưới 5×7 giá trị theo ô; "" = trống. Ký tự vuốt xuống và hai trang lớp 123 gắn theo ô,
- * không theo chữ: đổi chỗ chữ ở lớp chữ không kéo theo hai lớp này.
+ * Lưới giá trị theo ô, cùng hình với lớp chữ ([GridSpec]); "" = trống. Ký tự vuốt xuống và hai trang lớp 123 gắn
+ * theo ô, không theo chữ: đổi chỗ chữ ở lớp chữ không kéo theo hai lớp này.
  */
 data class CellGrid(val rows: List<List<String>>) {
+    val spec: GridSpec get() = GridSpec.of(rows.map { it.size })!!
+
     init {
-        require(rows.size == LayoutModel.ROWS && rows.all { it.size == LayoutModel.COLS }) { "Cần lưới 5×7" }
+        requireNotNull(GridSpec.of(rows.map { it.size })) { "Lưới không đúng kiểu nào" }
     }
 
     operator fun get(r: Int, c: Int): String = rows[r][c]
@@ -40,11 +42,12 @@ object KeyLayers {
     )
 
     /**
-     * Ô giữ được giá trị của lớp 123: ô chữ, cùng ô ⚙ và `,` `.` — giá trị ở ba ô này (nếu có) thay phím của lớp chữ
-     * khi hiện lớp 123 (phím 1/2 ở ô ⚙, `<` `>` ở trang 2), ô trống thì vẫn là phím của lớp chữ. Các phím chức năng
+     * Ô giữ được giá trị của lớp 123: ô chữ, cùng ô ⚙, ⇧ và `,` `.` — giá trị ở các ô này (nếu có) thay phím của lớp
+     * chữ khi hiện lớp 123 (phím 1/2 ở ô ⚙ hay ⇧, `<` `>` ở trang 2), ô trống thì vẫn là phím của lớp chữ. Các phím chức năng
      * khác và phím cách lấy từ lớp chữ.
      */
-    fun symbolUsable(code: String): Boolean = KeyCode.isLetter(code) || code == KeyCode.SETTINGS || code == "," || code == "."
+    fun symbolUsable(code: String): Boolean =
+        KeyCode.isLetter(code) || code == KeyCode.SETTINGS || code == KeyCode.SHIFT || code == "," || code == "."
 
     /** [reconcile] lớp 123: giá trị bị che dời sang ô chữ trước, chỉ khi hết ô chữ trống mới chiếm ô ⚙ / `,` `.` trống. */
     fun reconcileSymbols(layout: LayoutModel, pages: List<CellGrid>): List<CellGrid> =
@@ -94,12 +97,13 @@ object KeyLayers {
         fun free(r: Int, c: Int) = layout[r, c]?.let(target) ?: false
         val m = pages.map { g -> g.rows.map { it.toMutableList() } }
         val hidden = ArrayList<Pair<Int, String>>()
-        for (p in m.indices) for (r in 0 until LayoutModel.ROWS) for (c in 0 until LayoutModel.COLS)
+        require(pages.all { it.spec == layout.spec }) { "Lớp khác kiểu lưới với lớp chữ" }
+        for (p in m.indices) for (r in m[p].indices) for (c in m[p][r].indices)
             if (!ok(r, c) && m[p][r][c].isNotEmpty()) { hidden += p to m[p][r][c]; m[p][r][c] = "" }
         for ((p0, v) in hidden) {
             run place@{
                 for (accepts in listOf(::free, ::ok)) for (p in listOf(p0) + m.indices.filter { it != p0 })
-                    for (r in 0 until LayoutModel.ROWS) for (c in 0 until LayoutModel.COLS)
+                    for (r in m[p].indices) for (c in m[p][r].indices)
                         if (accepts(r, c) && m[p][r][c].isEmpty()) { m[p][r][c] = v; return@place }
             }
         }
@@ -116,4 +120,12 @@ object KeyLayers {
 
     /** Lớp vuốt xuống mặc định: theo phím trên bố cục mặc định (số 1…0 dưới Q…P). */
     val DEFAULT_SWIPE: CellGrid = CellGrid.fromCodes(LayoutModel.DEFAULT) { DEFAULT_SWIPE_BY_CODE[it] }
+
+    /** Lớp vuốt xuống của bố cục truyền thống: số 1…0 dưới hàng Q…P như phím giữ của Gboard. */
+    val QWERTY_SWIPE: CellGrid = CellGrid.fromCodes(LayoutModel.QWERTY) { DEFAULT_SWIPE_BY_CODE[it] }
+
+    fun defaultSwipe(spec: GridSpec): CellGrid = when (spec) {
+        GridSpec.HEX7 -> DEFAULT_SWIPE
+        GridSpec.QWERTY -> QWERTY_SWIPE
+    }
 }

@@ -2,6 +2,8 @@
 
 ## 0.7.3 — unreleased
 
+- Thêm profile có sẵn "Truyền thống" cho ai chưa quen lưới tổ ong: bố cục QWERTY 10 cột quen thuộc, phím chữ nhật, có phím ⇧ (chạm đúp khoá chữ hoa) và ⌫ (giữ để xoá liên tục), lớp 123 hai trang với hàng số 1…0 ở trên. Mọi cử chỉ, gợi ý và gõ vuốt dùng như trên lưới tổ ong. Chọn trong Cài đặt › Bàn phím.
+
 ## 0.7.2 — 2026-11-09
 
 - Clipboard history không còn nằm trong bản sao lưu tự động của Android hay khi chuyển sang máy mới; mục thường quá 1 giờ bị xoá ngay khi bàn phím khởi động hoặc hiện lên, không đợi lần chép kế tiếp.

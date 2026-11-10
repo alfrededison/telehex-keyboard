@@ -3,6 +3,7 @@ package com.telehex.keyboard.data
 import android.content.Context
 import android.content.SharedPreferences
 import com.telehex.keyboard.layout.CellGrid
+import com.telehex.keyboard.layout.GridSpec
 import com.telehex.keyboard.layout.KeyLayers
 import com.telehex.keyboard.layout.LayoutModel
 import com.telehex.keyboard.layout.Profile
@@ -100,7 +101,7 @@ class Prefs(context: Context, fileName: String = "telehex") {
         e.apply()
         // Ba lớp của bàn phím phải khớp profile đang dùng, dù bản sao lưu mang theo lớp nào: có profile thì ghi lại
         // ba lớp theo profile đó; bản trước khi có profile thì nhận các lớp vừa khôi phục làm profile ([ensureProfiles]).
-        if (o.has(KEY_ACTIVE_PROFILE)) saveProfiles(readProfiles(), activeProfile)
+        if (o.has(KEY_ACTIVE_PROFILE)) { ensureProfiles(); saveProfiles(readProfiles(), activeProfile) }
         else if (listOf(KEY_LAYOUT, KEY_CUSTOM, KEY_SWIPE_GRID, KEY_SYMBOL_PAGES).any(o::has)) sp.edit().remove(KEY_ACTIVE_PROFILE).apply()
     }
 
@@ -247,7 +248,10 @@ class Prefs(context: Context, fileName: String = "telehex") {
     val swipeGrid: CellGrid
         get() {
             val l = layout
-            val raw = sp.getString(KEY_SWIPE_GRID, null)?.let { gridsFromJson(it, 1) }?.single() ?: run {
+            val raw = sp.getString(KEY_SWIPE_GRID, null)?.let { gridsFromJson(it, 1) }?.single()
+                // Lưới khác kiểu với lớp chữ (khôi phục dở dang): dùng lớp có sẵn của kiểu lưới đó
+                ?.let { if (it.spec == l.spec) it else KeyLayers.defaultSwipe(l.spec) } ?: run {
+                if (l.spec != GridSpec.HEX7) return KeyLayers.defaultSwipe(l.spec)
                 val custom = legacyCustomKeys
                 var g = CellGrid.fromCodes(l) { custom[it] ?: KeyLayers.DEFAULT_SWIPE_BY_CODE[it] }
                 if (storedLayout() != null) g = KeyLayers.pinDigits(g)
@@ -264,7 +268,9 @@ class Prefs(context: Context, fileName: String = "telehex") {
     val symbolPages: List<CellGrid>
         get() {
             val l = layout
-            val raw = sp.getString(KEY_SYMBOL_PAGES, null)?.let { gridsFromJson(it, 2) } ?: run {
+            val raw = sp.getString(KEY_SYMBOL_PAGES, null)?.let { gridsFromJson(it, 2) }
+                ?.let { pages -> if (pages.all { it.spec == l.spec }) pages else SymbolPages.defaultFor(l.spec) } ?: run {
+                if (l.spec != GridSpec.HEX7) return SymbolPages.defaultFor(l.spec)
                 val p = if (storedLayout() == null) SymbolPages.DEFAULT
                 else SymbolPages.fromLetters(l).let { listOf(KeyLayers.pinDigits(it[0]), it[1]) }
                 sp.edit().putString(KEY_SYMBOL_PAGES, gridsToJson(p)).apply()
@@ -293,6 +299,7 @@ class Prefs(context: Context, fileName: String = "telehex") {
      * sẵn đã bỏ): nhận bố cục đang dùng làm profile ([Profile.adopt]).
      */
     fun ensureProfiles() {
+        renameProfilesShadowedByBuiltIn()
         val active = sp.getString(KEY_ACTIVE_PROFILE, null)
         val user = readProfiles()
         Profile.BUILT_IN.firstOrNull { it.name == active }?.let { builtIn ->
@@ -303,6 +310,27 @@ class Prefs(context: Context, fileName: String = "telehex") {
         val (adopted, name) = Profile.adopt(liveLayers(), user)
         // Preset bản cũ (chỉ lớp chữ) không chuyển sang profile: bỏ để khỏi đi theo bản sao lưu
         sp.edit().putString(KEY_PROFILES, profilesToJson(adopted)).putString(KEY_ACTIVE_PROFILE, name).remove(LEGACY_PRESETS).apply()
+    }
+
+    /**
+     * Profile người dùng trùng tên (không phân biệt hoa thường) với một profile có sẵn mới thêm (như "Truyền thống" ở
+     * 0.7.3, hay từ bản sao lưu cũ) thì đổi tên thành "… 2", để không bị profile có sẵn che mất. Lúc chưa đổi, tên
+     * đang dùng trùng như vậy là của profile người dùng, vì trước đó chưa có profile có sẵn mang tên đó.
+     */
+    private fun renameProfilesShadowedByBuiltIn() {
+        val builtIn = Profile.BUILT_IN.map { it.name }
+        val user = readProfiles()
+        if (user.none { Profile.nameTaken(it.name, builtIn) }) return
+        val taken = (builtIn + user.map { it.name }).toMutableList()
+        val active = sp.getString(KEY_ACTIVE_PROFILE, null)
+        var newActive = active
+        val renamed = user.map { p ->
+            if (!Profile.nameTaken(p.name, builtIn)) return@map p
+            val n = Profile.uniqueName(p.name, taken).also { taken += it }
+            if (p.name == active) newActive = n
+            p.named(n)
+        }
+        sp.edit().putString(KEY_PROFILES, profilesToJson(renamed)).putString(KEY_ACTIVE_PROFILE, newActive).apply()
     }
 
     /** Profile người dùng tạo, theo thứ tự tạo. */
@@ -338,11 +366,14 @@ class Prefs(context: Context, fileName: String = "telehex") {
         runCatching {
             val a = JSONArray(json)
             (0 until a.length()).mapNotNull { i ->
-                val o = a.getJSONObject(i)
-                val letters = LayoutModel.fromJson(o.getString("letters"))?.takeIf { it.validate() == null } ?: return@mapNotNull null
-                val swipe = gridsFromJson(o.getString("swipe"), 1)?.single() ?: return@mapNotNull null
-                val symbols = gridsFromJson(o.getString("symbols"), 2) ?: return@mapNotNull null
-                Profile(o.getString("name"), letters, swipe, symbols).reconciled()
+                // Một profile hỏng (ba lớp khác kiểu lưới…) không làm mất cả danh sách
+                runCatching {
+                    val o = a.getJSONObject(i)
+                    val letters = LayoutModel.fromJson(o.getString("letters"))?.takeIf { it.validate() == null } ?: return@mapNotNull null
+                    val swipe = gridsFromJson(o.getString("swipe"), 1)?.single() ?: return@mapNotNull null
+                    val symbols = gridsFromJson(o.getString("symbols"), 2) ?: return@mapNotNull null
+                    Profile(o.getString("name"), letters, swipe, symbols).reconciled()
+                }.getOrNull()
             }
         }.getOrNull()
     } ?: emptyList()

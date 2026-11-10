@@ -6,7 +6,7 @@ Mã Android hiện tại là nguồn tham chiếu cho hành vi và hình học.
 
 ## 1. Nguyên tắc
 
-- Bàn phím Telex tiếng Việt trên lưới lục giác đều 7 cột; hỗ trợ profile tuỳ biến.
+- Bàn phím Telex tiếng Việt trên lưới lục giác đều 7 cột; profile "Truyền thống" cho bố cục QWERTY 10 cột; hỗ trợ profile tuỳ biến.
 - Chạy hoàn toàn offline, không xin quyền INTERNET, dữ liệu gõ ở bộ nhớ riêng của app.
 - Không autocorrect: chỉ thay chữ khi người dùng chạm một gợi ý.
 - Phím cách và Enter cố định; từng lớp Chữ / Vuốt xuống / 123 sắp xếp riêng theo ô.
@@ -26,6 +26,20 @@ Với chiều rộng khả dụng `Wu` (trừ padding 8dp mỗi bên):
 - Phím cách ghép 3 ô giữa hàng cuối; thu hình vẽ 1.5dp mỗi cạnh để có khe.
 - Hit-test chọn tâm gần nhất, có tuỳ chọn học độ lệch chạm và vùng chạm động.
 - Một tay thu lưới về 80%, dồn trái/phải; lục giác luôn đều.
+
+Kiểu lưới (`GridSpec`) nhận ra từ số ô mỗi hàng của lớp chữ, nên JSON bố cục không thêm trường; nó giữ mép trái
+từng ô nên một hàng không cần lệch đều. Ba lớp của một profile luôn cùng kiểu lưới. Lưới truyền thống
+(`GridSpec.QWERTY`):
+
+- 4 hàng 10/9/9/10 ô, `W = Wu / 10`. Q…P mép trái `0…9 · W`, A…L lệch `0.5 · W`; hàng Z: ⇧ ở `0`, Z…M ở
+  `1.5…7.5 · W` (Z ngay dưới S), ⌫ ở `9 · W`, chừa ½ ô hai bên chữ; hàng cuối 10 ô.
+- Ô kề: hai ô cùng hàng và các ô hàng trên/dưới có tâm lệch không quá 1 ô (lưới lệch ½ ô cho 2, hàng thẳng cột
+  cho 3).
+- Phím chữ nhật bo góc, bước hàng `min(1.44 · W, 60dp)` (Gboard đo trên máy 411dp: 40,8 × 58,7dp); khe ngang
+  ~5,5dp, dọc ~11dp.
+- Hàng cuối `123 ☺ ⚙ , [cách 4 ô] . ↵`. Lớp 123: phím 1/2 ở ô ⇧, `/` (trang 2 là `\`) ở ô ⚙.
+- Hit-test lấy ô gần nhất theo khoảng cách Chebyshev chia nửa ô (ô chứa điểm luôn thắng; chạm khoảng trống cạnh
+  ⇧ / ⌫ ra phím gần nhất), cùng học độ lệch chạm và vùng chạm động.
 
 Mặc định dùng composing text. App trong danh sách dự phòng dùng
 `deleteSurroundingText` + `commitText`. Theo dõi thay đổi selection để giữ chữ và kết thúc

@@ -262,10 +262,12 @@ class LayoutEditorActivity : Activity() {
 
         saveButton = col.addButton("") { save() }
         col.addButton("Về mặc định (lớp này)") {
+            // Mặc định theo kiểu lưới đang sửa (tổ ong hay truyền thống)
+            val spec = editor.layout.spec
             when (editor.layer) {
-                EditLayer.SWIPE -> editor.setSwipe(KeyLayers.DEFAULT_SWIPE)
-                EditLayer.SYMBOLS -> editor.setSymbols(SymbolPages.DEFAULT)
-                EditLayer.LETTERS -> editor.setLetters(LayoutModel.DEFAULT)
+                EditLayer.SWIPE -> editor.setSwipe(KeyLayers.defaultSwipe(spec))
+                EditLayer.SYMBOLS -> editor.setSymbols(SymbolPages.defaultFor(spec))
+                EditLayer.LETTERS -> editor.setLetters(LayoutModel.defaultFor(spec))
             }
         }
         root.addView(editor, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
@@ -273,7 +275,7 @@ class LayoutEditorActivity : Activity() {
         editor.onChanged = ::onEditorChanged
         editor.onTapSwipe = { key, r, c ->
             // Ở lớp này nhãn phụ (sub) là chữ của phím
-            SwipeCharPicker.show(this, key.sub.ifEmpty { key.code }, editor.swipe[r, c], KeyLayers.DEFAULT_SWIPE[r, c]) { v ->
+            SwipeCharPicker.show(this, key.sub.ifEmpty { key.code }, editor.swipe[r, c], KeyLayers.defaultSwipe(editor.layout.spec)[r, c]) { v ->
                 editor.setSwipeAt(r, c, v)
             }
         }
@@ -379,7 +381,8 @@ class LayoutEditorActivity : Activity() {
 
     private fun createProfile() {
         askName("Tạo profile", Profile.uniqueName("Profile mới", allProfiles().map { it.name })) { n ->
-            val p = Profile.DEFAULT.named(n)
+            // Profile mới cùng kiểu lưới với profile đang dùng
+            val p = Profile.builtInFor(active.spec).named(n)
             commit(user + p, p)
         }
     }

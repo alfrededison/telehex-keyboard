@@ -13,13 +13,15 @@ import android.util.TypedValue
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
-import com.telehex.keyboard.layout.HexGeometry
+import com.telehex.keyboard.layout.GridSpec
 import com.telehex.keyboard.layout.KeyCode
+import com.telehex.keyboard.layout.KeyGeometry
 import com.telehex.telex.predict.GlideDecoder.Point
 import kotlin.math.hypot
 
 /**
- * Bàn phím lục giác vẽ bằng Canvas với `Path` dựng sẵn cho mỗi phím, cache lại khi kích thước đổi.
+ * Bàn phím vẽ bằng Canvas với `Path` dựng sẵn cho mỗi phím, cache lại khi kích thước đổi. Kiểu lưới (tổ ong hay
+ * truyền thống) suy ra từ các ô của [keys].
  */
 open class KeyboardView @JvmOverloads constructor(
     context: Context,
@@ -66,8 +68,23 @@ open class KeyboardView @JvmOverloads constructor(
     var keys: List<Key> = emptyList()
         set(value) {
             if (field != value) cancelTouches()
-            field = value; rebuild(); invalidate()
+            field = value
+            specOf(value)?.takeIf { it != spec }?.let { s ->
+                spec = s
+                if (width > 0) geometry = makeGeometry(width.toFloat())
+                requestLayout() // đổi kiểu lưới thì đổi chiều cao
+            }
+            rebuild(); invalidate()
         }
+
+    /** Kiểu lưới của các phím đang vẽ. */
+    private var spec: GridSpec = GridSpec.HEX7
+
+    private fun specOf(keys: List<Key>): GridSpec? {
+        val sizes = IntArray(keys.maxOfOrNull { k -> k.cells.maxOf { it.first } }?.plus(1) ?: return null)
+        for (k in keys) for ((r, c) in k.cells) sizes[r] = maxOf(sizes[r], c + 1)
+        return GridSpec.of(sizes.toList())
+    }
 
     /** Nhãn chữ cái viết hoa (chữ sắp gõ sẽ hoa) hay thường, như Gboard. */
     var shifted: Boolean = true
@@ -89,7 +106,8 @@ open class KeyboardView @JvmOverloads constructor(
     var oneHanded: Int = 0
         set(value) { field = value; if (width > 0) { geometry = makeGeometry(width.toFloat()); rebuild(); invalidate() } }
 
-    private fun makeGeometry(w: Float) = HexGeometry(w, padPx, topPx, gapPx, if (oneHanded == 0) 1f else 0.8f, oneHanded == 2)
+    private fun makeGeometry(w: Float, spec: GridSpec = this.spec) =
+        KeyGeometry.of(spec, w, padPx, topPx, gapPx, dp(MAX_ROW_DP), if (oneHanded == 0) 1f else 0.8f, oneHanded == 2)
 
     var hapticEnabled: Boolean = true
     var soundEnabled: Boolean = false
@@ -97,7 +115,7 @@ open class KeyboardView @JvmOverloads constructor(
 
     private class Drawn(val key: Key, val path: Path, val center: PointF)
 
-    private var geometry: HexGeometry? = null
+    private var geometry: KeyGeometry? = null
     private var drawn: List<Drawn> = emptyList()
     private val cellToKey = HashMap<Pair<Int, Int>, Key>()
     private val pressed = HashMap<Int, Key>()
@@ -157,8 +175,9 @@ open class KeyboardView @JvmOverloads constructor(
             key ?: return
             // Ngón cái có thể chạm mép nút chức năng rồi lăn sang chữ trước khi nhấc.
             // Lần chạm ngắn kết thúc trên chữ phải gõ chữ đó, không bật ⚙/123 đã chạm lúc đầu.
+            // ⌫ và ⇧ nằm sát chữ: chạm lệch vẫn là ⌫ / ⇧, không thành chữ bên cạnh
             val released = if (gesture == Gesture.TAP && down != null &&
-                KeyCode.isFunction(key.code) && !key.isSpace) {
+                KeyCode.isFunction(key.code) && !key.isSpace && key.code != KeyCode.BACKSPACE && key.code != KeyCode.SHIFT) {
                 keyAtPosition(down[0] + dx, down[1] + dy)?.takeIf { it.isLetter } ?: key
             } else key
             if (gesture == Gesture.TAP && down != null) {
@@ -317,9 +336,9 @@ open class KeyboardView @JvmOverloads constructor(
     /** Chiều cao lưới hiện tại (px), dùng cho các bảng thay thế lưới (emoji, dialpad). */
     val gridHeightPx: Int get() = (topPx + (geometry?.gridHeight ?: 0f) + bottomPx).toInt()
 
-    /** Chiều cao lưới sẽ có với bề rộng [widthPx], không cần đã đo. */
-    fun expectedHeight(widthPx: Int): Int =
-        (topPx + makeGeometry(widthPx.toFloat()).gridHeight + bottomPx).toInt()
+    /** Chiều cao lưới sẽ có với bề rộng [widthPx] và kiểu lưới [spec], không cần đã đo hay đã có phím. */
+    fun expectedHeight(widthPx: Int, spec: GridSpec = this.spec): Int =
+        (topPx + makeGeometry(widthPx.toFloat(), spec).gridHeight + bottomPx).toInt()
 
     fun dp(v: Float): Float = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, resources.displayMetrics)
     private fun sp(v: Float): Float = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, v, resources.displayMetrics)
@@ -341,11 +360,9 @@ open class KeyboardView @JvmOverloads constructor(
         cellToKey.clear()
         drawn = keys.map { key ->
             for (cell in key.cells) cellToKey[cell] = key
-            if (key.isSpace) Drawn(key, g.spacePath(), g.spaceCenter())
-            else {
-                val (r, c) = key.cells.first()
-                Drawn(key, g.hexPath(r, c), g.center(r, c))
-            }
+            // Phím nhiều ô (phím cách) chiếm các ô liền nhau trên một hàng
+            val (r, c) = key.cells.minBy { it.second }
+            Drawn(key, g.keyPath(r, c, key.cells.size), g.keyCenter(r, c, key.cells.size))
         }
     }
 
@@ -422,14 +439,23 @@ open class KeyboardView @JvmOverloads constructor(
         val smallSize = sp(14f)
         for (d in drawn) {
             val k = d.key
-            fill.color = theme.bgFor(k.kind)
+            val isShift = k.code == KeyCode.SHIFT
+            fill.color = when {
+                isShift && capsLock -> theme.enterBg
+                isShift && shifted -> theme.vowelBg
+                else -> theme.bgFor(k.kind)
+            }
             if (dimmed) fill.alpha = 110
             canvas.drawPath(d.path, fill)
             if (k in pressedKeys) {
                 fill.color = theme.pressedOverlay
                 canvas.drawPath(d.path, fill)
             }
-            val fg = theme.fgFor(k.kind)
+            val fg = when {
+                isShift && capsLock -> theme.enterFg
+                isShift && shifted -> theme.vowelFg
+                else -> theme.fgFor(k.kind)
+            }
             labelPaint.color = fg
             labelPaint.textSize = when {
                 k.kind == KeyKind.FUNCTION && k.label.length > 1 -> smallSize
@@ -449,7 +475,12 @@ open class KeyboardView @JvmOverloads constructor(
             }
             // Nhãn chính; nếu có nhãn phụ hoặc ký tự vuốt xuống ở dưới thì nhích lên một chút
             val labelY = cy + labelPaint.textSize * 0.36f - (if (hasSub || hasHint) sp(4f) else 0f)
-            canvas.drawText(if (k.isLetter && !shifted) k.code else k.label, cx, labelY, labelPaint)
+            val label = when {
+                isShift -> if (capsLock) "⇪" else if (shifted) "⬆" else "⇧"
+                k.isLetter && !shifted -> k.code
+                else -> k.label
+            }
+            canvas.drawText(label, cx, labelY, labelPaint)
             if (hasSub) {
                 subPaint.color = fg; subPaint.textSize = sp(11f)
                 canvas.drawText(k.sub, cx, labelY + sp(12f), subPaint)
@@ -534,6 +565,11 @@ open class KeyboardView @JvmOverloads constructor(
         }
         if (consumed) invalidate()
         return consumed
+    }
+
+    companion object {
+        /** Trần bước hàng của phím chữ nhật (dp), để màn ngang không quá cao. */
+        private const val MAX_ROW_DP = 60f
     }
 
     @SuppressLint("ClickableViewAccessibility")

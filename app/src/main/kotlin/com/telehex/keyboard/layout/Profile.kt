@@ -6,6 +6,12 @@ package com.telehex.keyboard.layout
  */
 class Profile(val name: String, val letters: LayoutModel, val swipe: CellGrid, val symbols: List<CellGrid>) {
 
+    init {
+        require(swipe.spec == letters.spec && symbols.all { it.spec == letters.spec }) { "Ba lớp phải cùng kiểu lưới" }
+    }
+
+    val spec: GridSpec get() = letters.spec
+
     val isBuiltIn: Boolean get() = BUILT_IN.any { it.name == name }
 
     fun sameLayers(o: Profile): Boolean = letters.rows == o.letters.rows && swipe == o.swipe && symbols == o.symbols
@@ -43,11 +49,17 @@ class Profile(val name: String, val letters: LayoutModel, val swipe: CellGrid, v
 
         val DEFAULT = Profile("Mặc định", LayoutModel.DEFAULT, KeyLayers.DEFAULT_SWIPE, SymbolPages.DEFAULT)
 
+        /** Bàn phím truyền thống kiểu Gboard (lưới [GridSpec.QWERTY]) cho ai chưa quen lưới tổ ong. */
+        val QWERTY = Profile("Truyền thống", LayoutModel.QWERTY, KeyLayers.QWERTY_SWIPE, SymbolPages.QWERTY)
+
         /**
          * Profile có sẵn, hiện trước profile người dùng tạo. "Cân bằng hai ngón" và "Công thái học" bỏ ở 0.7.1: ai đang
          * dùng thì [adopt] giữ nguyên bố cục thành profile "Của tôi".
          */
-        val BUILT_IN: List<Profile> = listOf(DEFAULT)
+        val BUILT_IN: List<Profile> = listOf(DEFAULT, QWERTY)
+
+        /** Profile có sẵn của kiểu lưới [spec]: điểm xuất phát khi tạo mới hay về mặc định. */
+        fun builtInFor(spec: GridSpec): Profile = BUILT_IN.first { it.spec == spec }
 
         fun nameTaken(name: String, taken: Collection<String>) = taken.any { it.equals(name, ignoreCase = true) }
 

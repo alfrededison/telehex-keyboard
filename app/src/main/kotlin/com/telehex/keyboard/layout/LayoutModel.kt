@@ -14,26 +14,24 @@ object KeyCode {
     const val BACKSPACE = "#back"
     const val SPACE = "#space"
     const val DIAL = "#dial"
+    const val SHIFT = "#shift"
 
     fun isLetter(code: String): Boolean = code.length == 1 && code[0] in 'a'..'z'
     fun isFunction(code: String): Boolean = code.startsWith("#")
 }
 
 /**
- * Lưới 5 hàng × 7 cột của lớp chữ. `null` = ô thuộc phím cách (3 ô giữa hàng cuối).
+ * Lưới lớp chữ theo một [GridSpec] (nhận ra từ số ô mỗi hàng). `null` = ô thuộc phím cách (các ô giữa hàng cuối).
  */
 class LayoutModel(val rows: List<List<String?>>) {
 
-    init {
-        require(rows.size == ROWS) { "Cần $ROWS hàng" }
-        require(rows.all { it.size == COLS }) { "Mỗi hàng cần $COLS cột" }
-    }
+    val spec: GridSpec = requireNotNull(GridSpec.of(rows.map { it.size })) { "Lưới không đúng kiểu nào" }
 
     operator fun get(r: Int, c: Int): String? = rows[r][c]
 
     /** Vị trí (hàng, cột) của một mã phím, hoặc null. */
     fun find(code: String): Pair<Int, Int>? {
-        for (r in 0 until ROWS) for (c in 0 until COLS) if (rows[r][c] == code) return r to c
+        for (r in rows.indices) for (c in rows[r].indices) if (rows[r][c] == code) return r to c
         return null
     }
 
@@ -57,23 +55,19 @@ class LayoutModel(val rows: List<List<String?>>) {
         if (KeyCode.NUMBERS !in codes) return "Thiếu phím 123"
         if (KeyCode.SETTINGS !in codes) return "Thiếu phím ⚙"
         if (KeyCode.ENTER !in codes) return "Thiếu phím ↵"
-        if (rows[4][2] != null || rows[4][3] != null || rows[4][4] != null) return "Phím cách phải chiếm 3 ô giữa hàng cuối"
-        if (rows.flatten().count { it == null } != 3) return "Chỉ có 3 ô thuộc phím cách"
+        val n = spec.spaceCells
+        if ((0 until n).any { rows[spec.spaceRow][spec.spaceFirstCol + it] != null }) return "Phím cách phải chiếm $n ô giữa hàng cuối"
+        if (rows.flatten().count { it == null } != n) return "Chỉ có $n ô thuộc phím cách"
         return null
     }
 
-    /** Các ô kề (tối đa 6) của ô (r, c) trên lưới lục giác lệch hàng [0.5, 0, 0.5, 0, 0.5]. */
-    fun neighborCells(r: Int, c: Int): List<Pair<Int, Int>> {
-        val shifted = r % 2 == 0 // hàng lệch ½ sang phải
-        val cand = if (shifted) listOf(r to c - 1, r to c + 1, r - 1 to c, r - 1 to c + 1, r + 1 to c, r + 1 to c + 1)
-        else listOf(r to c - 1, r to c + 1, r - 1 to c - 1, r - 1 to c, r + 1 to c - 1, r + 1 to c)
-        return cand.filter { (rr, cc) -> rr in 0 until ROWS && cc in 0 until COLS }
-    }
+    /** Các ô kề (tối đa 6) của ô (r, c), xem [GridSpec.neighborCells]. */
+    fun neighborCells(r: Int, c: Int): List<Pair<Int, Int>> = spec.neighborCells(r, c)
 
     /** Chữ cái → các chữ cái kề trên lưới (bỏ phím chức năng và ô phím cách). */
     fun letterNeighbors(): Map<Char, List<Char>> {
         val out = HashMap<Char, List<Char>>()
-        for (r in 0 until ROWS) for (c in 0 until COLS) {
+        for (r in rows.indices) for (c in rows[r].indices) {
             val code = rows[r][c] ?: continue
             if (!KeyCode.isLetter(code)) continue
             out[code[0]] = neighborCells(r, c).mapNotNull { (rr, cc) -> rows[rr][cc]?.takeIf { KeyCode.isLetter(it) }?.get(0) }
@@ -92,9 +86,6 @@ class LayoutModel(val rows: List<List<String?>>) {
     }
 
     companion object {
-        const val ROWS = 5
-        const val COLS = 7
-
         /**
          * Gần QWERTY nhất trên lưới 7 cột: hai hàng trên đọc zigzag `⚙ Q W E R T G Y H U I O P 123` (⚙ sát mép trái,
          * U I O P zigzag ở góc phải), hàng giữa `A S D F` bên trái và `J K L` thẳng hàng bên phải; G H lên hai hàng
@@ -109,6 +100,25 @@ class LayoutModel(val rows: List<List<String?>>) {
                 listOf(KeyCode.EMOJI, ",", null, null, null, ".", KeyCode.ENTER),
             )
         )
+
+        /**
+         * Truyền thống: đúng thứ tự QWERTY. Hàng Z: ⇧ sát mép trái, Z…M căn giữa, ⌫ sát mép phải. Hàng cuối:
+         * 123 ☺ ⚙ `,` bên trái phím cách 4 ô, `.` ↵ bên phải.
+         */
+        val QWERTY: LayoutModel = LayoutModel(
+            listOf(
+                "qwertyuiop".map { "$it" },
+                "asdfghjkl".map { "$it" },
+                listOf(KeyCode.SHIFT) + "zxcvbnm".map { "$it" } + listOf(KeyCode.BACKSPACE),
+                listOf(KeyCode.NUMBERS, KeyCode.EMOJI, KeyCode.SETTINGS, ",", null, null, null, null, ".", KeyCode.ENTER),
+            )
+        )
+
+        /** Lớp chữ có sẵn của kiểu lưới [spec]. */
+        fun defaultFor(spec: GridSpec): LayoutModel = when (spec) {
+            GridSpec.HEX7 -> DEFAULT
+            GridSpec.QWERTY -> QWERTY
+        }
 
         fun fromJson(json: String): LayoutModel? = runCatching {
             val arr = JSONArray(json)

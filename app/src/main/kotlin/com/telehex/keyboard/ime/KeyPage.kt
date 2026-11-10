@@ -37,7 +37,7 @@ object KeyPage {
             else -> layout.rows
         }
         val keys = ArrayList<Key>(32)
-        val spaceCells = ArrayList<Pair<Int, Int>>(3)
+        val spaceCells = ArrayList<Pair<Int, Int>>(4)
         for (r in rows.indices) for (c in rows[r].indices) {
             val code = rows[r][c]
             if (code == null) { spaceCells.add(r to c); continue }
@@ -51,6 +51,7 @@ object KeyPage {
                 code == KeyCode.ENTER -> Key(code, cell, enterLabel, kind = KeyKind.ENTER)
                 code == KeyCode.ABC -> Key(code, cell, "ABC", kind = KeyKind.FUNCTION)
                 code == KeyCode.BACKSPACE -> Key(code, cell, "⌫", kind = KeyKind.FUNCTION)
+                code == KeyCode.SHIFT -> Key(code, cell, "⇧", kind = KeyKind.FUNCTION)
                 code == "," || code == "." ->
                     Key(code, cell, code, hint = if (mode == Mode.ABC) swipe[r, c] else "", kind = KeyKind.FUNCTION)
                 mode == Mode.SYMBOLS -> Key(code, cell, code, kind = KeyKind.SYMBOL)
