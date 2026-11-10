@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.1 — unreleased
+## 0.8.1 — 2026-11-10
 
 - Gõ vuốt dùng được ở chế độ EN (vuốt xuống phím cách): lướt qua các chữ để gợi ý từ tiếng Anh, viết hoa đầu câu và "I", tự thêm dấu cách sau dấu câu. Không bật ở ô mật khẩu, email, URL hay ô tắt gợi ý, và không học từ EN vào dữ liệu tiếng Việt.
 - Gợi ý EN nhận từ rút gọn gõ thiếu dấu nháy: "ill" → I'll, "dont" → don't, "well" → có cả we'll. "I" trong I'm, I'll… luôn viết hoa.
