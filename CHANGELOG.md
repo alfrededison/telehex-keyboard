@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.8.1 — unreleased
+
 ## 0.8.0 — 2026-11-10
 
 - Thêm profile có sẵn "Truyền thống" cho ai chưa quen lưới tổ ong: bố cục QWERTY 10 cột quen thuộc, phím chữ nhật, có phím ⇧ (chạm đúp khoá chữ hoa) và ⌫ (giữ để xoá liên tục), lớp 123 hai trang với hàng số 1…0 ở trên. Mọi cử chỉ, gợi ý và gõ vuốt dùng như trên lưới tổ ong. Chọn trong Cài đặt › Bàn phím.
