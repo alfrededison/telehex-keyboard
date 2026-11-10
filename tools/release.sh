@@ -4,6 +4,7 @@
 #   tools/release.sh                    no argument: X.Y.Z is the current appVersion, unchanged
 #   tools/release.sh patch|minor|major  bump appVersion first; with appVersion 0.1.1:
 #                                       patch 0.1.2 (0.1.1 is never released), minor 0.2.0, major 1.0.0
+#   tools/release.sh --force [...]      release even if main is behind or has diverged from origin
 #   tools/release.sh -h                 print this usage
 #
 #   1. appVersion becomes X.Y.Z and CHANGELOG.md "## <appVersion> — unreleased" becomes
@@ -19,6 +20,9 @@
 #
 #   git push --atomic origin main vX.Y.Z
 #
+# With --force on a main that is behind or has diverged from origin, the printed push adds
+# --force-with-lease=main:<sha fetched during the checks>, so it overwrites only that commit.
+#
 # The tag builds the signed release as a draft. The bump commit on main builds nothing and deletes
 # the old "dev" prerelease (its X.Y.Z-dev.N is below the release); the next code commit publishes
 # <next>-dev.N, whose versionCode is above the release, so dev builds keep installing over it.
@@ -29,22 +33,28 @@ cd "$(dirname "$0")/.."
 
 usage() {
   cat <<'USAGE'
-usage: tools/release.sh [patch|minor|major]
+usage: tools/release.sh [--force] [patch|minor|major]
 
   (no argument)  release the current appVersion as it is
   patch          bump appVersion first, then release: 0.1.1 -> 0.1.2 (0.1.1 is never released)
   minor          bump appVersion first, then release: 0.1.1 -> 0.2.0
   major          bump appVersion first, then release: 0.1.1 -> 1.0.0
+  --force        release even if main is behind or has diverged from origin; the push then
+                 needs --force-with-lease and overwrites origin's main
 
 Then appVersion moves on to the next patch (0.2.0 -> 0.2.1). Nothing is pushed.
 USAGE
 }
-KIND="${1:-}"
-case "$KIND" in
-  ""|patch|minor|major) ;;
-  -h|--help) usage; exit 0 ;;
-  *) usage >&2; exit 2 ;;
-esac
+KIND=""
+FORCE=0
+for arg in "$@"; do
+  case "$arg" in
+    patch|minor|major) [ -z "$KIND" ] || { usage >&2; exit 2; }; KIND="$arg" ;;
+    -f|--force) FORCE=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *) usage >&2; exit 2 ;;
+  esac
+done
 
 GRADLE=app/build.gradle.kts
 CHANGELOG=CHANGELOG.md
@@ -76,9 +86,15 @@ git remote get-url "$REMOTE" >/dev/null 2>&1 || fail "no remote '$REMOTE' (set R
 # "dev" tag, which dev-build recreates on every code push (and deletes after a release), has moved
 # since the last fetch.
 git fetch -q "$REMOTE" "$BRANCH" || fail "cannot fetch $BRANCH from $REMOTE"
-if git rev-parse -q --verify "refs/remotes/$REMOTE/$BRANCH" >/dev/null; then
-  git merge-base --is-ancestor "$REMOTE/$BRANCH" HEAD ||
-    fail "$BRANCH is behind or has diverged from $REMOTE/$BRANCH: pull first"
+LEASE=""
+if git rev-parse -q --verify "refs/remotes/$REMOTE/$BRANCH" >/dev/null &&
+   ! git merge-base --is-ancestor "$REMOTE/$BRANCH" HEAD; then
+  [ "$FORCE" = 1 ] ||
+    fail "$BRANCH is behind or has diverged from $REMOTE/$BRANCH: pull first (or --force to overwrite it)"
+  LEASE=$(git rev-parse "$REMOTE/$BRANCH")
+  DROPPED=$(git rev-list --count "HEAD..$LEASE")
+  echo "warning: $BRANCH is behind or has diverged from $REMOTE/$BRANCH; pushing will drop:" >&2
+  git log --format='  %h %s' "HEAD..$LEASE" >&2
 fi
 if git ls-remote --exit-code --tags "$REMOTE" "refs/tags/$TAG" >/dev/null 2>&1; then
   fail "$TAG already exists on $REMOTE: release with patch, minor or major"
@@ -165,4 +181,10 @@ DONE=1
 
 RELEASE=0 . tools/version.sh
 echo "Tagged $TAG; $BRANCH is now $VERSION_NAME (versionCode $VERSION_CODE)."
-echo "Review, then push both atomically:  git push --atomic $REMOTE $BRANCH $TAG"
+if [ -n "$LEASE" ]; then
+  # The lease is the $REMOTE/$BRANCH fetched during the checks: the push fails if anyone pushed since.
+  echo "This overwrites $DROPPED commit(s) on $REMOTE/$BRANCH, listed at the start."
+  echo "Review, then push both atomically:  git push --atomic --force-with-lease=$BRANCH:$LEASE $REMOTE $BRANCH $TAG"
+else
+  echo "Review, then push both atomically:  git push --atomic $REMOTE $BRANCH $TAG"
+fi

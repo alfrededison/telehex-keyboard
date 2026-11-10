@@ -169,6 +169,64 @@ class ReleaseTest(unittest.TestCase):
         self.assertIn("pull first", result.stderr)
         self.assert_untouched(start)
 
+    def diverge(self):
+        """origin/main gains a commit this repo lacks, and this repo gains one origin lacks."""
+        other = self.other_clone()
+        (other / "README.md").write_text("pushed elsewhere\n")
+        self.git("add", "README.md", cwd=other)
+        self.git("commit", "-q", "-m", "Elsewhere", cwd=other)
+        self.git("push", "-q", "origin", "main", cwd=other)
+        self.git("commit", "-q", "--allow-empty", "-m", "Local")
+        return other
+
+    def test_force_releases_a_diverged_main_and_prints_a_leased_push(self):
+        self.diverge()
+        result = self.release("--force", "minor")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("Elsewhere", result.stderr)  # warns what the push drops
+        self.assertIn("overwrites 1 commit(s) on origin/main", result.stdout)
+        self.assertNotEqual("", self.git("tag", "-l", "v0.2.0"))
+        lease = self.git("rev-parse", "main", cwd=self.origin)
+        push = "git push --atomic --force-with-lease=main:%s origin main v0.2.0" % lease
+        self.assertIn(push, result.stdout)
+        self.git(*push.split()[1:])
+        self.assertEqual(self.git("rev-parse", "HEAD"), self.git("rev-parse", "main", cwd=self.origin))
+
+    def test_force_without_divergence_prints_the_plain_push(self):
+        result = self.release("--force")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn("git push --atomic origin main v0.1.0", result.stdout)
+
+    def test_force_may_follow_the_bump(self):
+        self.diverge()
+        result = self.release("minor", "--force")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertNotEqual("", self.git("tag", "-l", "v0.2.0"))
+
+    def test_force_still_refuses_a_tag_on_origin(self):
+        other = self.diverge()
+        self.git("tag", "v0.1.0", cwd=other)
+        self.git("push", "-q", "origin", "v0.1.0", cwd=other)
+        start = self.git("rev-parse", "HEAD")
+        result = self.release("--force")
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("already exists", result.stderr)
+        self.assertEqual(start, self.git("rev-parse", "HEAD"))
+
+    def test_force_still_refuses_an_empty_release(self):
+        self.diverge()
+        self.assertEqual(0, self.release("--force").returncode)
+        start = self.git("rev-parse", "HEAD")
+        result = self.release("--force")
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("nothing to release", result.stderr)
+        self.assert_untouched(start, "v0.1.1")
+
+    def test_refuses_two_bumps(self):
+        start = self.git("rev-parse", "HEAD")
+        self.assertEqual(2, self.release("minor", "patch").returncode)
+        self.assert_untouched(start)
+
     def test_refuses_when_the_tag_exists_only_on_origin(self):
         start = self.git("rev-parse", "HEAD")
         other = self.other_clone()
