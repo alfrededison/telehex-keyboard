@@ -39,6 +39,12 @@ class GlideDecoderTest {
         assertEquals("tiêng", decoder.suggest(path("tieng"), centers, words).first())
     }
 
+    @Test fun englishModeSkipsTelexSpellings() {
+        // "tieengs" chỉ khớp tiếng qua Telex; EN lướt đúng chữ của từ
+        assertTrue(decoder.suggest(path("tieengs"), centers, words("tiếng"), english = true).isEmpty())
+        assertEquals("tide", decoder.suggest(path("tide"), centers, words("tide", "tied"), english = true).first())
+    }
+
     @Test fun rejectsTapsAndPathsFarFromKnownWords() {
         assertTrue(decoder.suggest(listOf(Point(0f, 0f)), centers, words("tiếng")).isEmpty())
         assertTrue(decoder.suggest(listOf(Point(10f, 10f), Point(12f, 10f)), centers, words("tiếng")).isEmpty())

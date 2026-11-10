@@ -388,7 +388,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         keyboardView.theme = t
         keyboardView.hapticEnabled = prefs.haptic
         keyboardView.soundEnabled = prefs.sound
-        keyboardView.canGlide = { prefs.glideTyping && mode == Mode.ABC && telexEnabled && !emojiSearch && !hasSelection() && !cursorMode }
+        // EN chỉ lướt ở ô được gợi ý từ EN (không phải email, URL, ô tắt gợi ý)
+        keyboardView.canGlide = { prefs.glideTyping && mode == Mode.ABC && !secureField && (!english || englishSuggestionsAllowed) &&
+            !emojiSearch && !hasSelection() && !cursorMode }
         keyboardView.setThresholds(dpF(prefs.swipeThresholdDp), prefs.longPressMs.toLong())
         keyboardView.oneHanded = prefs.oneHanded
         keyboardView.canLift = if (prefs.dragToRearrange) ::canLift else null
@@ -654,10 +656,22 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             return
         }
         if (glideSuggestions.isNotEmpty()) {
-            val pickGlide: (String) -> Unit = { word ->
+            val pickGlide: (String) -> Unit = pick@ { word ->
                 val auto = upperNext() && !predictions.predictor.personal.usuallyCapitalized(word)
                 clearGlide()
-                if (!engine.isEmpty) {
+                if (english) {
+                    // EN không soạn âm tiết và không học: chèn thẳng, tách khỏi chữ ngay trước con trỏ
+                    val ic = currentInputConnection ?: run { updateBar(); return@pick }
+                    val previous = ic.getTextBeforeCursor(1, 0)?.lastOrNull()
+                    // Cách sau chữ và dấu câu ("hello,|"), không cách sau khoảng trắng hay dấu mở ngoặc
+                    val lead = if (previous != null && !previous.isWhitespace() && previous !in OPENERS) " " else ""
+                    // Đã có khoảng trắng sau con trỏ thì đừng thêm cái thứ hai
+                    val spaced = ic.getTextAfterCursor(1, 0)?.firstOrNull()?.isWhitespace() != true
+                    val text = lead + word + if (spaced) " " else ""
+                    clearOneShotCaps()
+                    commitSyllable(text)
+                    suggestionSpace = text.takeIf { spaced }
+                } else if (!engine.isEmpty) {
                     replaceComposing(word)
                 } else {
                     commitSyllable("$word ")
@@ -1216,10 +1230,22 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         if (keyboardView.canGlide?.invoke() != true) return
         clearGlide()
         suggestionSpace = null
-        val words = predictions.predictor.glideWords(recent.toList())
-        val typed = engine.text()
-        glideSuggestions = glideDecoder.suggest(points, centers, words, engine.config, max = 24).map {
-            if (typed.isEmpty()) casedPrediction(it) else casedCompletion(it, typed)
+        glideSuggestions = if (english) {
+            val before = currentInputConnection?.getTextBeforeCursor(160, 0)?.toString().orEmpty()
+            val words = predictions.englishPredictor.glideWords(EnglishPredictor.contextBefore(before))
+            glideDecoder.suggest(points, centers, words, max = 24, english = true).map {
+                when {
+                    capsLockActive() -> it.uppercase()
+                    capsSentenceStart() || oneShotUpper() || it == "i" || it.startsWith("i'") -> it.replaceFirstChar { c -> c.titlecase() }
+                    else -> it
+                }
+            }
+        } else {
+            val words = predictions.predictor.glideWords(recent.toList())
+            val typed = engine.text()
+            glideDecoder.suggest(points, centers, words, engine.config, max = 24).map {
+                if (typed.isEmpty()) casedPrediction(it) else casedCompletion(it, typed)
+            }
         }
         if (glideSuggestions.isEmpty()) flash("Chưa nhận ra từ, thử lướt lại")
         updateBar()
@@ -1336,5 +1362,6 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
 
         /** Dấu câu đứng sát chữ phía trước. */
         private const val NO_SPACE_BEFORE = ".,!?:;…)]}"
+        private const val OPENERS = "([{\"'“‘"
     }
 }

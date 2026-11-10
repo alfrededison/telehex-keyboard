@@ -2,6 +2,9 @@
 
 ## 0.8.1 — unreleased
 
+- Gõ vuốt dùng được ở chế độ EN (vuốt xuống phím cách): lướt qua các chữ để gợi ý từ tiếng Anh, viết hoa đầu câu và "I", tự thêm dấu cách sau dấu câu. Không bật ở ô mật khẩu, email, URL hay ô tắt gợi ý, và không học từ EN vào dữ liệu tiếng Việt.
+- Gợi ý EN nhận từ rút gọn gõ thiếu dấu nháy: "ill" → I'll, "dont" → don't, "well" → có cả we'll. "I" trong I'm, I'll… luôn viết hoa.
+
 ## 0.8.0 — 2026-11-10
 
 - Thêm profile có sẵn "Truyền thống" cho ai chưa quen lưới tổ ong: bố cục QWERTY 10 cột quen thuộc, phím chữ nhật, có phím ⇧ (chạm đúp khoá chữ hoa) và ⌫ (giữ để xoá liên tục), lớp 123 hai trang với hàng số 1…0 ở trên. Mọi cử chỉ, gợi ý và gõ vuốt dùng như trên lưới tổ ong. Chọn trong Cài đặt › Bàn phím.

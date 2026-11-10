@@ -46,7 +46,9 @@ class EnglishPredictorTest {
             .bufferedReader().use { it.readLines() }
         assertEquals(50000, words.size)
         for (prefix in ('a'..'z').map { it.toString() } + listOf("app", "writ", "zz", "can'")) {
+            // "I" luôn viết hoa trong từ rút gọn: i'm → I'm
             val expected = words.filter { it.startsWith(prefix) && it.length > prefix.length }
+                .map { if (it.startsWith("i'")) "I" + it.drop(1) else it }
             for (limit in listOf(1, 3, 24)) assertEquals(prefix, expected.take(limit), predictor.complete(prefix, max = limit))
         }
     }
@@ -62,6 +64,31 @@ class EnglishPredictorTest {
         assertFalse(contextual.complete("app", max = 3).contains("appointment"))
         assertEquals("appointment", contextual.complete("app", max = 3, context = listOf("book", "an")).first())
         assertEquals(contextual.complete("app"), contextual.complete("app", context = listOf("unseenword")))
+    }
+
+    @Test fun completesContractionsTypedWithoutTheApostrophe() {
+        assertEquals("I'll", predictor.complete("ill").first())
+        assertEquals("I'll", predictor.complete("Ill").first())
+        assertEquals("I'LL", predictor.complete("ill", capsLock = true).first())
+        assertEquals("don't", predictor.complete("dont").first())
+        assertEquals("Don't", predictor.complete("Dont").first())
+        assertTrue(predictor.complete("well").contains("we'll"))
+        assertTrue(predictor.complete("i").contains("I'm"))
+        assertEquals("I'm", predictor.complete("i'").first())
+    }
+
+    @Test fun glideDecodesEnglishWordsOnQwertyIncludingContractions() {
+        val qwerty = listOf("qwertyuiop" to 0f, "asdfghjkl" to 0.5f, "zxcvbnm" to 1.5f).flatMapIndexed { row, (keys, inset) ->
+            keys.mapIndexed { i, c -> c to GlideDecoder.Point(inset + i, row.toFloat()) }
+        }.toMap()
+        val decoder = GlideDecoder()
+        fun glide(keys: String, context: List<String> = emptyList()) = decoder.suggest(
+            keys.map { qwerty.getValue(it) }, qwerty, contextualFixture.glideWords(context), max = 5, english = true)
+        assertEquals("hello", glide("hello").first())
+        assertEquals("world", glide("world").first())
+        assertTrue(glide("dont").contains("don't"))
+        // Từ cùng hình dạng: ngữ cảnh n-gram chọn từ hợp câu
+        assertEquals("you", glide("you", listOf("thank")).first())
     }
 
     @Test fun importedModelPredictsNextWordsAndUsesContextWhileCompleting() {

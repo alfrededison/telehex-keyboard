@@ -11,6 +11,8 @@ class EnglishPredictor(words: List<String>, private val model: NgramModel? = nul
         .map { it.lowercase(Locale.ROOT).replace('’', '\'') }.filter { validWord(it) }.distinct().withIndex().sortedBy { it.value }
     private val unigram = model?.scorer(emptyList())
     private data class Candidate(val word: String, val rank: Int, val score: Double)
+    // Gõ thiếu dấu nháy vẫn ra từ rút gọn: "ill" → I'll, "dont" → don't.
+    private val contractions = dictionary.filter { '\'' in it.value }.map { it.value.replace("'", "") to it }
 
     fun complete(prefix: String, max: Int = 24, capsLock: Boolean = false, context: List<String> = emptyList()): List<String> {
         if (max <= 0 || prefix.length > 32 || !prefixPattern.matches(prefix)) return emptyList()
@@ -26,21 +28,33 @@ class EnglishPredictor(words: List<String>, private val model: NgramModel? = nul
         // Chỉ giữ max từ phổ biến nhất trong khoảng tiền tố, tránh sắp xếp hàng nghìn từ mỗi phím.
         val order = compareBy<Candidate> { it.score }.thenByDescending { it.rank }
         val best = PriorityQueue(order)
+        fun offer(candidate: Candidate) {
+            if (best.size < max) best.add(candidate)
+            else if (order.compare(candidate, best.peek()) > 0) { best.poll(); best.add(candidate) }
+        }
         for (i in lo until dictionary.size) {
             val entry = dictionary[i]
             if (!entry.value.startsWith(key)) break
             if (entry.value.length == key.length) continue
-            // Chỉ thưởng phần xác suất tăng nhờ ngữ cảnh. Ngữ cảnh lạ giữ xếp hạng từ điển.
-            val lift = if (scorer == null) 0.0 else
-                (scorer.probability(entry.value) - (unigram?.probability(entry.value) ?: 0.0)).coerceAtLeast(0.0)
-            val candidate = Candidate(entry.value, entry.index, 0.1 / (entry.index + 10) + lift)
-            if (best.size < max) best.add(candidate)
-            else if (order.compare(candidate, best.peek()) > 0) { best.poll(); best.add(candidate) }
+            offer(Candidate(entry.value, entry.index, 0.1 / (entry.index + 10) + lift(scorer, entry.value)))
+        }
+        if ('\'' !in key) for ((plain, entry) in contractions) {
+            if (!plain.startsWith(key) || entry.value.startsWith(key)) continue
+            offer(Candidate(entry.value, entry.index, 0.1 / (entry.index + 10) + lift(scorer, entry.value)))
         }
         return best.sortedWith(order.reversed()).map {
-            if (upper) it.word.uppercase(Locale.ROOT) else prefix + it.word.substring(key.length)
+            when {
+                upper -> it.word.uppercase(Locale.ROOT)
+                it.word.startsWith(key) -> capitalizeI(prefix + it.word.substring(key.length))
+                // Từ rút gọn không giữ được từng chữ đã gõ: chỉ theo chữ hoa đầu
+                prefix.first().isUpperCase() -> it.word.replaceFirstChar { c -> c.uppercaseChar() }
+                else -> capitalizeI(it.word)
+            }
         }
     }
+
+    private fun capitalizeI(word: String): String =
+        if (word.startsWith("i'") || word.startsWith("i’")) word.replaceFirstChar { it.uppercaseChar() } else word
 
     fun next(context: List<String>, max: Int = 24, capsLock: Boolean = false, capitalize: Boolean = false): List<String> {
         if (max <= 0) return emptyList()
@@ -52,6 +66,21 @@ class EnglishPredictor(words: List<String>, private val model: NgramModel? = nul
                     else -> it
                 }
             }
+    }
+
+    /** Chỉ thưởng phần xác suất tăng nhờ ngữ cảnh. Ngữ cảnh lạ giữ xếp hạng từ điển. */
+    private fun lift(scorer: NgramModel.Scorer?, word: String): Double = if (scorer == null) 0.0 else
+        (scorer.probability(word) - (unigram?.probability(word) ?: 0.0)).coerceAtLeast(0.0)
+
+    // Thứ hạng phổ biến làm điểm nền cho gõ vuốt. Dựng cùng predictor (luồng nền), không ở lần lướt đầu.
+    private val glidePriors = dictionary.sortedBy { it.index }.map { NgramModel.Scored(it.value, 0.1 / (it.index + 10)) }
+
+    /** Toàn bộ từ điển cho gõ vuốt, từ hợp ngữ cảnh n-gram được nâng điểm. */
+    fun glideWords(context: List<String>): List<NgramModel.Scored> {
+        val scorer = if (context.isEmpty()) null else model?.scorer(context.takeLast(2).map { it.lowercase(Locale.ROOT).replace('’', '\'') })
+        val lifted = scorer?.candidates(200)?.associateWith { lift(scorer, it) }?.filterValues { it > 0 }.orEmpty()
+        if (lifted.isEmpty()) return glidePriors
+        return glidePriors.map { s -> lifted[s.text]?.let { NgramModel.Scored(s.text, s.score + it) } ?: s }
     }
 
     data class Token(val head: String, val tail: String)

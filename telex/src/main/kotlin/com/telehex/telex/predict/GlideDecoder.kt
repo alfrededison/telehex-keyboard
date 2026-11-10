@@ -20,6 +20,7 @@ class GlideDecoder {
         words: List<NgramModel.Scored>,
         config: TelexConfig = TelexConfig(),
         max: Int = 6,
+        english: Boolean = false,
     ): List<String> {
         if (trace.size < 2 || max <= 0) return emptyList()
         val length = length(trace)
@@ -28,12 +29,19 @@ class GlideDecoder {
         val scores = ArrayList<Pair<String, Double>>()
         for ((word, prior) in words) {
             if (word.length !in 1..24) continue
-            // Có thể lướt chữ không dấu (tieng → tiếng), hoặc đủ phím Telex (tieengs).
-            val plain = Normalizer.normalize(word.lowercase().replace('đ', 'd'), Normalizer.Form.NFD)
-                .filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
-            val telex = TelexDecomposer.keysOf(word, config)?.first
+            // EN lướt đúng các chữ, bỏ dấu nháy (dont → don't). VI có thể lướt chữ không dấu
+            // (tieng → tiếng), hoặc đủ phím Telex (tieengs).
+            val spellings = if (english) listOf(word.lowercase().replace("'", "")) else listOfNotNull(
+                Normalizer.normalize(word.lowercase().replace('đ', 'd'), Normalizer.Form.NFD)
+                    .filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() },
+                TelexDecomposer.keysOf(word, config)?.first,
+            ).distinct()
             var best = Double.POSITIVE_INFINITY
-            for (spelling in listOfNotNull(plain, telex).distinct()) {
+            for (spelling in spellings) {
+                // Loại sớm theo phím đầu/cuối trước khi dựng đường: phần lớn từ điển rớt ở đây
+                val first = centers[spelling.firstOrNull() ?: continue] ?: continue
+                val last = centers[spelling.last()] ?: continue
+                if (trace.first().distance(first) > 0.85f || trace.last().distance(last) > 0.85f) continue
                 if (spelling.any { it !in centers }) continue
                 val path = spelling.map { centers.getValue(it) }.fold(ArrayList<Point>()) { out, p ->
                     if (out.lastOrNull() != p) out.add(p)
