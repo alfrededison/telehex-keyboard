@@ -8,7 +8,7 @@ name: dev-build
 on:
   push:
     branches: [main]
-    paths-ignore: ["**.md", "LICENSE", "NOTICE"]
+    paths-ignore: ["**.md", "LICENSE", "NOTICE", "fastlane/**", "tools/store/**", "tools/store_screens.py"]
 
 permissions:
   contents: read

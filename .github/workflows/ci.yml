@@ -3,7 +3,7 @@ name: ci
 
 on:
   pull_request:
-    paths-ignore: ["**.md", "LICENSE", "NOTICE"]
+    paths-ignore: ["**.md", "LICENSE", "NOTICE", "fastlane/**", "tools/store/**", "tools/store_screens.py"]
   workflow_dispatch:
 
 permissions:
