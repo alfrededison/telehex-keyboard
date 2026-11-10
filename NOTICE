@@ -35,3 +35,8 @@ from wordfreq 3.1.1 by Robyn Speer, under CC BY-SA 4.0, with the same upstream
 credits listed above. TeleHex normalizes Unicode, removes duplicates and retains
 Latin/Vietnamese letter tokens up to 8 characters. See docs/vietnamese-dictionary.md
 and assets/vi-NOTICE.txt for details. This word list is separate from vi.ngram.
+
+The Play Store screenshot generator (tools/store/screens.html, not part of the app) uses
+the Be Vietnam Pro fonts in tools/store/fonts/, Copyright 2021 The Be Vietnam Pro Project
+Authors (https://github.com/bettergui/BeVietnamPro), licensed under the SIL Open Font
+License 1.1 (tools/store/fonts/OFL.txt).

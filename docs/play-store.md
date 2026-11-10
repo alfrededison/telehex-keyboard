@@ -13,7 +13,7 @@ Key này cũng là upload key: file AAB tải lên Play được ký bằng đú
 | Tải AAB lên Play khi push tag | `.github/workflows/release.yml`, chỉ chạy khi có secret `PLAY_SERVICE_ACCOUNT_JSON`; luôn đính AAB vào artifact `TeleHex-release-play-bundle` |
 | "Có gì mới" (≤ 500 ký tự) | `tools/play_whatsnew.py` rút từ mục CHANGELOG của tag |
 | Tiêu đề, mô tả ngắn, mô tả đầy đủ (vi, en-US) | `fastlane/metadata/android/<ngôn ngữ>/` |
-| Icon 512, feature graphic 1024×500, 6 ảnh chụp | `fastlane/metadata/android/vi/images/` |
+| Icon 512, feature graphic 1024×500, ảnh chụp 1080×1920 | `fastlane/metadata/android/vi/images/`; ảnh chụp dựng từ `tools/store/screens.html` bằng `python3 tools/store_screens.py` (cần Python Playwright, Google Chrome, ffmpeg), xuất thẳng `phoneScreenshots/1.png`, `2.png`… theo thứ tự trên trang |
 | Chính sách quyền riêng tư | [privacy-policy.md](privacy-policy.md) |
 
 ## 1. Tạo app trong Play Console
