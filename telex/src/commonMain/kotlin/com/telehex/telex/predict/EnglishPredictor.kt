@@ -1,14 +1,13 @@
 package com.telehex.telex.predict
 
-import java.util.Locale
-import java.util.PriorityQueue
-import java.text.Normalizer
+import com.telehex.platform.PriorityQueue
+import com.telehex.platform.Normalizer
 
 /** Từ điển EN theo độ phổ biến + n-gram riêng; không tự sửa hay học dữ liệu người dùng. */
 class EnglishPredictor(words: List<String>, private val model: NgramModel? = null) {
     // Sắp theo chữ để tìm tiền tố bằng binary search; index gốc giữ thứ tự phổ biến.
     private val dictionary = (words + (model as? BinaryNgramModel)?.vocabulary.orEmpty())
-        .map { it.lowercase(Locale.ROOT).replace('’', '\'') }.filter { validWord(it) }.distinct().withIndex().sortedBy { it.value }
+        .map { it.lowercase().replace('’', '\'') }.filter { validWord(it) }.distinct().withIndex().sortedBy { it.value }
     private val unigram = model?.scorer(emptyList())
     private data class Candidate(val word: String, val rank: Int, val score: Double)
     // Gõ thiếu dấu nháy vẫn ra từ rút gọn: "ill" → I'll, "dont" → don't.
@@ -16,9 +15,9 @@ class EnglishPredictor(words: List<String>, private val model: NgramModel? = nul
 
     fun complete(prefix: String, max: Int = 24, capsLock: Boolean = false, context: List<String> = emptyList()): List<String> {
         if (max <= 0 || prefix.length > 32 || !prefixPattern.matches(prefix)) return emptyList()
-        val key = prefix.lowercase(Locale.ROOT).replace('’', '\'')
+        val key = prefix.lowercase().replace('’', '\'')
         val upper = capsLock || (prefix.length > 1 && prefix.filter { it.isAsciiLetter() }.all { it.isUpperCase() })
-        val scorer = if (context.isEmpty()) null else model?.scorer(context.takeLast(2).map { it.lowercase(Locale.ROOT).replace('’', '\'') })
+        val scorer = if (context.isEmpty()) null else model?.scorer(context.takeLast(2).map { it.lowercase().replace('’', '\'') })
         var lo = 0
         var hi = dictionary.size
         while (lo < hi) {
@@ -44,7 +43,7 @@ class EnglishPredictor(words: List<String>, private val model: NgramModel? = nul
         }
         return best.sortedWith(order.reversed()).map {
             when {
-                upper -> it.word.uppercase(Locale.ROOT)
+                upper -> it.word.uppercase()
                 it.word.startsWith(key) -> capitalizeI(prefix + it.word.substring(key.length))
                 // Từ rút gọn không giữ được từng chữ đã gõ: chỉ theo chữ hoa đầu
                 prefix.first().isUpperCase() -> it.word.replaceFirstChar { c -> c.uppercaseChar() }
@@ -58,10 +57,10 @@ class EnglishPredictor(words: List<String>, private val model: NgramModel? = nul
 
     fun next(context: List<String>, max: Int = 24, capsLock: Boolean = false, capitalize: Boolean = false): List<String> {
         if (max <= 0) return emptyList()
-        return model?.predict(context.takeLast(2).map { it.lowercase(Locale.ROOT).replace('’', '\'') }, max)
+        return model?.predict(context.takeLast(2).map { it.lowercase().replace('’', '\'') }, max)
             .orEmpty().map { it.text }.filter { validWord(it) }.map {
                 when {
-                    capsLock -> it.uppercase(Locale.ROOT)
+                    capsLock -> it.uppercase()
                     capitalize || it == "i" || it.startsWith("i'") -> it.replaceFirstChar { c -> c.uppercaseChar() }
                     else -> it
                 }
@@ -77,7 +76,7 @@ class EnglishPredictor(words: List<String>, private val model: NgramModel? = nul
 
     /** Toàn bộ từ điển cho gõ vuốt, từ hợp ngữ cảnh n-gram được nâng điểm. */
     fun glideWords(context: List<String>): List<NgramModel.Scored> {
-        val scorer = if (context.isEmpty()) null else model?.scorer(context.takeLast(2).map { it.lowercase(Locale.ROOT).replace('’', '\'') })
+        val scorer = if (context.isEmpty()) null else model?.scorer(context.takeLast(2).map { it.lowercase().replace('’', '\'') })
         val lifted = scorer?.candidates(200)?.associateWith { lift(scorer, it) }?.filterValues { it > 0 }.orEmpty()
         if (lifted.isEmpty()) return glidePriors
         return glidePriors.map { s -> lifted[s.text]?.let { NgramModel.Scored(s.text, s.score + it) } ?: s }
@@ -97,7 +96,7 @@ class EnglishPredictor(words: List<String>, private val model: NgramModel? = nul
             val sentence = Normalizer.normalize(text.substring(text.indexOfLast { it in ".!?\n" } + 1), Normalizer.Form.NFC)
             val context = ArrayDeque<String>()
             for (match in contextPattern.findAll(sentence)) {
-                val word = match.value.lowercase(Locale.ROOT).replace('’', '\'')
+                val word = match.value.lowercase().replace('’', '\'')
                 if (!validWord(word)) context.clear()
                 else { context.addLast(word); if (context.size > 2) context.removeFirst() }
             }

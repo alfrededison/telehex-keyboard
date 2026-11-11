@@ -1,8 +1,10 @@
+@file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+
 package com.telehex.telex.predict
 
 import com.telehex.telex.ToneRules
-import java.io.BufferedReader
-import java.io.StringReader
+import com.telehex.platform.TextLineReader as BufferedReader
+import com.telehex.platform.stringLineReader
 
 /**
  * Mô hình cá nhân: đếm n-gram (1–3) từ chính người dùng, hoàn toàn trên máy.
@@ -197,7 +199,7 @@ class PersonalModel {
         if (n - prefixCount <= 64) {
             for (id in prefixCount until n) {
                 val at = lowerBound(keys[id])
-                System.arraycopy(prefixIds, at, prefixIds, at + 1, prefixCount - at)
+                prefixIds.copyInto(prefixIds, at + 1, at, prefixCount)
                 prefixIds[at] = id
                 prefixCount++
             }
@@ -267,7 +269,7 @@ class PersonalModel {
             return sb.toString()
         }
 
-        fun deserialize(text: String): PersonalModel = read(BufferedReader(StringReader(text)))
+        fun deserialize(text: String): PersonalModel = read(stringLineReader(text))
 
         /** Đọc dần từ [reader]; dòng hỏng hoặc lạ bị bỏ qua. */
         fun read(reader: BufferedReader): PersonalModel {
@@ -324,8 +326,8 @@ internal class TopK(private val k: Int) {
  * ô của bảng này sang một bảng khác đang lớn dần (khi copy, khi đọc file do chính hàm hash đó sắp
  * thứ tự) sẽ dồn khoá thành chuỗi dò rất dài, tốn gần bình phương thời gian.
  */
-private val seeds = java.util.concurrent.atomic.AtomicInteger(java.util.Random().nextInt())
-private fun nextSeed(): Int = seeds.getAndAdd(-0x61c88647)
+private val seeds = kotlin.concurrent.atomics.AtomicInt(kotlin.random.Random.nextInt())
+private fun nextSeed(): Int = seeds.fetchAndAdd(-0x61c88647)
 
 /** Bảng băm int → int (địa chỉ mở, dò tuyến tính), kèm tổng số đếm. Khoá là id âm tiết (≥ 0). */
 internal class IntCounts private constructor(capacity: Int, private val seed: Int) {

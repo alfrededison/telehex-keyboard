@@ -1,7 +1,8 @@
 package com.telehex.telex.predict
 
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
+import kotlin.math.pow
+import com.telehex.platform.ModelBuffer
+import com.telehex.platform.ByteArrayModelBuffer
 
 /**
  * Mô hình n-gram gốc đọc từ file nhị phân do `tools/build_ngram.py` sinh ra (có thể mmap).
@@ -16,8 +17,8 @@ import java.nio.ByteOrder
  * ```
  * Xác suất đã được làm trơn Kneser–Ney ở phía Python; runtime tra và nội suy giữa các bậc để sinh ứng viên.
  */
-class BinaryNgramModel(buffer: ByteBuffer) : NgramModel {
-    private val buf: ByteBuffer = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN)
+class BinaryNgramModel(private val buf: ModelBuffer) : NgramModel {
+    constructor(bytes: ByteArray) : this(ByteArrayModelBuffer(bytes))
     private val vocab: Array<String>
     private val index: HashMap<String, Int>
     private val uniQ: Int
@@ -41,7 +42,7 @@ class BinaryNgramModel(buffer: ByteBuffer) : NgramModel {
             val bytes = ByteArray(len)
             for (j in 0 until len) bytes[j] = buf.get(pos + j)
             pos += len
-            vocab[i] = String(bytes, Charsets.UTF_8)
+            vocab[i] = bytes.decodeToString()
             index[vocab[i]] = i
         }
         require(pos <= buf.limit() - n - 8) { "File mô hình bị cắt ngắn" }
@@ -167,7 +168,7 @@ class BinaryNgramModel(buffer: ByteBuffer) : NgramModel {
     private companion object {
         const val FOLLOWER_CANDIDATES = 50
         /** q (8 bit) → xác suất 2^(−q/8), tra bảng thay vì gọi Math.pow mỗi lần. */
-        val Q2P = DoubleArray(256) { Math.pow(2.0, -it / 8.0) }
+        val Q2P = DoubleArray(256) { 2.0.pow(-it / 8.0) }
     }
 
     private val topUnigrams: List<Int> by lazy {

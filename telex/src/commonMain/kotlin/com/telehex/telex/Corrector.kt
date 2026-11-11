@@ -1,6 +1,6 @@
 package com.telehex.telex
 
-import java.text.Normalizer
+import com.telehex.platform.Normalizer
 import kotlin.math.ln
 
 /**
@@ -126,7 +126,7 @@ class Corrector(
 
     private companion object {
         fun plain(word: String): String = Normalizer.normalize(word.lowercase().replace('đ', 'd'), Normalizer.Form.NFD)
-            .filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
+            .filter { it.category != CharCategory.NON_SPACING_MARK }
 
         val restorationWords: Map<String, List<String>> by lazy { CommonSyllables.RANK.keys.groupBy { plain(it) } }
     }

@@ -1,6 +1,6 @@
 package com.telehex.telex.predict
 
-import java.text.Normalizer
+import com.telehex.platform.Normalizer
 
 /** Hai âm tiết cuối trước từ đang sửa; không đi qua ranh giới câu. */
 object PredictionContext {

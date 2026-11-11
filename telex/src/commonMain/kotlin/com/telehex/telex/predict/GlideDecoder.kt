@@ -2,7 +2,7 @@ package com.telehex.telex.predict
 
 import com.telehex.telex.TelexConfig
 import com.telehex.telex.TelexDecomposer
-import java.text.Normalizer
+import com.telehex.platform.Normalizer
 import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.ln
@@ -33,7 +33,7 @@ class GlideDecoder {
             // (tieng → tiếng), hoặc đủ phím Telex (tieengs).
             val spellings = if (english) listOf(word.lowercase().replace("'", "")) else listOfNotNull(
                 Normalizer.normalize(word.lowercase().replace('đ', 'd'), Normalizer.Form.NFD)
-                    .filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() },
+                    .filter { it.category != CharCategory.NON_SPACING_MARK },
                 TelexDecomposer.keysOf(word, config)?.first,
             ).distinct()
             var best = Double.POSITIVE_INFINITY
