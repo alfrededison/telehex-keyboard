@@ -1,6 +1,8 @@
 package com.telehex.telex
 
 import com.telehex.telex.predict.*
+import com.telehex.platform.ByteArrayModelBuffer
+import com.telehex.platform.ModelBuffer
 import com.telehex.platform.Normalizer
 import com.telehex.telex.predict.EnglishPredictor
 import com.telehex.telex.predict.Phrases
@@ -127,12 +129,14 @@ class KeyboardVocabulary(englishText: String, vietnameseText: String, phrasesTex
 class KeyboardLanguagePack private constructor(internal val model: BinaryNgramModel?, val error: String) {
     val valid: Boolean get() = model != null
     companion object {
-        fun load(bytes: ByteArray, englishMode: Boolean): KeyboardLanguagePack = try {
-            require(bytes.size in 17..8_388_608) { "Gói phải nhỏ hơn 8 MiB" }
-            val count = (bytes[5].toInt() and 255) or ((bytes[6].toInt() and 255) shl 8) or
-                ((bytes[7].toInt() and 255) shl 16) or (bytes[8].toInt() shl 24)
-            require(count in 1..100_000) { "Số từ vựng vượt giới hạn" }
-            val model = BinaryNgramModel(bytes)
+        /** Largest accepted pack: the default 3/4 build of the Vietnamese pack is about 29 MB. */
+        const val MAX_BYTES = 32 * 1024 * 1024
+        fun load(bytes: ByteArray, englishMode: Boolean): KeyboardLanguagePack = load(ByteArrayModelBuffer(bytes), englishMode)
+        /** Reads the pack through [buffer] without copying it, so Apple can pass a memory-mapped file. */
+        fun load(buffer: ModelBuffer, englishMode: Boolean): KeyboardLanguagePack = try {
+            require(buffer.limit() in 17..MAX_BYTES) { "Gói phải nhỏ hơn ${MAX_BYTES / 1024 / 1024} MiB" }
+            require(buffer.getInt(5) in 1..100_000) { "Số từ vựng vượt giới hạn" }
+            val model = BinaryNgramModel(buffer)
             val englishWord = Regex("[a-zA-Z]+(?:['’][a-zA-Z]+)*")
             if (englishMode) require(model.vocabulary.all { it.length <= 32 && englishWord.matches(it) }) { "Gói EN chứa từ không hợp lệ" }
             KeyboardLanguagePack(model, "")

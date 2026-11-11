@@ -1,0 +1,4 @@
+// Ký cho thiết bị và App Store: đặt Apple Developer Team ID trong Signing.local.xcconfig (không commit), ví dụ
+//   DEVELOPMENT_TEAM = ABCDE12345
+// Bản Simulator và CI build không ký (CODE_SIGNING_ALLOWED=NO) nên không cần file này.
+#include? "Signing.local.xcconfig"

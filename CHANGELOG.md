@@ -2,6 +2,22 @@
 
 ## 0.8.2 — unreleased
 
+- iOS: bản native đầu tiên, trong cùng repo và dùng chung engine Kotlin Multiplatform với Android: gõ Telex VI/EN với từ điển offline, gợi ý và học từ (có ẩn danh), gõ vuốt, emoji tìm bằng tiếng Việt, gõ tắt và sao lưu JSON. Không có bảng chỉnh sửa (chọn, chép, cắt theo vùng chọn) vì bàn phím iOS không chọn được văn bản thay ứng dụng.
+- iOS: bố cục như Android 0.8.0 — Mặc định (⚙ sát mép trái, zigzag ⚙ Q W E R T G Y H U I O P 123, lớp 123 hai trang gắn theo ô, vuốt xuống Q…P ra 1…0) và "Truyền thống" (QWERTY 10 cột, ⇧ chạm đúp khoá hoa, ⌫ giữ để xoá liên tục), cùng trình sửa các lớp phím.
+- iOS: giao diện theo bàn phím hệ thống iOS — nền xám, phím chữ và phím cách trắng có bóng 1pt, phím chức năng xám, chữ nét thường, ↵ mang màu nhấn, ⇧ sáng lên khi bật; bong bóng phóng to ký tự khi chạm; trên phím chữ nhật ký tự vuốt xuống nằm ở góc dưới bên phải; emoji vuốt xuống vẽ nhỏ để không lấn vào chữ. Lưới tổ ong giữ hình lục giác, nguyên âm tô màu nhấn nhạt và phím dấu tô cam nhạt như Android; màu nhấn còn tô ↵, công tắc và nét gõ vuốt. "Không" để nguyên âm và phím dấu trắng như phụ âm.
+- iOS: thanh gợi ý là chữ trơn chia ba ô có vạch ngăn, gợi ý đầu đậm; khi chưa có gợi ý thanh hiện lối tắt emoji, gõ tắt, profile, giao diện và cài đặt. Bảng cài đặt chuyển sang danh sách nhóm kiểu app Cài đặt: icon màu, ›, ✓ cho profile đang dùng, "‹ Cài đặt" quay về và "Xong" về bàn phím; màu nhấn chọn bằng ô tròn; bảng emoji có ô tìm kiếm và hàng nhóm cuộn ngang.
+- iOS: khi tìm emoji, thêm gõ tắt hay đặt tên profile, bàn phím cao thêm một hàng ô nhập rộng (tên ô nhỏ phía trên, chữ lớn; ô viết tắt hẹp, ô nội dung rộng) thay vì thu nhỏ phím; tiêu đề trình soạn hiện trên thanh trên. Các nút chọn lớp khi sửa phím nằm ngay trên thanh gợi ý.
+- iOS: gõ tắt có nút 🗑 ở mỗi hàng, chạm lần nữa vào "Xoá" để xác nhận.
+- iOS: gõ vuốt ở chế độ EN như Android 0.8.1: lướt ra từ tiếng Anh và từ rút gọn ("dont" → don't), "I" luôn viết hoa, tự cách sau chữ hay dấu câu đứng trước; không bật ở email, URL hay ô tắt gợi ý, không học từ EN.
+- iOS: toàn bộ Cài đặt chuyển vào app như Android (bàn phím, Telex, gõ tắt, gợi ý và gói ngôn ngữ, chống bấm nhầm, cử chỉ, emoji, sao lưu cài đặt, chỉnh lớp phím) và tới bàn phím qua App Group, không cần Truy cập đầy đủ; ⚙ trên bàn phím còn đổi profile, ẩn danh, emoji, sao lưu đầy đủ và xoá dữ liệu học.
+- iOS: sửa âm tiết đầu tiên trong ô trống không ghép dấu ("ddi" thay vì "đi").
+- iOS: lịch sử clipboard (mở từ ⚙ hoặc vuốt xuống phím ⚙, phím ⚙ có icon clipboard nhỏ như Android khi dùng được; mục thường tự xoá sau 1 giờ, ghim để giữ) và giữ kéo đổi chỗ phím ngay trên bàn phím, cả hai mặc định bật và chạy ngay khi cho phép Truy cập đầy đủ (app không đoán trạng thái quyền, chỉ ghi chú và có nút mở Cài đặt); app hiện profile tạo khi kéo đổi chỗ. iOS hỏi quyền dán mỗi lần bàn phím đọc clipboard trừ khi cho phép dán từ ứng dụng khác.
+- iOS: thêm các tuỳ chọn như Android: "Tự khôi phục từ tiếng Anh", "Vùng chạm động" (chạm lưng chừng giữa hai phím chữ thì chọn phím giữ âm tiết hợp lệ) và thanh trượt "Mỗi bước xoá từ / di con trỏ".
+- iOS: chạm như Android 0.7.1: chạm mép ⚙/123 rồi nhấc tay trên chữ thì gõ chữ đó; vùng chạm học được không lấn sang phím chức năng; chạm đang dở bị huỷ khi đổi lớp hay ẩn bàn phím.
+- iOS: màn chào trong app như Android 0.8.0: ô gõ thử ngay đầu trang, các bước bật bàn phím (✓ khi đã thêm TeleHex) và chọn kiểu Tổ ong/Truyền thống có hình xem trước; bàn phím đổi theo lựa chọn khi mở lại (qua App Group).
+- iOS: gói ngôn ngữ `.ngram` tới 32 MiB (đủ cho gói tiếng Việt khuyên dùng 14,6 MB): bàn phím đọc gói thẳng từ tệp thay vì nạp hết vào bộ nhớ. Sao lưu đầy đủ từ ⚙ trên bàn phím không còn kèm gói; sao lưu cài đặt trong app vẫn kèm.
+- iOS: app có icon; 🌐 trên thanh gợi ý chỉ hiện ở máy iOS yêu cầu (có nút Home), máy Face ID dùng nút chuyển bàn phím của hệ thống.
+
 ## 0.8.1 — 2026-11-10
 
 - Gõ vuốt dùng được ở chế độ EN (vuốt xuống phím cách): lướt qua các chữ để gợi ý từ tiếng Anh, viết hoa đầu câu và "I", tự thêm dấu cách sau dấu câu. Không bật ở ô mật khẩu, email, URL hay ô tắt gợi ý, và không học từ EN vào dữ liệu tiếng Việt.

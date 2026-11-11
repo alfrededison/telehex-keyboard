@@ -14,7 +14,8 @@ Mã Android hiện tại là nguồn tham chiếu cho hành vi và hình học.
 
 ## 2. Kiến trúc và hình học
 
-- `telex/`: Kotlin thuần, engine Telex, kiểm tra âm tiết, sửa lỗi và dự đoán; unit test độc lập Android.
+- `telex/`: Kotlin Multiplatform; thuật toán chung ở `commonMain`, Unicode/IO theo nền tảng ở `jvmMain` và `appleMain`; Android tiếp tục dùng JVM artifact, iOS dùng framework native.
+- `ios/`: app + keyboard extension UIKit đang triển khai. Chuẩn phát hành là đủ tính năng Android 0.8.1 mà iOS hỗ trợ; tiến độ và khác biệt nền tảng ở [bảng đối chiếu iOS](ios/docs/feature-parity.md).
 - `app/ime/`: InputMethodService và custom Views vẽ Canvas; settings/editor dùng Android Views.
 - `app/data/`: SharedPreferences cho tuỳ chọn/profile; file riêng cho mô hình và clipboard.
 - `tools/`: dựng/đo n-gram, dựng dữ liệu emoji, version, ký APK và release.
@@ -118,3 +119,9 @@ Enter tuân theo imeOptions hoặc chèn xuống dòng; không có tuỳ chọn 
 - Version chỉ sửa ở `appVersion`; quy trình release đầy đủ nằm trong README và `tools/release.sh`.
 - Dữ liệu Unicode/CLDR theo Unicode-3.0, ghi công trong NOTICE. Corpus n-gram phải có giấy phép
   phù hợp trước khi chia sẻ mô hình; không đưa corpus vào repo.
+
+## 7. iOS native + KMP
+
+- Nguồn đối chiếu tính năng và gate phát hành: [ios/docs/feature-parity.md](ios/docs/feature-parity.md).
+- Engine chung; UIKit native cho keyboard/app và các giới hạn proxy iOS được ghi rõ.
+- Chỉ phát hành khi đủ tính năng 0.8.1 mà iOS hỗ trợ và qua các gate thiết bị/CI/signing.

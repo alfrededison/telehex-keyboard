@@ -9,7 +9,7 @@ internal expect fun normalizeUnicode(text: String, decomposed: Boolean): String
 expect class TextLineReader { fun readLine(): String? }
 expect fun stringLineReader(text: String): TextLineReader
 
-/** Android keeps its existing mmap buffer; Apple can use an owned byte array. */
+/** Android wraps its mmap ByteBuffer; Apple wraps memory-mapped NSData (`NSDataModelBuffer`). */
 interface ModelBuffer {
     operator fun get(index: Int): Byte
     fun getInt(index: Int): Int

@@ -64,7 +64,8 @@ Không đưa test trở lại train. Với corpus tiếng Anh khác, truyền te
 `build_ngram.py --language en` và bảo đảm quyền phát hành mô hình phái sinh.
 Tuỳ chọn mặc định vẫn là `--language vi` để giữ pipeline tiếng Việt.
 Chép `en.ngram` sang điện thoại, mở **Cài đặt → Gợi ý → Nạp gói tiếng Anh (.ngram)…**
-để chọn file. **Xoá gói tiếng Anh đã nạp** đưa EN về hoàn thành từ theo độ phổ biến.
+để chọn file (trên iPhone: **Nạp gói EN .ngram…**; tệp Safari tải về nằm ở iCloud Drive › Tải về, xem
+[language-pack.md](language-pack.md#6-nạp-vào-bàn-phím)). **Xoá gói tiếng Anh đã nạp** đưa EN về hoàn thành từ theo độ phổ biến.
 Gói VI và EN nạp/xoá riêng; gói sai định dạng hoặc gói EN chứa từ không đúng bảng chữ
 sẽ bị từ chối trước khi thay file đang dùng. Gói không nằm trong bản sao lưu tuỳ chọn.
 Repo bỏ qua mọi `*.ngram`, chỉ giữ fixture test nhỏ cho VI và EN; không commit corpus hay
