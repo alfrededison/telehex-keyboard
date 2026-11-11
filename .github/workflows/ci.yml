@@ -3,7 +3,8 @@ name: ci
 
 on:
   pull_request:
-    paths-ignore: ["**.md", "LICENSE", "NOTICE", "fastlane/**", "tools/store/**", "tools/store_screens.py"]
+    paths-ignore: ["**.md", "LICENSE", "NOTICE", "fastlane/**", "tools/store/**", "tools/store_screens.py",
+                   "ios/**", "telex/src/appleMain/**", ".github/workflows/ios.yml", "tools/store_ios_screens.py"]
   workflow_dispatch:
 
 permissions:
