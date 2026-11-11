@@ -1,6 +1,6 @@
 # TeleHex cho iOS
 
-Bản iOS chính thức được phát triển trong cùng repo Android. **Đang triển khai, chưa đủ điều kiện phát hành.** Chuẩn tính năng là Android 0.8.1, chỉ phát hành khi các mục iOS hỗ trợ trong [bảng đối chiếu](docs/feature-parity.md) đã được kiểm thử và các khác biệt nền tảng đã được chốt.
+Bản iOS chính thức được phát triển trong cùng repo Android. **Đang thử công khai qua [TestFlight](https://testflight.apple.com/join/gvyHeek6), chưa lên App Store.** Chuẩn tính năng là Android 0.8.1, chỉ phát hành khi các mục iOS hỗ trợ trong [bảng đối chiếu](docs/feature-parity.md) đã được kiểm thử và các khác biệt nền tảng đã được chốt.
 
 ## Cấu trúc
 
@@ -35,8 +35,20 @@ SDK=iphoneos DESTINATION='generic/platform=iOS' CONFIGURATION=Release ios/script
 App và keyboard extension dùng chung App Group `group.com.telehex.keyboard.shared` (entitlements sinh từ `project.json`). Không cần Truy cập đầy đủ: app là nơi chỉnh cài đặt và ghi cấu hình, gói ngôn ngữ, lệnh xoá vào group; bàn phím chỉ đọc khi mở ra (`SharedSettings.swift`). Cả hai target có `PrivacyInfo.xcprivacy` (không thu thập dữ liệu; khai báo UserDefaults lý do `CA92.1` và `1C8F.1`) và `ITSAppUsesNonExemptEncryption = NO`.
 
 1. Tạo `ios/Config/Signing.local.xcconfig` (không commit) với `DEVELOPMENT_TEAM = <Team ID>`, rồi `xcodegen generate --spec ios/project.json`.
-2. Đăng nhập tài khoản Apple Developer trong Xcode. Ký tự động sẽ đăng ký App ID `com.telehex.keyboard`, `com.telehex.keyboard.extension` và App Group; nếu ký thủ công, bật App Groups cho cả hai App ID và tạo profile có group này.
-3. Tạo app trên App Store Connect với bundle ID `com.telehex.keyboard`, rồi chạy `ios/scripts/release.sh` (archive Release, ký tự động, tải lên TestFlight; số build tự tăng). `DESTINATION=export` chỉ xuất `.ipa`. Không đăng nhập Xcode thì dùng khoá API App Store Connect qua `ASC_KEY_PATH`, `ASC_KEY_ID`, `ASC_ISSUER_ID`.
+2. Chủ tài khoản tạo App Group `group.com.telehex.keyboard.shared` và gán cho App ID `com.telehex.keyboard`, `com.telehex.keyboard.extension` trên developer.apple.com (xem [docs/app-store.md](../docs/app-store.md)). Tài khoản có quyền Certificates, Identifiers & Profiles đăng nhập Xcode thì ký tự động làm việc này.
+3. Tạo app trên App Store Connect với bundle ID `com.telehex.keyboard`, rồi chạy `ios/scripts/release.sh` (archive Release, ký, tải lên TestFlight; số build tự tăng). `DESTINATION=export` chỉ xuất `.ipa`.
+4. `python3 ios/scripts/asc_metadata.py` đẩy tên, mô tả, ảnh chụp, xếp hạng tuổi, giá và gắn build vào phiên bản App Store; chi tiết ở [docs/app-store.md](../docs/app-store.md).
+5. `python3 ios/scripts/asc_testflight.py` đưa build mới nhất ra TestFlight công khai (Test Information, What to Test, nhóm Công khai có public link, gửi Beta App Review).
+
+Không đăng nhập Xcode được thì thêm khoá API App Store Connect (vai trò Admin) vào `Signing.local.xcconfig`:
+
+```
+ASC_KEY_PATH = /Users/<bạn>/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8
+ASC_KEY_ID = <KEY_ID>
+ASC_ISSUER_ID = <ISSUER_ID>
+```
+
+Khoá API không quản lý được App Group nên ký tự động bằng khoá lỗi 401. Khi có khoá, `release.sh` gọi `scripts/asc_signing.py` để ký thủ công: tái dùng hoặc tạo chứng chỉ Apple Distribution (khoá riêng vào login keychain, bản lưu ở `~/.appstoreconnect/signing`), tạo profile App Store cho app và extension, kiểm tra profile có đủ App Group rồi mới archive. Thiếu group thì script dừng và nói cần gán gì. Lần đầu codesign dùng khoá mới nhập, macOS có thể hỏi quyền truy cập Keychain: chọn **Always Allow** (chạy không có người bấm thì lỗi `errSecInternalComponent`).
 
 Bản không ký (Simulator, CI) không có App Group: cài đặt chỉnh trong app không tới được bàn phím (trang chính có ghi chú), mọi thứ khác chạy bình thường. Để thử App Group trên Simulator, build ký ad-hoc:
 

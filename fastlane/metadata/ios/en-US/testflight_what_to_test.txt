@@ -1,0 +1,10 @@
+Turn it on: open TeleHex and follow the welcome steps (Settings › General › Keyboard › Keyboards › Add New Keyboard › TeleHex), then tap the test field and hold the globe key to pick TeleHex.
+
+Please try:
+• Typing Telex in the apps you use (Messages, Safari, Notes, chat apps): are tone marks placed right, are letters ever doubled or lost?
+• Space bar gestures: swipe left to delete, down to switch Vietnamese/English, hold and drag to move the cursor. Glide across letters to slide-type.
+• Switching the Hexagonal/Traditional layout and other settings in the app, then reopening the keyboard to see them applied.
+• Allowing Full Access if you want key sounds, haptics and clipboard history.
+• Whether the keyboard ever disappears, lags or stutters, especially in long text.
+
+If something goes wrong, take a screenshot in TestFlight to send feedback with it.

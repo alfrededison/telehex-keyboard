@@ -1,0 +1,1 @@
+vietnamese,tiếng việt,bàn phím,gõ dấu,hexagon,hex,gesture,glide,swipe,offline,tone marks

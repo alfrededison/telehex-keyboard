@@ -1,0 +1,3 @@
+TeleHex là bàn phím tiếng Việt gõ Telex trên lưới tổ ong 7 cột: phím rộng hơn, xoá và viết hoa bằng cử chỉ vuốt, gợi ý không tự sửa chữ. Có bố cục Truyền thống (QWERTY 10 cột) cho ai quen bàn phím thường. Mọi thứ chạy trên máy; gõ không cần Truy cập đầy đủ.
+
+Đây là bản thử nghiệm đầu tiên trên iPhone và iPad. Cảm ơn bạn đã thử và góp ý!

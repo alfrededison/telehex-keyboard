@@ -1,0 +1,10 @@
+Bật bàn phím: mở TeleHex, làm theo các bước trên màn chào (Cài đặt › Cài đặt chung › Bàn phím › Bàn phím › Thêm bàn phím mới › TeleHex), rồi chạm ô gõ thử và giữ nút quả địa cầu để chọn TeleHex.
+
+Nhờ bạn thử:
+• Gõ Telex trong các app bạn hay dùng (tin nhắn, Safari, ghi chú, app chat): dấu có đặt đúng, chữ có bị lặp hay mất không.
+• Vuốt trên phím cách: trái để xoá, xuống để đổi Việt/Anh, giữ rồi kéo để di con trỏ. Lướt qua các chữ để gõ vuốt.
+• Đổi bố cục Tổ ong/Truyền thống và các cài đặt trong app, rồi mở lại bàn phím xem đã áp dụng chưa.
+• Bật Truy cập đầy đủ nếu muốn thử âm phím, rung, lịch sử clipboard.
+• Bàn phím có lúc nào biến mất, chậm hay giật không, nhất là khi gõ đoạn dài.
+
+Gặp lỗi, chụp màn hình trong TestFlight để gửi góp ý kèm ảnh.

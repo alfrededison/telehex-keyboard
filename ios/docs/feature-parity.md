@@ -1,6 +1,6 @@
 # Điều kiện phát hành iOS theo Android 0.8.1
 
-Quyết định: phát hành khi đủ tính năng Android 0.8.1 mà iOS hỗ trợ. Bản iOS dùng UIKit và engine KMP trong cùng repo. **Đang kiểm thử; chưa đủ điều kiện phát hành.**
+Quyết định: phát hành khi đủ tính năng Android 0.8.1 mà iOS hỗ trợ. Bản iOS dùng UIKit và engine KMP trong cùng repo. **Bản 0.1.0 đang thử công khai trên TestFlight; chuẩn bị gửi App Review.**
 
 ## Phần đã triển khai
 
@@ -25,10 +25,10 @@ Quyết định: phát hành khi đủ tính năng Android 0.8.1 mà iOS hỗ tr
 ## Bằng chứng kiểm thử
 
 - 80 JVM tests, 7 macOS Native tests, 34 Android app tests đều đạt; corpus golden và Unicode NFC/NFD.
-- 59 XCTest đạt: bridge Swift → Native, safe replacement khi đổi field/selection/context, Unicode cursor, keyboard-owned undo/redo, snippets/ẩn danh/EN không học, cấu hình/profile và bố cục 0.8.0, thanh gợi ý/điều hướng bảng, pending write/clear, backup/restore và emoji ghép.
+- 62 XCTest đạt: bridge Swift → Native, safe replacement khi đổi field/selection/context, Unicode cursor, keyboard-owned undo/redo, snippets/ẩn danh/EN không học, cấu hình/profile và bố cục 0.8.0, thanh gợi ý/điều hướng bảng, pending write/clear, backup/restore và emoji ghép.
 - UI Simulator có video riêng từng kịch bản trong `test-recordings/`: gõ VI/EN, profile/symbols/emoji, snippets/privacy, bố cục truyền thống, editor lớp phím, glide/space, appearance/dialpad và extension thật. Chỉ giữ video khi test đạt.
 - Android phải tiếp tục qua `:telex:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug`.
-- Build Simulator và Release ARM64 không ký đều đạt tại máy phát triển. Workflow iOS có XCTest; CI từ xa chưa chạy cho diff này.
+- Build Simulator và Release ARM64 không ký đều đạt tại máy phát triển. Workflow iOS (build + XCTest) và Android đều đạt trên `main` tới commit gói ngôn ngữ 32 MiB.
 
 Danh sách hành vi đã có code không thay thế kiểm thử thực tế trên thiết bị và các ứng dụng chủ.
 
@@ -61,11 +61,16 @@ Review độc lập đã hoàn tất một lần cho diff mở rộng. Người 
 ## Điều kiện còn lại trước phát hành
 
 - [x] Review độc lập diff và xử lý cả 6 finding được duyệt, có test hồi quy.
-- [ ] Kiểm thử đủ các nhánh cử chỉ: held cursor, selection copy/cut, hai ngón, chuyển trang khi drag; kiểm thử âm/rung trên thiết bị thật.
-- [ ] Test iPhone thật theo yêu cầu riêng: RAM/footprint, cold open, gõ dài, memory warning, extension bị terminate/recreate; gói ngôn ngữ sát giới hạn.
+- [ ] Kiểm thử đủ các nhánh cử chỉ: held cursor, xoá vùng chọn, hai ngón, chuyển trang khi drag; kiểm thử âm/rung trên thiết bị thật.
+- [x] iPhone thật, bản TestFlight: gõ đầy đủ khi tắt Truy cập đầy đủ; dialpad ở ô số; cài đặt chỉnh trong app tới bàn phím qua App Group.
+- [ ] Gõ dài trên iPhone thật (bản TestFlight, đã nạp gói VI khuyên dùng 14,6 MB): trong một ghi chú, gõ liên tục khoảng 15 phút (cỡ 3.000 ký tự) xen gõ vuốt, chọn gợi ý, emoji, đổi VI/EN; sau đó chuyển qua lại 5–10 app có ô nhập rồi quay lại gõ tiếp. Đạt khi bàn phím không lần nào tự biến mất hay rơi về bàn phím hệ thống, không chậm dần, và Cài đặt › Quyền riêng tư & Bảo mật › Phân tích & Cải tiến › Dữ liệu phân tích không có `JetsamEvent` mới nhắc tới `TeleHexKeyboard` (cần bật Chia sẻ phân tích iPhone).
+- [ ] Đo kỹ trên iPhone thật (cần bản ký development để Xcode attach): RAM/footprint, cold open, memory warning, extension bị terminate/recreate; gói ngôn ngữ sát giới hạn 32 MiB.
 - [ ] UIKit, SwiftUI, Safari/WKWebView và app chat mục tiêu; iPhone/iPad/rotation, Dynamic Type/VoiceOver.
 - [ ] Files import/export/restore thực tế và rung/âm phím với Full Access bật/tắt trên thiết bị.
 - [x] Cấu hình ký: entitlements App Group, `Signing.local.xcconfig` cho Team ID, privacy manifest, khai báo mã hoá.
-- [ ] Đặt Team ID, đăng ký App ID/App Group, archive bản ký; kiểm tra App Group trên máy thật.
-- [ ] Icon, versioning, nguồn dữ liệu/giấy phép, metadata App Store/TestFlight.
-- [ ] Android CI và iOS CI đều qua trên nhánh hợp nhất trước phát hành.
+- [x] Đặt Team ID, đăng ký App ID `com.telehex.keyboard`/`com.telehex.keyboard.extension` và App Group `group.com.telehex.keyboard.shared`, archive bản ký (`ios/scripts/release.sh`), build 0.1.0 lên TestFlight; build qua Beta App Review, có link công khai.
+- [x] Icon, versioning, metadata và ảnh chụp App Store (`fastlane/metadata/ios`, `fastlane/screenshots/ios`, đẩy bằng `ios/scripts/asc_metadata.py`).
+- [x] Người liên hệ App Review (đẩy bằng `asc_metadata.py`).
+- [ ] Trên web App Store Connect: App Privacy (Data Not Collected), Content Rights (nguồn dữ liệu/giấy phép).
+- [ ] Gắn build mới nhất vào phiên bản 0.1.0: chạy lại `asc_metadata.py`.
+- [ ] Android CI và iOS CI đều qua trên `main` sau khi push các commit iOS mới nhất.

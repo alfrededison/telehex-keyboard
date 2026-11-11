@@ -29,3 +29,13 @@ out/
 # Gói ngôn ngữ dựng từ corpus có giấy phép riêng; chỉ commit có chủ đích (git add -f)
 *.ngram
 !telex/src/test/resources/*.ngram
+
+# Ảnh gốc chụp từ Simulator cho ảnh App Store; tạo lại bằng ios/UITests/StoreScreenshots.m
+tools/store/ios-raw/
+
+# Generated iOS project / Apple build artifacts
+ios/*.xcodeproj/
+ios/Generated/
+# Team ID để ký, mỗi máy tự đặt
+ios/Config/Signing.local.xcconfig
+*.xcuserstate

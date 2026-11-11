@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<title>TeleHex App Store screenshots</title>
+<!--
+  App Store screenshots for iOS: real Simulator captures from tools/store/ios-raw/ framed with the same
+  yellow honeycomb, font and headline style as the Google Play set (screens.html). Rendered by
+  tools/store_ios_screens.py: every <section class="shot"> becomes one PNG, iPhone 6.9" 1320×2868 and
+  iPad 13" 2064×2752. Captions must stay true on iOS (no Internet-permission, paste or per-app claims).
+-->
+<style>
+  @font-face { font-family: "Be Vietnam Pro"; font-weight: 600; src: url("fonts/BeVietnamPro-SemiBold.ttf"); }
+  @font-face { font-family: "Be Vietnam Pro"; font-weight: 800; src: url("fonts/BeVietnamPro-ExtraBold.ttf"); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #D9DDE2; font-family: "Be Vietnam Pro", sans-serif; color: #231A0B; }
+  .shot { position: relative; overflow: hidden; background: #F2B33D; }
+  .wall { position: absolute; left: 0; top: 0; }
+  .copy { position: absolute; text-align: center; }
+  .copy h1 { font-weight: 800; line-height: 1.12; letter-spacing: -0.01em; }
+  .copy h1 em { font-style: normal; color: #0A3A80; }
+  .copy p { font-weight: 600; line-height: 1.35; color: #573700; }
+  .logo { position: absolute; }
+  .device { position: absolute; background: #101215; box-shadow: 0 40px 80px rgba(60, 35, 0, 0.30); }
+  .device img { position: absolute; display: block; }
+  .device svg { position: absolute; overflow: visible; }
+
+  .iphone { width: 1320px; height: 2868px; }
+  .iphone .copy { left: 70px; top: 190px; width: 1180px; }
+  .iphone.hero .copy { top: 300px; }
+  .iphone .copy h1 { font-size: 104px; }
+  .iphone .copy p { margin-top: 30px; font-size: 52px; }
+  .iphone .logo { left: 570px; top: 60px; width: 180px; height: 180px; }
+  .iphone .device { left: 160px; top: 720px; width: 1000px; height: 2102px; border-radius: 150px; }
+  .iphone .device img, .iphone .device svg { left: 30px; top: 30px; width: 940px; height: 2042px; }
+  .iphone .device img { border-radius: 122px; }
+
+  .ipad { width: 2064px; height: 2752px; }
+  .ipad .copy { left: 140px; top: 130px; width: 1784px; }
+  .ipad.hero .copy { left: 400px; width: 1524px; text-align: left; }
+  .ipad .copy h1 { font-size: 112px; }
+  .ipad .copy p { margin-top: 30px; font-size: 56px; }
+  .ipad .logo { left: 140px; top: 150px; width: 210px; height: 210px; }
+  .ipad .device { left: 271px; top: 640px; width: 1522px; height: 2005px; border-radius: 90px; }
+  .ipad .device img, .ipad .device svg { left: 36px; top: 36px; width: 1450px; height: 1933px; }
+  .ipad .device img { border-radius: 56px; }
+</style>
+</head>
+<body>
+<div id="shots"></div>
+<script>
+(function () {
+  const SQ3 = Math.sqrt(3);
+  const ICON = '<svg viewBox="0 0 108 108" width="100%" height="100%"><rect width="108" height="108" rx="26" fill="#DCE8FB"/><path fill="#0A3A80" d="M54,22 L80,37 L80,71 L54,86 L28,71 L28,37 Z"/><path fill="#FFFFFF" d="M54,30 L73,41 L73,67 L54,78 L35,67 L35,41 Z"/><path fill="#0A3A80" d="M58.3432,63.173 L64.3973,64.1892 Q63.2297,67.5189 60.7108,69.2595 Q58.1919,71 54.4081,71 Q48.4189,71 45.5432,67.0865 Q43.273,63.9514 43.273,59.173 Q43.273,53.4649 46.2567,50.2324 Q49.2405,47 53.8027,47 Q58.927,47 61.8892,50.3838 Q64.8513,53.7676 64.7216,60.7514 H49.5 Q49.5648,63.4541 50.9703,64.9568 Q52.3757,66.4595 54.473,66.4595 Q55.9,66.4595 56.873,65.6811 Q57.8459,64.9027 58.3432,63.173 Z M58.6892,57.0324 Q58.6243,54.3946 57.327,53.0216 Q56.0297,51.6486 54.1703,51.6486 Q52.1811,51.6486 50.8838,53.0973 Q49.5865,54.5459 49.6081,57.0324 Z"/><path fill="#E8882F" d="M45.5,44 L51.5,37.5 Q54,35 56.5,37.5 L62.5,44 L58,44 L54,40 L50,44 Z"/></svg>';
+
+  // Same honeycomb wall as screens.html, sized to the canvas.
+  function wall(width, height, a) {
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const h = (a * 2) / SQ3;
+    let out = "";
+    for (let r = -1; r * h * 0.75 < height + h; r++) for (let c = -1; c * a < width + a; c++) {
+      const cx = c * a + (r % 2 ? a / 2 : 0), cy = r * h * 0.75, w2 = a / 2, h2 = h / 2, h4 = h / 4;
+      const pts = [[cx, cy - h2], [cx + w2, cy - h4], [cx + w2, cy + h4], [cx, cy + h2], [cx - w2, cy + h4], [cx - w2, cy - h4]];
+      out += `<polygon points="${pts.map((p) => p.join(",")).join(" ")}" fill="${rnd() < 0.14 ? "#F5C04F" : "#F2B33D"}" stroke="#E19A22" stroke-width="${a / 16}" stroke-linejoin="round"/>`;
+    }
+    return `<svg class="wall" width="${width}" height="${height}">${out}</svg>`;
+  }
+
+  // Finger trail over the capture, in raw-capture pixels (key centres measured on ios-raw/*-3-glide.png; re-measure after recapturing).
+  function trail(device) {
+    const pts = device.glide.map(([x, y]) => [x * device.width, y * device.height]);
+    const d = pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(0)},${y.toFixed(0)}`).join(" ");
+    const [ex, ey] = pts[pts.length - 1], w = device.trail;
+    return `<svg viewBox="0 0 ${device.width} ${device.height}">
+      <path d="${d}" fill="none" stroke="#0A3A80" stroke-opacity="0.45" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${ex}" cy="${ey}" r="${w * 0.55}" fill="#0A3A80" fill-opacity="0.6"/>
+    </svg>`;
+  }
+
+  const DEVICES = {
+    iphone: { width: 1320, height: 2868, hex: 156, trail: 26, glide: [[1126 / 1320, 2088 / 2868], [787 / 1320, 2088 / 2868], [1040 / 1320, 1940 / 2868]] },
+    ipad: { width: 2064, height: 2752, hex: 200, trail: 18, glide: [[1362 / 2064, 2309 / 2752], [1122 / 2064, 2309 / 2752], [1302 / 2064, 2205 / 2752]] },
+  };
+  const SCENES = [
+    { id: "1-hero", title: "Bàn phím Telex<br><em>tổ ong</em>", sub: "Phím rộng hơn, vẫn thứ tự QWERTY", logo: true },
+    { id: "2-telex", title: "Gõ Telex<br><em>quen tay</em>", sub: "Đủ dấu, có gợi ý tiếng Việt" },
+    { id: "3-glide", title: "Lướt một nét,<br><em>chạm chọn từ</em>", sub: "Lướt p → h → o, nhả tay, chọn “phở”", glide: true },
+    { id: "4-english", title: "Gõ tiếng Anh<br><em>ngay trên bàn phím</em>", sub: "Vuốt xuống phím cách · 50.000 từ offline" },
+    { id: "5-traditional", title: "Quen bàn phím<br><em>10 cột?</em>", sub: "Chọn bố cục Truyền thống, có ⇧ và ⌫" },
+    { id: "6-privacy", title: "Chữ của bạn<br><em>ở lại trên máy</em>", sub: "Không tự sửa chữ<br>Không cần Truy cập đầy đủ" },
+  ];
+
+  const html = [];
+  for (const [kind, device] of Object.entries(DEVICES)) {
+    SCENES.forEach((scene, i) => {
+      const hero = scene.logo ? " hero" : "";
+      html.push(`<section class="shot ${kind}${hero}" id="${kind}-${i + 1}" style="width:${device.width}px;height:${device.height}px">
+        ${wall(device.width, device.height, device.hex)}
+        ${scene.logo ? `<div class="logo">${ICON}</div>` : ""}
+        <div class="copy"><h1>${scene.title}</h1><p>${scene.sub}</p></div>
+        <div class="device"><img src="ios-raw/${kind}-${scene.id}.png" alt="">${scene.glide ? trail(device) : ""}</div>
+      </section>`);
+    });
+  }
+  document.getElementById("shots").innerHTML = html.join("");
+})();
+</script>
+</body>
+</html>

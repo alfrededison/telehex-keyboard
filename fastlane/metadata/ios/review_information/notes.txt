@@ -1,0 +1,18 @@
+TeleHex is a Vietnamese Telex keyboard extension. No account or login is needed.
+
+To test:
+1. Open TeleHex once, then go to Settings › General › Keyboard › Keyboards › Add New Keyboard › TeleHex.
+2. Back in TeleHex, tap the test field and switch to TeleHex with the globe key.
+3. Type "tieengs vieetj" to get "tiếng việt". Swipe left on the space bar to delete; swipe down on the space bar to switch between Vietnamese and English.
+4. Settings changed in the TeleHex app (for example the "Tổ ong" honeycomb or "Truyền thống" traditional layout; the app is in Vietnamese) apply the next time the keyboard opens. This works without Full Access.
+
+Full Access is optional. Typing, suggestions, learned words, profiles, text shortcuts and settings from the app all work without it. With Full Access allowed (Settings › General › Keyboard › Keyboards › TeleHex › Allow Full Access), the keyboard additionally uses it only for:
+- key click sounds and haptic feedback (off by default);
+- clipboard history, which reads the clipboard only when the user opens the clipboard panel (swipe down on the gear key);
+- rearranging keys directly on the keyboard by holding a key and dragging it;
+- writing the profile chosen or edited on the keyboard, and the fact that Full Access is on, to the shared App Group so the TeleHex app can show them.
+Clipboard history and key dragging are switched on in the app by default but stay inactive until Full Access is allowed.
+
+The keyboard has no networking code and sends nothing off the device; all data stays in the app's own container and its App Group. The keyboard never opens other apps.
+
+The keyboard provides number and decimal input through its 123 pages and a dial pad for number-pad fields.

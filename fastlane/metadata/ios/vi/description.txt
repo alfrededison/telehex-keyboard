@@ -1,0 +1,38 @@
+TeleHex là bàn phím tiếng Việt gõ Telex trên lưới lục giác 7 cột. Thứ tự chữ vẫn theo tinh thần QWERTY nên quen tay ngay, nhưng mỗi phím rộng hơn khoảng 30% so với bàn phím 10 cột.
+
+Xoá, chữ hoa và ký tự phụ chuyển sang cử chỉ vuốt, nên lưới tổ ong không cần phím xoá hay shift.
+
+Quen bàn phím 10 cột? Chọn bố cục Truyền thống: QWERTY đủ 10 cột, có phím ⇧ và ⌫, vẫn dùng được mọi cử chỉ và gợi ý.
+
+GÕ TRÊN MÁY, KHÔNG CẦN TRUY CẬP ĐẦY ĐỦ
+• Telex, gợi ý và từ đã học đều xử lý và lưu ngay trên iPhone, iPad của bạn. TeleHex không có chức năng gửi dữ liệu lên mạng.
+• Gõ, gợi ý, profile và gõ tắt chạy đầy đủ khi không bật Truy cập đầy đủ. Quyền này chỉ dùng cho âm phím, rung, kéo đổi chỗ phím trên bàn phím, lịch sử clipboard và để app biết quyền đã bật.
+• Không quảng cáo, không tài khoản, không theo dõi. Mã nguồn mở (MIT).
+
+GÕ BẰNG CỬ CHỈ
+• Vuốt lên phím chữ để viết hoa, vuốt xuống để gõ số, ký hiệu hoặc emoji in nhỏ dưới phím.
+• Vuốt trái trên phím cách để xoá; vuốt dài để xoá theo từng từ, có báo trước số từ sẽ xoá.
+• Vuốt lên phím cách để khoá chữ hoa, vuốt xuống để bật/tắt chế độ gõ tiếng Anh.
+• Giữ phím cách rồi kéo để di con trỏ.
+• Hai ngón vuốt để hoàn tác / làm lại.
+• Gõ vuốt: lướt qua các chữ của một âm tiết hay một từ tiếng Anh rồi chọn từ gợi ý.
+
+THANH GỢI Ý KHÔNG TỰ SỬA
+• TeleHex không bao giờ tự đổi chữ bạn đã gõ.
+• Gợi ý 6 biến thể dấu của âm tiết đang gõ, chạm một lần là xong.
+• Gợi ý sửa khi gõ nhầm phím lân cận, thiếu hoặc thừa phím.
+• Gợi ý âm tiết tiếp theo, học từ chính cách bạn viết.
+• Emoji theo từ khoá: gõ "cười" để thấy các mặt cười.
+• Chế độ tiếng Anh có từ điển 50.000 từ để hoàn thành từ, tự bật ở ô email, địa chỉ web và ô chỉ nhận chữ Latinh.
+
+TUỲ BIẾN
+• Giữ một phím rồi kéo thả để đổi chỗ phím ngay trên bàn phím (cần Truy cập đầy đủ), hoặc sửa trong app.
+• Hai bố cục có sẵn: Tổ ong và Truyền thống. Tạo thêm profile riêng, sửa từng lớp phím và tự chọn ký tự vuốt xuống cho từng phím.
+• Kiểu đặt dấu cũ/mới (hòa/hoà), gõ tắt, lịch sử clipboard (cần Truy cập đầy đủ), chế độ ẩn danh, chế độ một tay, chiều cao bàn phím, giao diện sáng/tối, màu nhấn, rung và âm phím.
+• Nạp gói ngôn ngữ riêng cho gợi ý tiếng Việt và tiếng Anh.
+• Sao lưu và khôi phục cài đặt ra một file.
+
+BẬT BÀN PHÍM
+Mở TeleHex, màn chào hướng dẫn từng bước: vào Cài đặt › Cài đặt chung › Bàn phím › Bàn phím › Thêm bàn phím mới, chọn TeleHex, rồi chọn bố cục Tổ ong hay Truyền thống ngay trong app. Ứng dụng dùng tiếng Việt.
+
+Mã nguồn và hướng dẫn: https://github.com/alfrededison/telehex-keyboard

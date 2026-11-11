@@ -1,0 +1,1 @@
+A Vietnamese Telex keyboard on a 7-column hex grid: wider keys, gestures for delete and capitals, suggestions without autocorrect. Works on-device, no Full Access needed.

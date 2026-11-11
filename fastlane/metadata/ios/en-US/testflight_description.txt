@@ -1,0 +1,3 @@
+TeleHex is a Vietnamese Telex keyboard on a 7-column hexagonal grid: wider keys, gestures for delete and capitals, suggestions that never autocorrect. A Traditional layout (10-column QWERTY) is there if you prefer a regular keyboard. Everything runs on the device; typing needs no Full Access.
+
+This is the first test build for iPhone and iPad. Thanks for trying it and sending feedback!
