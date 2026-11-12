@@ -100,7 +100,7 @@ Nhóm **Nội bộ** (thành viên App Store Connect của team) nhận mọi bu
 python3 ios/scripts/asc_testflight.py
 ```
 
-Script đưa build mới nhất đã xử lý xong vào nhóm External **Công khai** có public link (`https://testflight.apple.com/join/gvyHeek6`), và chạy lại bao nhiêu lần cũng được:
+Script đưa build tải lên gần nhất vào nhóm External **Công khai** có public link (`https://testflight.apple.com/join/gvyHeek6`), và chạy lại bao nhiêu lần cũng được:
 
 | Mục | Nguồn |
 |---|---|
@@ -110,6 +110,8 @@ Script đưa build mới nhất đã xử lý xong vào nhóm External **Công k
 | Beta App Review Information | người liên hệ lấy từ phần App Review của phiên bản App Store; ghi chú `review_information/notes.txt` |
 | What to Test (mỗi build) | `<ngôn ngữ>/testflight_what_to_test.txt` |
 | Giới hạn số người qua link | `TESTFLIGHT_PUBLIC_LIMIT` (bỏ trống là không giới hạn, tối đa 10.000) |
+
+Nhóm **Nội bộ** tự nhận mọi build, còn nhóm **Công khai** chỉ nhận build qua script này: mỗi lần `release.sh` xong phải chạy lại. Build vừa tải lên còn đang xử lý thì script đợi tới khi xong (tối đa 30 phút). Ngay sau khi tải lên, build có thể vài phút sau mới hiện trong API; lúc đó script vẫn thấy build trước, nên đợi vài phút rồi hẵng chạy, và kiểm tra dòng "thêm build N" có đúng số build mới.
 
 Build đầu của mỗi phiên bản phải qua Beta App Review (thường dưới 1 ngày); public link chỉ mở khi đã duyệt. Build sau của cùng phiên bản thường được duyệt tự động. Không dùng emoji trong các file này: App Store Connect từ chối emoji ở mô tả.
 

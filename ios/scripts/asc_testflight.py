@@ -7,7 +7,7 @@ Làm lần lượt:
   1. Test Information: mô tả bản beta, email góp ý, Privacy Policy URL (fastlane/metadata/ios/<ngôn ngữ>/
      testflight_description.txt, privacy_url.txt, marketing_url.txt) và người liên hệ cho Beta App Review, lấy từ
      phần App Review của phiên bản App Store (đã điền trên web) hoặc REVIEW_* trong Signing.local.xcconfig.
-  2. "What to Test" của build mới nhất đã xử lý xong: <ngôn ngữ>/testflight_what_to_test.txt.
+  2. "What to Test" của build tải lên gần nhất (đang xử lý thì đợi xong): <ngôn ngữ>/testflight_what_to_test.txt.
   3. Nhóm External "Công khai": thêm build, bật public link (TESTFLIGHT_PUBLIC_LIMIT trong Signing.local.xcconfig
      để giới hạn số người, bỏ trống là không giới hạn).
   4. Gửi Beta App Review nếu build chưa gửi; in public link.
@@ -15,6 +15,8 @@ Làm lần lượt:
 Email góp ý là TESTFLIGHT_FEEDBACK_EMAIL trong Signing.local.xcconfig, mặc định là email liên hệ App Review. Người thử
 thấy email này.
 """
+import time
+
 from asc_metadata import EDITABLE, METADATA, connect, local_setting, text, upsert
 from asc_signing import fail
 
@@ -69,12 +71,26 @@ def test_information(client, app_id, locales, person):
         say("Beta App Review: không đổi")
 
 
-def latest_build(client, app_id, version_string):
-    builds = client.call("GET", f"/v1/builds?filter[app]={app_id}&filter[preReleaseVersion.version]={version_string}"
-                         "&filter[processingState]=VALID&filter[expired]=false&sort=-uploadedDate&limit=1")["data"]
-    if not builds:
-        fail(f"chưa có build {version_string} nào xử lý xong; chạy ios/scripts/release.sh rồi đợi Apple xử lý")
-    return builds[0]
+def latest_build(client, app_id, version_string, wait_minutes=30):
+    """Build tải lên gần nhất, kể cả đang xử lý: đợi Apple xử lý xong thay vì lặng lẽ lấy build cũ hơn đã xử lý. Build vừa
+    tải lên có thể vài phút sau mới hiện trong API; chạy ngay sau release.sh mà chưa thấy thì chạy lại sau."""
+    query = (f"/v1/builds?filter[app]={app_id}&filter[preReleaseVersion.version]={version_string}"
+             "&filter[expired]=false&sort=-uploadedDate&limit=1")
+    deadline = time.monotonic() + wait_minutes * 60
+    while True:
+        builds = client.call("GET", query)["data"]
+        if not builds:
+            fail(f"chưa có build {version_string} nào; chạy ios/scripts/release.sh trước")
+        build = builds[0]
+        state = build["attributes"]["processingState"]
+        if state == "VALID":
+            return build
+        if state != "PROCESSING":
+            fail(f"build {build['attributes']['version']} xử lý lỗi ({state}); tải build mới bằng ios/scripts/release.sh")
+        if time.monotonic() > deadline:
+            fail(f"build {build['attributes']['version']} vẫn đang xử lý sau {wait_minutes} phút; chạy lại sau")
+        say(f"build {build['attributes']['version']} đang xử lý, đợi…")
+        time.sleep(30)
 
 
 def what_to_test(client, build, locales):
