@@ -785,12 +785,13 @@ final class HexKeyboardView: UIView {
                 onGlide?(trace, centers); return
             }
             guard max(abs(dx),abs(dy)) >= preferences.configuration.swipeThreshold else { adaptTouch(point,index: index); activate(code,index: index); return }
+            // Phím cách như Android: trái xoá (có vùng chọn thì cắt), phải dán, lên khoá hoa (có vùng chọn thì chép), xuống đổi VI/EN.
             if code == " " {
                 if abs(dx) > abs(dy) {
                     if dx < 0 {
                         if !inlineDocuments.isEmpty { type("⌫") } else if deletingWords { onWordDelete?(wordCount(dx),true) } else { onCommand?("space-left") }
-                    }
-                } else if dy > 0 { if inlineDocuments.isEmpty { onToggleLanguage?() } else { inlineSession.englishMode.toggle(); updateEditorBar() } } else if inlineDocuments.isEmpty { onCapsLock?() }
+                    } else if inlineDocuments.isEmpty { onCommand?("paste") }
+                } else if dy > 0 { if inlineDocuments.isEmpty { onToggleLanguage?() } else { inlineSession.englishMode.toggle(); updateEditorBar() } } else if inlineDocuments.isEmpty { onCommand?("space-up") }
             } else if KeyboardProfile.isLetter(code) && abs(dy) > abs(dx) && dy < 0 { type(uppercase ? code.lowercased() : code.uppercased()) }
             else if (KeyboardProfile.isLetter(code) || [",","."].contains(code)) && abs(dy) > abs(dx) && dy > 0 { let value = preferences.profile.swipe[index]; if !value.isEmpty { type(value) } }
         case .cancel: clearGesture()

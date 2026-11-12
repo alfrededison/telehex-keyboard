@@ -30,6 +30,8 @@ final class KeyboardDriver {
     private var upperNext: Bool { capsLock || shiftOnce || (automaticCapital && !suppressAutoCapital) }
     var onNextKeyboard: (() -> Void)?
     var fullAccess: () -> Bool = { false }
+    /// Clipboard cho cắt/chép/dán trên phím cách; test dùng clipboard riêng.
+    var pasteboard = UIPasteboard.general
     lazy var clipboard = ClipboardHistory(store: store)
     /// Lịch sử clipboard: người dùng bật trong app và bàn phím có Truy cập đầy đủ (iOS mới cho đọc clipboard).
     var clipboardEnabled: Bool { fullAccess() && preferences.configuration.clipboardHistory }
@@ -178,10 +180,16 @@ final class KeyboardDriver {
     private func command(_ name: String) {
         let doc = document()
         switch name {
-        // Vuốt trái phím cách: xoá một ký tự, hoặc xoá vùng đang chọn trong ứng dụng.
-        case "space-left": session.press("⌫",in: doc)
-        case "undo": session.undo(in: doc)
-        case "redo": session.redo(in: doc)
+        // Vuốt trái phím cách: xoá một ký tự; có vùng chọn trong ứng dụng thì cắt.
+        case "space-left":
+            if selection(in: doc) != nil { clipboardAction("cut", in: doc) } else { session.press("⌫",in: doc) }
+        // Vuốt lên phím cách: có vùng chọn thì chép, không thì khoá/mở chữ hoa.
+        case "space-up":
+            if selection(in: doc) != nil { clipboardAction("copy", in: doc) } else { view.onCapsLock?(); return }
+        case "paste": clipboardAction("paste", in: doc)
+        // Hai ngón vuốt trái/phải: báo kết quả như Android.
+        case "undo": view.message(session.undo(in: doc) ? "↶ Đã hoàn tác" : "Không còn gì để hoàn tác")
+        case "redo": view.message(session.redo(in: doc) ? "↷ Đã làm lại" : "Không còn gì để làm lại")
         case "clear-personal":
             session.clearLearned(in: doc); store.clearPersonal()
             reloadVocabulary()
@@ -191,5 +199,25 @@ final class KeyboardDriver {
         default: break
         }
         update()
+    }
+    private func selection(in doc: TextDocument) -> String? { doc.selection.flatMap { $0.isEmpty ? nil : $0 } }
+    /// Cắt/chép vùng chọn của ứng dụng, dán clipboard. iOS chỉ cho bàn phím đọc/ghi clipboard khi có Truy cập đầy đủ;
+    /// không có quyền thì cắt vẫn xoá vùng chọn như trước (hoàn tác được) và báo cần quyền.
+    private func clipboardAction(_ action: String, in doc: TextDocument) {
+        guard fullAccess() else {
+            if action == "cut" { session.press("⌫",in: doc) }
+            view.message(action == "cut" ? "Đã xoá; cần Truy cập đầy đủ để cắt vào clipboard"
+                         : "Cần cho phép Truy cập đầy đủ để \(action == "copy" ? "chép" : "dán")")
+            return
+        }
+        if action == "paste" {
+            guard let text = pasteboard.string, !text.isEmpty else { view.message("Clipboard trống"); return }
+            session.insertText(text, in: doc); view.message("Đã dán")
+            return
+        }
+        guard let text = selection(in: doc) else { return }
+        pasteboard.string = text
+        if action == "cut" { session.press("⌫",in: doc) }
+        view.message(action == "cut" ? "✂ Đã cắt" : "Đã chép")
     }
 }

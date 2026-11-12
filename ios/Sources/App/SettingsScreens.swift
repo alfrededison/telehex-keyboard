@@ -168,7 +168,8 @@ enum SettingsScreens {
             Section(header: "Cách dùng", rows: [
                 "Chữ: vuốt lên đảo hoa/thường, vuốt xuống gõ ký tự phụ.",
                 "Lướt qua từ 3 phím chữ để gõ vuốt (tiếng Việt và tiếng Anh).",
-                "Phím cách: vuốt trái xoá, kéo xa xoá từ, lên khoá hoa, xuống đổi VI/EN, giữ rồi kéo để di con trỏ.",
+                "Phím cách: vuốt trái xoá, kéo xa xoá từ, phải dán, lên khoá hoa, xuống đổi VI/EN, giữ rồi kéo để di con trỏ.",
+                "Có vùng chọn: vuốt lên phím cách để chép, vuốt trái để cắt. Cắt, chép, dán cần Truy cập đầy đủ.",
                 "Bố cục truyền thống: chạm đúp ⇧ để khoá hoa. Giữ ⌫ để xoá liên tục.",
                 "Hai ngón vuốt trái/phải: hoàn tác/làm lại.",
             ].enumerated().map { Row(title: $1, id: "gesture-help-\($0)", kind: .text) }),
@@ -202,7 +203,7 @@ enum SettingsScreens {
 
 /// iOS không cho app biết bàn phím có Truy cập đầy đủ hay không, nên app không đoán trạng thái: chức năng cần quyền bật sẵn,
 /// bàn phím tự kiểm tra quyền khi chạy, app chỉ hướng dẫn cách bật.
-let fullAccessHelp = "Cài đặt › Cài đặt chung › Bàn phím › Bàn phím › TeleHex › bật Cho phép Truy cập đầy đủ. Bật xong là dùng được, không cần làm gì thêm. TeleHex không gửi nội dung gõ đi đâu; quyền này chỉ dùng cho clipboard, kéo đổi chỗ phím, rung và âm phím."
+let fullAccessHelp = "Cài đặt › Cài đặt chung › Bàn phím › Bàn phím › TeleHex › bật Cho phép Truy cập đầy đủ. Bật xong là dùng được, không cần làm gì thêm. TeleHex không gửi nội dung gõ đi đâu; quyền này chỉ dùng cho cắt/chép/dán và lịch sử clipboard, kéo đổi chỗ phím, rung và âm phím."
 func openFullAccessSettings() -> SettingsViewController.Row {
     .init(title: "Mở Cài đặt để bật Truy cập đầy đủ", id: "open-system-settings", kind: .action { _ in
         if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }

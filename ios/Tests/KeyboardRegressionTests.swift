@@ -12,6 +12,52 @@ final class KeyboardRegressionTests: XCTestCase {
     private func store() -> KeyboardDataStore {
         KeyboardDataStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
     }
+    /// Ô nhập có vùng chọn như ứng dụng thật: chèn thay vùng chọn, ⌫ xoá vùng chọn.
+    private final class SelectionDocument: TextDocument {
+        var before: String, selected: String, after: String
+        let documentID: UUID? = UUID()
+        init(_ before: String, _ selected: String, _ after: String) { self.before = before; self.selected = selected; self.after = after }
+        var text: String { before + selected + after }
+        var beforeInput: String? { before }
+        var afterInput: String? { after }
+        var selection: String? { selected.isEmpty ? nil : selected }
+        /// Như textDocumentProxy thật: insertText("") không làm gì, kể cả khi có vùng chọn.
+        func insert(_ value: String) { guard !value.isEmpty else { return }; before += value; selected = "" }
+        func deleteBackward() { if !selected.isEmpty { selected = "" } else if !before.isEmpty { before.removeLast() } }
+    }
+    func testSpaceSwipesCutCopyAndPasteLikeAndroid() {
+        let pasteboard = UIPasteboard.withUniqueName()
+        defer { UIPasteboard.remove(withName: pasteboard.name) }
+        pasteboard.string = "cũ"
+        let doc = SelectionDocument("a ", "xin", " b")
+        let driver = KeyboardDriver(preferences: preferences(), document: { doc }, traits: { (.default,.none) }, loadVocabulary: { _,_ in })
+        driver.pasteboard = pasteboard; driver.update()
+        // Không có Truy cập đầy đủ: không chép được, clipboard giữ nguyên.
+        driver.view.onCommand?("space-up")
+        XCTAssertEqual(pasteboard.string, "cũ"); XCTAssertEqual(doc.text, "a xin b")
+        driver.fullAccess = { true }
+        driver.view.onCommand?("space-up")
+        XCTAssertEqual(pasteboard.string, "xin"); XCTAssertEqual(doc.text, "a xin b")
+        pasteboard.string = "chào"
+        driver.view.onCommand?("space-left")
+        XCTAssertEqual(pasteboard.string, "xin"); XCTAssertEqual(doc.text, "a  b")
+        // Hoàn tác/làm lại lần cắt.
+        driver.view.onCommand?("undo"); XCTAssertEqual(doc.text, "a xin b")
+        driver.view.onCommand?("redo"); XCTAssertEqual(doc.text, "a  b")
+        driver.view.onCommand?("paste")
+        XCTAssertEqual(doc.text, "a xin b")
+        // Không có quyền: vuốt trái vẫn xoá vùng chọn (⌫ dùng cùng đường xoá).
+        driver.fullAccess = { false }
+        doc.selected = "xin"; doc.before = "a "
+        driver.view.onCommand?("space-left")
+        XCTAssertEqual(doc.text, "a  b"); XCTAssertEqual(pasteboard.string, "xin")
+        driver.fullAccess = { true }; doc.before = "a xin"
+        // Không có vùng chọn: vuốt lên vẫn khoá chữ hoa, vuốt trái xoá một ký tự.
+        driver.view.onCommand?("space-up")
+        XCTAssertTrue(driver.view.capsLocked)
+        driver.view.onCommand?("space-left")
+        XCTAssertEqual(doc.text, "a xi b")
+    }
     func testSwitchingLayerFamiliesDropsSelectionAndInvalidSourceCannotChangeProfile() {
         let prefs = preferences(), view = HexKeyboardView(preferences: preferences())
         view.startLayoutEditor(0); view.editCell(0,layer: 0)

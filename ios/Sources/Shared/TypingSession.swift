@@ -211,26 +211,30 @@ final class TypingSession {
             guard old.isEmpty || document.beforeInput?.hasSuffix(old) == true else { reset(); return }
             for _ in old { document.deleteBackward() }
             document.insert(new)
-        } else { document.insert(new) }
+        // Có vùng chọn: chèn thay vùng chọn; xoá thì phải gọi deleteBackward, vì insertText("") của iOS không làm gì.
+        } else if new.isEmpty { document.deleteBackward() } else { document.insert(new) }
         if history, document.documentID != nil {
             undoStack.append(Edit(old: selected.isEmpty ? old : selected, new: new, anchor: DocumentAnchor(document)))
             if undoStack.count > 80 { undoStack.removeFirst() }
             redoStack.removeAll()
         }
     }
-    func undo(in document: TextDocument) {
-        guard let last = undoStack.last, last.anchor.matches(document), document.selection?.isEmpty != false else { return }
+    /// Trả false khi không có gì để hoàn tác (hoặc văn bản đã đổi ngoài bàn phím), để báo cho người dùng.
+    @discardableResult func undo(in document: TextDocument) -> Bool {
+        guard let last = undoStack.last, last.anchor.matches(document), document.selection?.isEmpty != false else { return false }
         reset(); undoStack.removeLast()
         change(old: last.new, new: last.old, in: document, history: false)
         redoStack.append(Edit(old: last.old, new: last.new, anchor: DocumentAnchor(document)))
         refreshCandidates(in: document)
+        return true
     }
-    func redo(in document: TextDocument) {
-        guard let last = redoStack.last, last.anchor.matches(document), document.selection?.isEmpty != false else { return }
+    @discardableResult func redo(in document: TextDocument) -> Bool {
+        guard let last = redoStack.last, last.anchor.matches(document), document.selection?.isEmpty != false else { return false }
         reset(); redoStack.removeLast()
         change(old: last.old, new: last.new, in: document, history: false)
         undoStack.append(Edit(old: last.old, new: last.new, anchor: DocumentAnchor(document)))
         refreshCandidates(in: document)
+        return true
     }
     func insert(_ text: String, in document: TextDocument) {
         synchronize(with: document); reset(); change(old: "", new: text, in: document); refreshCandidates(in: document)
