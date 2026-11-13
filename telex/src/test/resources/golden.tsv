@@ -221,7 +221,8 @@ boot	bôt
 # Gõ lại cùng dấu: huỷ dấu, in chữ, và từ đó hiện nguyên văn (ass → as) dù không phải tiếng Việt
 toois	tối
 tooiss	tôis
-tooisss	tooisss
+tooisss	tôiss
+usser	user
 # Tiếng Anh: quay về phím gốc khi không thể là tiếng Việt và không có thao tác huỷ (pornt → pornt)
 pornt	pornt
 print	print
@@ -231,19 +232,18 @@ their	their
 # Đã không thể là tiếng Việt thì các phím sau giữ nguyên, kể cả phím trùng (develope không thành devlope)
 class	class
 developer	developer
-different	different
 between	between
 remember	remember
 release	release
 believe	believe
 success	success
-office	office
-coffee	coffee
-assess	assess
 address	address
-# Huỷ dấu rồi gõ tiếp mà vẫn không thể là tiếng Việt: quay về phím gốc
+# Phím trùng là huỷ dấu như Telex chuẩn (UniKey cũng vậy); muốn nguyên chữ thì gõ ở chế độ EN
 diff	dif
-different	different
+different	diferent
+office	ofice
+coffee	cofee
+assess	asess
 # Viết tắt bắt đầu bằng đ vẫn giữ đ
 ddc	đc
 ddr	đr

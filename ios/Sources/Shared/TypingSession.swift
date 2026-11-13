@@ -134,6 +134,9 @@ final class TypingSession {
                 if key == " ", standalone, let snippet = configuration.snippets[engine.rawKeys().lowercased()] ?? configuration.snippets[composing.lowercased()] {
                     let expanded = composing.first?.isUppercase == true ? snippet.prefix(1).uppercased() + snippet.dropFirst() : snippet
                     replace(with: expanded, in: document)
+                } else if !englishMode, let restored = engine.restoredKeys() {
+                    // Như UniKey: từ có dấu mà sai chính tả thì trả lại phím đã gõ ("ủe" → user), không học
+                    replace(with: restored, in: document)
                 } else { learn(composing, before: context) }
             }
             reset()

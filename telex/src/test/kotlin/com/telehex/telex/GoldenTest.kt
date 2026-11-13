@@ -60,6 +60,37 @@ class GoldenTest {
     }
 
     @Test
+    fun commitRestoresKeysOfMarkedMisspelledSyllableLikeUniKey() {
+        fun committed(keys: String, config: TelexConfig = TelexConfig()): String {
+            val e = TelexEngine(config)
+            for (k in keys) e.press(k.lowercaseChar(), k.isUpperCase())
+            return e.restoredKeys() ?: e.text()
+        }
+        // Có dấu mà sai chính tả: trả lại phím đã gõ
+        assertEquals("user", committed("user"))
+        assertEquals("User", committed("User"))
+        assertEquals("uow", committed("uow"))
+        // Đúng chính tả thì giữ tiếng Việt, kể cả khi trùng chữ tiếng Anh
+        assertEquals("thể", committed("there"))
+        assertEquals("tiếng", committed("tieengs"))
+        assertEquals("người", committed("nguwowif"))
+        // Đã huỷ hết dấu: giữ nguyên văn (UniKey chỉ khôi phục từ còn dấu)
+        assertEquals("as", committed("ass"))
+        assertEquals("user", committed("usser"))
+        // Chỉ có phụ âm, hoặc đã hiện phím gốc
+        assertEquals("đ", committed("dd"))
+        assertEquals("đc", committed("ddc"))
+        assertEquals("developer", committed("developer"))
+        // Tắt khôi phục tiếng Anh thì giữ chữ Telex
+        assertEquals("ủe", committed("user", TelexConfig(englishFallback = false)))
+        // Đã xoá giữa chừng: phím gốc không còn khớp
+        val e = TelexEngine()
+        for (k in "users") e.press(k)
+        e.backspace()
+        assertEquals(null, e.restoredKeys())
+    }
+
+    @Test
     fun resumeReloadsACommittedWord() {
         fun resumed(word: String, keys: String, config: TelexConfig = TelexConfig()): String? {
             val e = TelexEngine(config)

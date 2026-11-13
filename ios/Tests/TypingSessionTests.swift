@@ -200,6 +200,20 @@ final class TypingSessionTests: XCTestCase {
         for key in "ddiaj" { driver.view.activate(String(key), index: driver.view.keys.first { $0.2 == String(key) }!.1) }
         XCTAssertEqual(document.text,"Địa")
     }
+    func testMarkedMisspelledSyllableRestoresKeysOnCommitLikeUniKey() {
+        let (session,document) = configured()
+        var learned = 0; session.onPersonalChanged = { _ in learned += 1 }
+        for key in "user there usser " { session.press(String(key),in: document) }
+        XCTAssertEqual(document.text,"user thể user ")
+        XCTAssertEqual(learned,2) // thể, user (gõ huỷ dấu có chủ ý); không học "user" khôi phục
+        let prefs = KeyboardPreferences(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        prefs.configuration.englishFallback = false
+        let other = TypingSession(), raw = Document(); other.configure(prefs)
+        other.vocabulary = session.vocabulary
+        for key in "user " { other.press(String(key),in: raw) }
+        XCTAssertEqual(raw.text,"ủe ")
+    }
+
     func testEnglishFallbackOptionAndPasteFromClipboard() {
         let (session,document) = configured()
         for key in "windows" { session.press(String(key),in: document) }

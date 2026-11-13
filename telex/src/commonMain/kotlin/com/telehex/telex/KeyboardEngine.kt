@@ -21,6 +21,8 @@ class KeyboardEngine {
     fun backspace(): String { engine.backspace(); return engine.text() }
     fun text(): String = engine.text()
     fun rawKeys(): String = engine.rawText()
+    /** Chốt từ như UniKey: âm tiết có dấu mà sai chính tả thì trả về phím đã gõ ("ủe" → user), ngược lại null. */
+    fun restoredKeys(): String? = engine.restoredKeys()
     fun rawCaps(): List<Boolean> = engine.rawCaps()
     fun candidates(): List<String> = engine.candidates().map { it.text }
     fun reset() = engine.reset()

@@ -863,8 +863,10 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         val ic = currentInputConnection ?: return
         val typed = engine.text()
         val keys = engine.rawText()
+        // Như UniKey: gõ tắt trước, không khớp mới khôi phục phím cho từ có dấu mà sai chính tả ("ủe" → user)
+        val restoredKeys = engine.restoredKeys()
         engine.reset()
-        var text = typed + extra
+        var text = (restoredKeys ?: typed) + extra
         var shortcutHead = 0
         var expanded = false
         if (extra == " " && prefs.shortcuts.isNotEmpty()) {
@@ -876,7 +878,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                 expanded = true
             }
         }
-        val syllable = if (expanded) "" else typed
+        val restored = restoredKeys.takeIf { !expanded }
+        val syllable = if (expanded) "" else restored ?: typed
         if (text.isNotEmpty()) {
             if (hasSelection()) history.record(EditHistory.Op.Delete(ic.getSelectedText(0)?.toString() ?: ""))
             if (shortcutHead > 0) {
@@ -890,8 +893,11 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             } else sink.commit(ic, text)
             history.record(EditHistory.Op.Insert(text))
         } else sink.detach(ic)
-        // Gõ tắt không học chữ viết tắt
-        if (syllable.isNotEmpty()) pushContext(syllable, autoCappedFirst) else resumedWord = null
+        // Từ vừa khôi phục phím (không phải tiếng Việt): đừng học, và nó ngắt ngữ cảnh dự đoán.
+        // Gõ tắt cũng không học chữ viết tắt.
+        if (restored != null) { recent.clear(); resumedWord = null }
+        else if (syllable.isNotEmpty()) pushContext(syllable, autoCappedFirst)
+        else resumedWord = null
         if (extra.isNotEmpty() && extra.last() in ".!?\n") recent.clear()
         updateBar()
     }

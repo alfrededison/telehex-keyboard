@@ -14,9 +14,10 @@ import com.telehex.platform.Normalizer
  * Chỉ biến đổi khi còn có thể ra tiếng Việt: phần chữ đã không thể là tiếng Việt ("cl", "dev")
  * thì các phím sau giữ nguyên ("class", "developer"), trừ `dd` đầu từ của các chữ viết tắt ("đc", "đr").
  *
- * Gõ lại cùng phím để huỷ biến đổi (`ss` → s, `aaa` → aa, `ddd` → dd) là chủ ý của người gõ, nên ngay
- * sau phím huỷ âm tiết ở chế độ "nguyên văn" ([literal]): hiện đúng [chars] dù không phải tiếng Việt
- * ("ass" → as). Gõ tiếp mà vẫn không thể là tiếng Việt thì quay về phím gốc ("diff" → dif, "different").
+ * Gõ lại cùng phím để huỷ biến đổi (`ss` → s, `aaa` → aa, `ddd` → dd) là chủ ý của người gõ, nên từ đó
+ * âm tiết ở chế độ "nguyên văn" ([literal]): hiện đúng [chars] dù không phải tiếng Việt ("ass" → as,
+ * "usser" → user). Khi chốt từ, âm tiết có dấu mà sai chính tả ("user" → ủe) trả lại phím đã gõ như
+ * UniKey, xem [restoredKeys].
  */
 class TelexEngine(config: TelexConfig = TelexConfig()) {
     var config: TelexConfig = config
@@ -32,7 +33,7 @@ class TelexEngine(config: TelexConfig = TelexConfig()) {
         private set
 
     private var rawDirty = false
-    /** Phím vừa gõ là phím huỷ biến đổi (gõ lại cùng phím): hiện nguyên văn [chars]. */
+    /** Đã có phím huỷ biến đổi (gõ lại cùng phím): hiện nguyên văn [chars]. */
     private var literal = false
     /** Vị trí các 'ư' sinh từ phím w đứng một mình (không có u), để gõ w lần nữa trả về 'w' chứ không phải "uw". */
     private val loneW = HashSet<Int>()
@@ -87,6 +88,20 @@ class TelexEngine(config: TelexConfig = TelexConfig()) {
         e.rawKeys.addAll(rawKeys); e.rawCaps.addAll(rawCaps)
         e.tone = tone; e.rawDirty = rawDirty; e.literal = literal; e.loneW.addAll(loneW)
         return e
+    }
+
+    /**
+     * Chốt từ như UniKey ("tự động khôi phục phím với từ sai"): âm tiết mang dấu (thanh, mũ, móc, đ) mà sai
+     * chính tả tiếng Việt thì trả về đúng các phím đã gõ: "user" → ủe → user, "uow" → ươ → uow.
+     * Null (giữ chữ đang hiện) khi đúng chính tả, khi đã huỷ hết dấu ("ass" → as, "usser" → user), khi chỉ có
+     * phụ âm ("dd" → đ), khi đã xoá giữa chừng, hoặc đã tắt khôi phục tiếng Anh.
+     */
+    fun restoredKeys(): String? {
+        if (!config.englishFallback || rawDirty || isEmpty || isFallback() || !hasVowel()) return null
+        val base = baseString()
+        val marked = tone != Tone.NONE || base.any { it in MARKED }
+        if (!marked || SyllableValidator.isValid(base, tone)) return null
+        return rawText().takeIf { it != text() }
     }
 
     /** Đúng các phím đã gõ (kèm chữ hoa). */
@@ -188,7 +203,6 @@ class TelexEngine(config: TelexConfig = TelexConfig()) {
     private fun add(ch: Char, upper: Boolean) { chars.add(ch); caps.add(upper) }
 
     private fun apply(k: Char, upper: Boolean) {
-        literal = false
         // Phần chữ đã không thể là tiếng Việt ("dev", "dif" sau khi huỷ dấu): các phím sau chỉ là chữ,
         // đừng biến đổi ngầm nữa. Nếu không, phím trùng về sau bị hiểu là huỷ ("develope" → devlope).
         // Riêng dấu thanh sai với âm cuối ("cachf") vẫn sửa được bằng phím dấu khác ("cachfs" → cách).
@@ -285,5 +299,6 @@ class TelexEngine(config: TelexConfig = TelexConfig()) {
     companion object {
         /** Từ dài hơn thế này thì không nạp lại để sửa dấu (không phải một âm tiết). */
         const val MAX_RESUME = 32
+        private const val MARKED = "ăâêôơưđ"
     }
 }
