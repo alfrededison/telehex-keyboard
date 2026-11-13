@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.3 — unreleased
+## 0.8.3 — 2026-11-13
 
 - Telex: khi chốt từ, từ có dấu mà sai chính tả được trả lại đúng phím đã gõ như UniKey ("user" thay vì "ủe"); gõ tắt vẫn được xét trước. Gõ lại phím dấu để huỷ lại giữ nguyên văn như trước 0.8.2 ("usser" → user, "ass" → as).
 - Gõ tắt bung được ngay sau dấu mở ngoặc, nháy ("(dc" → "(được"); chữ như "x.dc" hay đường link dán vào thì không bị bung.
