@@ -129,7 +129,9 @@ final class TypingSession {
             let before = document.beforeInput ?? ""
             if !composing.isEmpty {
                 let context = String(before.dropLast(composing.count))
-                if key == " ", let snippet = configuration.snippets[engine.rawKeys().lowercased()] ?? configuration.snippets[composing.lowercased()] {
+                // Gõ tắt chỉ bung khi âm tiết đứng đầu từ hoặc ngay sau dấu mở như Android: "(dc" bung, "x.dc" thì không
+                let standalone = context.last.map { $0.isWhitespace || Self.snippetOpeners.contains($0) } ?? true
+                if key == " ", standalone, let snippet = configuration.snippets[engine.rawKeys().lowercased()] ?? configuration.snippets[composing.lowercased()] {
                     let expanded = composing.first?.isUppercase == true ? snippet.prefix(1).uppercased() + snippet.dropFirst() : snippet
                     replace(with: expanded, in: document)
                 } else { learn(composing, before: context) }
@@ -181,6 +183,8 @@ final class TypingSession {
         }
         reset(); automaticSpace = addedSpace ? DocumentAnchor(document) : nil; refreshCandidates(in: document)
     }
+    /// Dấu mở: gõ tắt vẫn bung khi gõ ngay sau chúng ("(dc" → "(được"), như Android.
+    static let snippetOpeners: Set<Character> = ["(", "[", "{", "\"", "'", "“", "‘", "«", "<"]
     /// Dấu mở ngoặc/nháy: từ gõ vuốt EN chèn ngay sau, không thêm dấu cách.
     static let openers: Set<Character> = ["(", "[", "{", "\"", "'", "“", "‘", "«"]
     /// Ô cho phép gõ vuốt: có gợi ý (không phải email, URL, ô số) và đã nạp từ điển.

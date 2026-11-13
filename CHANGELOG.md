@@ -2,6 +2,8 @@
 
 ## 0.8.3 — unreleased
 
+- Gõ tắt bung được ngay sau dấu mở ngoặc, nháy ("(dc" → "(được"); chữ như "x.dc" hay đường link dán vào thì không bị bung.
+
 ## 0.8.2 — 2026-11-13
 
 - Telex: chữ tiếng Anh không còn bị bỏ dấu khi đã không thể là tiếng Việt ("developer", "class"); "ddc" vẫn ra "đc".

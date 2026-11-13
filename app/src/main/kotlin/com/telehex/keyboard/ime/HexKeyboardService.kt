@@ -861,24 +861,22 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         }
         if (emojiSearch) stopEmojiSearch()
         val ic = currentInputConnection ?: return
-        val syllable = engine.text()
-        var text = syllable + extra
+        val typed = engine.text()
+        val keys = engine.rawText()
         engine.reset()
+        var text = typed + extra
         var shortcutHead = 0
+        var expanded = false
         if (extra == " " && prefs.shortcuts.isNotEmpty()) {
-            // Gõ tắt: so khớp token trước con trỏ (cả phần đã commit như "@@") + âm tiết đang soạn
             // getTextBeforeCursor có cả phần đang soạn (composing) nên bỏ nó đi trước
-            val before = (ic.getTextBeforeCursor(32 + syllable.length, 0)?.toString() ?: "").removeSuffix(syllable)
-            val head = before.takeLastWhile { !it.isWhitespace() }
-            val token = head + syllable
-            // "Ko" (tự viết hoa đầu câu) khớp "ko" thì giữ chữ hoa: "Không"
-            val expansion = prefs.shortcuts[token]
-                ?: prefs.shortcuts[token.lowercase()]?.let { e -> if (token.first().isUpperCase()) e.replaceFirstChar { it.titlecase() } else e }
-            if (expansion != null) {
-                shortcutHead = head.length
-                text = expansion + " "
+            val before = (ic.getTextBeforeCursor(32 + typed.length, 0)?.toString() ?: "").removeSuffix(typed)
+            shortcutMatch(before.takeLastWhile { !it.isWhitespace() }, typed, keys)?.let { (head, expansion) ->
+                shortcutHead = head
+                text = "$expansion "
+                expanded = true
             }
         }
+        val syllable = if (expanded) "" else typed
         if (text.isNotEmpty()) {
             if (hasSelection()) history.record(EditHistory.Op.Delete(ic.getSelectedText(0)?.toString() ?: ""))
             if (shortcutHead > 0) {
@@ -892,9 +890,32 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             } else sink.commit(ic, text)
             history.record(EditHistory.Op.Insert(text))
         } else sink.detach(ic)
-        if (syllable.isNotEmpty() && shortcutHead == 0) pushContext(syllable, autoCappedFirst)
+        // Gõ tắt không học chữ viết tắt
+        if (syllable.isNotEmpty()) pushContext(syllable, autoCappedFirst) else resumedWord = null
         if (extra.isNotEmpty() && extra.last() in ".!?\n") recent.clear()
         updateBar()
+    }
+
+    /**
+     * Gõ tắt khớp với token trước con trỏ (phần đã chốt [head] như "@@" + âm tiết đang soạn), hoặc với âm tiết
+     * vừa gõ ngay sau dấu mở: "(dc" khớp "dc" → "(được". Thử cả chữ đang hiện lẫn phím đã gõ.
+     * @return (số ký tự đã chốt trước âm tiết cần xoá, chữ thay thế)
+     */
+    private fun shortcutMatch(head: String, typed: String, keys: String): Pair<Int, String>? {
+        for (start in 0..head.length) {
+            // Chỉ tách sau dấu mở và khi vừa gõ chữ: "file.ko", link dán "https://x.co" không bị bung
+            if (start > 0 && (typed.isEmpty() || head[start - 1] !in SHORTCUT_OPENERS)) continue
+            val part = head.substring(start)
+            for (word in listOf(typed, keys).distinct()) {
+                val token = part + word
+                if (token.isEmpty()) continue
+                // "Ko" (tự viết hoa đầu câu) khớp "ko" thì giữ chữ hoa: "Không"
+                val expansion = prefs.shortcuts[token]
+                    ?: prefs.shortcuts[token.lowercase()]?.let { e -> if (token.first().isUpperCase()) e.replaceFirstChar { it.titlecase() } else e }
+                if (expansion != null) return part.length to expansion
+            }
+        }
+        return null
     }
 
     /**
@@ -1399,6 +1420,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     companion object {
         /** Đặt vào `privateImeOptions` của ô nhập để không tự viết hoa (ô gõ tắt: viết tắt so khớp theo chữ thường). */
         const val NO_AUTO_CAP = "com.telehex.keyboard.noAutoCap"
+        /** Dấu mở: gõ tắt vẫn bung khi gõ ngay sau chúng ("(dc" → "(được"). */
+        private const val SHORTCUT_OPENERS = "([{\"'“‘«<"
 
         /** Giữ tối thiểu (ms) trước khi phím nhấc lên để kéo đổi chỗ. */
         private const val DRAG_HOLD_MS = 800L

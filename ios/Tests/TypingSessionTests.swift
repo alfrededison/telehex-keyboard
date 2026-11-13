@@ -58,6 +58,11 @@ final class TypingSessionTests: XCTestCase {
         for key in "hello " { session.press(String(key),in: document) }
         XCTAssertEqual(snapshots.count,count)
     }
+    func testSnippetExpandsAtWordStartOrRightAfterAnOpeningBracket() {
+        let (session,document) = configured()
+        for key in "(dc x.dc " { session.press(String(key),in: document) }
+        XCTAssertEqual(document.text,"(địa chỉ x.dc ")
+    }
     func testUndoRedoAndStaleHostEdits() {
         let (session,document) = configured()
         session.insert("👩🏽‍💻 tiếng",in: document)
