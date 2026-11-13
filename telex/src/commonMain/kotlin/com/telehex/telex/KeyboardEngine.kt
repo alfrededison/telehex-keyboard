@@ -24,6 +24,8 @@ class KeyboardEngine {
     fun rawCaps(): List<Boolean> = engine.rawCaps()
     fun candidates(): List<String> = engine.candidates().map { it.text }
     fun reset() = engine.reset()
+    /** Nạp lại từ ngay trước con trỏ để gõ tiếp dấu ("hiêu" + s → "hiếu"); false thì engine rỗng. */
+    fun resume(word: String): Boolean = engine.resume(word)
     /** Vùng chạm động: gõ thêm `letter` có giữ âm tiết đang gõ là tiếng Việt (hoặc còn có thể thành tiếng Việt) không. */
     fun keepsSyllableValid(letter: String): Boolean {
         val key = letter.singleOrNull()?.lowercaseChar()?.takeIf { it in 'a'..'z' } ?: return true

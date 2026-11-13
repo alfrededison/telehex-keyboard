@@ -896,10 +896,12 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
      * nên đầu câu vuốt lên ra chữ thường.
      */
     private fun typeLetter(ch: Char, swipedUp: Boolean) {
+        val resumed = resumeWordBeforeCursor()
         val auto = upperNext()
         val upper = auto != swipedUp
         // Chữ hoa vì ⇧ là chủ ý (tên riêng): học như đã gõ; chỉ đầu câu hay khoá hoa mới học như chữ thường
         if (engine.isEmpty) autoCappedFirst = auto && !swipedUp && capsOverride != CapsOverride.UPPER
+        else if (resumed != null) autoCappedFirst = resumed
         clearOneShotCaps()
         // Tìm emoji đọc chữ từ engine nên vẫn gõ vào engine dù đang EN
         if (!telexEnabled && !emojiSearch) {
@@ -909,6 +911,39 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         engine.press(ch, upper)
         updateComposing()
     }
+
+    /**
+     * Con trỏ đứng ngay sau một từ đã chốt (vừa xoá dấu cách, hoặc chạm vào cuối từ): nạp lại từ đó
+     * làm âm tiết đang soạn để phím kế tiếp gõ tiếp vào nó như Gboard: "hiêu␣" ⌫ s → hiếu,
+     * chạm sau "ban" rồi gõ s → bán. Con trỏ giữa từ thì không nạp.
+     * @return null nếu không nạp; ngược lại cho biết chữ hoa đầu từ có phải do tự viết hoa đầu câu.
+     */
+    private fun resumeWordBeforeCursor(): Boolean? {
+        if (!engine.isEmpty || emojiSearch || hasSelection() || !telexEnabled || mode != Mode.ABC) return null
+        val ic = currentInputConnection ?: return null
+        val after = ic.getTextAfterCursor(1, 0) ?: return null
+        if (after.isNotEmpty() && partOfWord(after[0])) return null
+        val before = ic.getTextBeforeCursor(80 + TelexEngine.MAX_RESUME, 0)?.toString() ?: return null
+        var i = before.length
+        while (i > 0 && partOfWord(before[i - 1])) i--
+        val word = before.substring(i)
+        // Từ chạm đầu đoạn đã đọc thì có thể còn dài hơn: bỏ qua
+        if (word.isEmpty() || word.length > TelexEngine.MAX_RESUME || (i == 0 && before.length >= 80 + TelexEngine.MAX_RESUME)) return null
+        if (!engine.resume(word)) return null
+        ic.beginBatchEdit()
+        ic.deleteSurroundingText(word.length, 0)
+        sink.setComposing(ic, engine.text(), engine.isSuspicious())
+        ic.endBatchEdit()
+        history.record(EditHistory.Op.Delete(word))
+        // Ngữ cảnh dự đoán là phần trước từ này, không phải chính nó
+        val head = before.substring(0, i)
+        recent.clear(); recent.addAll(PredictionContext.before(head))
+        val start = head.trimEnd()
+        return word[0].isUpperCase() && capRequest() != 0 && (start.isEmpty() || start.last() in ".!?\n")
+    }
+
+    /** Chữ, số hoặc dấu kết hợp (văn bản NFD): thuộc cùng một từ. */
+    private fun partOfWord(c: Char): Boolean = c.isLetterOrDigit() || Character.getType(c) == Character.NON_SPACING_MARK.toInt()
 
     /**
      * Phím chữ sắp gõ có tự viết hoa không. Theo cờ CAP_* của ô nhập. Ô không đặt cờ nào thường là

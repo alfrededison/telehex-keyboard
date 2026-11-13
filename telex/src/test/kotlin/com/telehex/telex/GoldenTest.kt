@@ -60,6 +60,31 @@ class GoldenTest {
     }
 
     @Test
+    fun resumeReloadsACommittedWord() {
+        fun resumed(word: String, keys: String, config: TelexConfig = TelexConfig()): String? {
+            val e = TelexEngine(config)
+            if (!e.resume(word)) return null
+            for (k in keys) e.press(k)
+            return e.text()
+        }
+        assertEquals("hiếu", resumed("hiêu", "s"))
+        assertEquals("bán", resumed("ban", "s"))
+        assertEquals("chiều", resumed("chiêu", "f"))
+        assertEquals("Người", resumed("Ngươi", "f"))
+        assertEquals("Đó", resumed("Đo", "s"))
+        assertEquals("tiêng", resumed("tiếng", "z"))
+        assertEquals("xoong", resumed("xoong", ""))
+        assertEquals("developers", resumed("developer", "s"))
+        // NFD từ ô nhập vẫn nạp được
+        assertEquals("hiếu", resumed("hiêu", "s"))
+        // Không gõ lại ra đúng từ: không nạp (kiểu đặt dấu khác, từ có ký tự lạ)
+        assertEquals(null, resumed("hòa", "", TelexConfig(newToneStyle = true)))
+        assertEquals(null, resumed("as", ""))
+        assertEquals("wifi", resumed("wifi", ""))
+        assertEquals(null, resumed("a1", ""))
+    }
+
+    @Test
     fun backspaceKeepsToneWhileVowelRemains() {
         val e = TelexEngine()
         for (k in "tieengs") e.press(k)

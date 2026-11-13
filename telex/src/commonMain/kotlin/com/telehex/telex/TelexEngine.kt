@@ -1,5 +1,7 @@
 package com.telehex.telex
 
+import com.telehex.platform.Normalizer
+
 /**
  * Engine Telex cho **một âm tiết đang soạn**. Kotlin thuần, không phụ thuộc Android.
  *
@@ -9,9 +11,12 @@ package com.telehex.telex
  * Sau khi người dùng xoá bớt ký tự của âm tiết hợp lệ, [rawKeys] không còn khớp với [chars]
  * ([rawDirty]); khi đó không quay về phím gốc nữa mà hiện đúng [chars] (như Gboard).
  *
- * Gõ lại cùng phím để huỷ biến đổi (`ss` → s, `aaa` → aa, `ddd` → dd) là chủ ý của người gõ,
- * nên từ đó âm tiết ở chế độ "nguyên văn" ([literal]): hiện đúng [chars] dù không phải tiếng Việt
- * ("ass" → as). Chuỗi không hợp lệ mà không có thao tác huỷ ("pornt", "windows") mới quay về phím gốc.
+ * Chỉ biến đổi khi còn có thể ra tiếng Việt: phần chữ đã không thể là tiếng Việt ("cl", "dev")
+ * thì các phím sau giữ nguyên ("class", "developer"), trừ `dd` đầu từ của các chữ viết tắt ("đc", "đr").
+ *
+ * Gõ lại cùng phím để huỷ biến đổi (`ss` → s, `aaa` → aa, `ddd` → dd) là chủ ý của người gõ, nên ngay
+ * sau phím huỷ âm tiết ở chế độ "nguyên văn" ([literal]): hiện đúng [chars] dù không phải tiếng Việt
+ * ("ass" → as). Gõ tiếp mà vẫn không thể là tiếng Việt thì quay về phím gốc ("diff" → dif, "different").
  */
 class TelexEngine(config: TelexConfig = TelexConfig()) {
     var config: TelexConfig = config
@@ -27,6 +32,7 @@ class TelexEngine(config: TelexConfig = TelexConfig()) {
         private set
 
     private var rawDirty = false
+    /** Phím vừa gõ là phím huỷ biến đổi (gõ lại cùng phím): hiện nguyên văn [chars]. */
     private var literal = false
     /** Vị trí các 'ư' sinh từ phím w đứng một mình (không có u), để gõ w lần nữa trả về 'w' chứ không phải "uw". */
     private val loneW = HashSet<Int>()
@@ -53,9 +59,16 @@ class TelexEngine(config: TelexConfig = TelexConfig()) {
     /** Chuỗi đang soạn để hiển thị / commit. */
     fun text(): String {
         cachedText?.let { return it }
-        val t = if (isFallback()) rawText() else ToneRules.spell(chars, tone, caps, config.newToneStyle)
+        val t = if (isFallback()) fallbackText() else ToneRules.spell(chars, tone, caps, config.newToneStyle)
         cachedText = t
         return t
+    }
+
+    /** Phím gốc, nhưng giữ "đ" từ `dd` đầu chữ viết tắt toàn phụ âm: "ddc" → đc, "ddr" → đr ("ddii" vẫn là ddii). */
+    private fun fallbackText(): String {
+        val raw = rawText()
+        if (chars.firstOrNull() != 'đ' || rawKeys.size < 2 || rawKeys[0] != 'd' || rawKeys[1] != 'd' || hasVowel()) return raw
+        return (if (caps[0]) "Đ" else "đ") + raw.substring(2)
     }
 
     /** Chữ hoa theo từng phím đã gõ. */
@@ -112,6 +125,23 @@ class TelexEngine(config: TelexConfig = TelexConfig()) {
     }
 
     /**
+     * Nạp lại một từ đã có trong ô nhập (ngay trước con trỏ) để gõ tiếp như chưa chốt:
+     * "hiêu" rồi gõ s → "hiếu", "ban" rồi gõ s → "bán".
+     * @return `false` (engine rỗng) nếu gõ lại các phím Telex của từ không ra đúng từ đó
+     *   (kiểu đặt dấu khác, "as" gõ bằng "ass"…): khi đó caller bắt đầu âm tiết mới như cũ.
+     */
+    fun resume(word: String): Boolean {
+        reset()
+        val nfc = Normalizer.normalize(word, Normalizer.Form.NFC)
+        if (nfc.length > MAX_RESUME) return false
+        val (keys, ups) = TelexDecomposer.keysOf(nfc, config) ?: return false
+        for (i in keys.indices) press(keys[i], ups[i])
+        if (text() == nfc) return true
+        reset()
+        return false
+    }
+
+    /**
      * Gõ một phím chữ `a`..`z`.
      * @param upper chữ hoa (vuốt lên). Giữ hoa khi engine biến đổi: `D` + `d` → `Đ`.
      */
@@ -158,6 +188,13 @@ class TelexEngine(config: TelexConfig = TelexConfig()) {
     private fun add(ch: Char, upper: Boolean) { chars.add(ch); caps.add(upper) }
 
     private fun apply(k: Char, upper: Boolean) {
+        literal = false
+        // Phần chữ đã không thể là tiếng Việt ("dev", "dif" sau khi huỷ dấu): các phím sau chỉ là chữ,
+        // đừng biến đổi ngầm nữa. Nếu không, phím trùng về sau bị hiểu là huỷ ("develope" → devlope).
+        // Riêng dấu thanh sai với âm cuối ("cachf") vẫn sửa được bằng phím dấu khác ("cachfs" → cách).
+        if (config.englishFallback && !rawDirty && !SyllableValidator.couldBecomeValid(baseString())) {
+            add(k, upper); return
+        }
         val hasV = hasVowel()
         val tv = config.toneOf(k)
         when {
@@ -244,4 +281,9 @@ class TelexEngine(config: TelexConfig = TelexConfig()) {
     private fun invalidateCache() { cachedText = null; cachedFallback = null }
 
     data class Candidate(val tone: Int, val text: String, val selected: Boolean)
+
+    companion object {
+        /** Từ dài hơn thế này thì không nạp lại để sửa dấu (không phải một âm tiết). */
+        const val MAX_RESUME = 32
+    }
 }

@@ -116,6 +116,7 @@ final class TypingSession {
         } else if key.count == 1, let scalar = key.unicodeScalars.first,
                   (65...90).contains(scalar.value) || (97...122).contains(scalar.value) || (englishMode && key == "'") {
             if document.documentID == nil { reset(); document.insert(key); return }
+            if composing.isEmpty && !englishMode { resumeWord(in: document) }
             // Ô trống: UIKit trả context trước con trỏ là nil chứ không phải "", vẫn bắt đầu âm tiết ("dd" → "đ" ngay chữ đầu).
             // Chèn xong mà vẫn không đọc được context thì không thể kiểm chứng để sửa: quay về gõ thô từng phím.
             replace(with: englishMode ? composing + key : engine.press(letter: key), in: document)
@@ -132,6 +133,15 @@ final class TypingSession {
             reset()
             change(old: removeSpace ? " " : "", new: key, in: document)
         }
+    }
+    /// Con trỏ ngay sau một từ đã chốt (vừa xoá dấu cách, hoặc chạm vào cuối từ): nạp lại từ đó làm âm tiết
+    /// đang soạn để phím kế tiếp gõ tiếp vào nó như Android: "hiêu␣" ⌫ s → hiếu, chạm sau "ban" rồi gõ s → bán.
+    private func resumeWord(in document: TextDocument) {
+        guard document.selection?.isEmpty != false, let before = document.beforeInput else { return }
+        if let next = document.afterInput?.first, next.isLetter || next.isNumber { return }
+        let word = String(before.reversed().prefix { $0.isLetter || $0.isNumber }.reversed())
+        guard !word.isEmpty, word.count <= 32, engine.resume(word: word) else { return }
+        composing = word; expectedContext = before; documentID = document.documentID
     }
     func choose(_ candidate: String, replacement: String? = nil, in document: TextDocument) {
         synchronize(with: document)

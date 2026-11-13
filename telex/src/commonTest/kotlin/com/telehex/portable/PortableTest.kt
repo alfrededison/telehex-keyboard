@@ -16,7 +16,7 @@ class PortableTest {
             assertEquals(parts[1], engine.text(), parts[0])
             count++
         }
-        assertEquals(413, count)
+        assertEquals(431, count)
     }
 
     @Test fun unicodePredictionAndPersonalDataOnNative() {

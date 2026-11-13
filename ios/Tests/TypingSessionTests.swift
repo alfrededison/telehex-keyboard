@@ -267,7 +267,7 @@ final class TypingSessionTests: XCTestCase {
             XCTAssertEqual(engine.text(), fields[1], "Input: \(fields[0])")
             count += 1
         }
-        XCTAssertEqual(count, 413)
+        XCTAssertEqual(count, 431)
         print("GOLDEN \(count) original cases passed through Swift -> Kotlin/Native on iOS Simulator")
     }
 
@@ -307,8 +307,33 @@ final class TypingSessionTests: XCTestCase {
         session.press("a", in: document)
         XCTAssertEqual(document.text, "a")
         document.documentID = UUID()
+        document.text = "a "; document.cursor = 2
         session.press("s", in: document)
-        XCTAssertEqual(document.text, "as")
+        XCTAssertEqual(document.text, "a s")
+    }
+
+    func testBackspacedWordTakesToneAgain() {
+        let session = TypingSession(), document = Document()
+        for key in "hieeu " { session.press(String(key), in: document) }
+        session.press("⌫", in: document)
+        session.press("s", in: document)
+        XCTAssertEqual(document.text, "hiếu")
+        session.undo(in: document)
+        XCTAssertEqual(document.text, "hiêu")
+    }
+
+    func testTappedWordEndTakesToneButMidWordDoesNot() {
+        let session = TypingSession(), document = Document()
+        for key in "ban chieeu " { session.press(String(key), in: document) }
+        session.press("⌫", in: document)
+        session.press("f", in: document)
+        XCTAssertEqual(document.text, "ban chiều")
+        document.cursor = 3
+        session.press("s", in: document)
+        XCTAssertEqual(document.text, "bán chiều")
+        document.cursor = 1
+        session.press("a", in: document)
+        XCTAssertEqual(document.text, "baán chiều")
     }
 
     func testUnavailableContextFallsBackWithoutDeletingHostText() {
