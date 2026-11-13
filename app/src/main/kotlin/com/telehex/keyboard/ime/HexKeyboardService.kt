@@ -8,6 +8,7 @@ import android.icu.text.BreakIterator
 import android.inputmethodservice.InputMethodService
 import android.os.Build
 import android.text.InputType
+import android.text.TextUtils
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowInsets
@@ -92,6 +93,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private var numberOnly = false
     /** Chữ đầu của âm tiết đang soạn được viết hoa chỉ vì đầu câu (hoặc khoá chữ hoa): học như chữ thường. */
     private var autoCappedFirst = false
+    /** Từ đã có trong ô nhập vừa được nạp lại để sửa: chốt y nguyên thì không học lại lần nữa. */
+    private var resumedWord: String? = null
 
     /**
      * Ghi đè tự viết hoa (vuốt lên phím cách, phím ⇧): [LOCK] đến khi tắt; [LOWER] / [UPPER] chỉ cho chữ kế tiếp.
@@ -275,7 +278,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private fun pushContext(raw: String, autoCapped: Boolean = false) {
         if (raw.isEmpty() || !raw.all { it.isLetter() }) return
         val syllable = if (autoCapped) raw.replaceFirstChar { it.lowercaseChar() } else raw
-        if (!incognito()) {
+        val unchanged = raw == resumedWord
+        resumedWord = null
+        if (!incognito() && !unchanged) {
             predictions.learn(recent.toList(), syllable)
             personalDirty = true
             keyboardView.removeCallbacks(savePersonal); keyboardView.postDelayed(savePersonal, 5000)
@@ -616,6 +621,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                 // Người dùng di chuyển con trỏ: huỷ âm tiết đang soạn, giữ nguyên chữ.
                 sink.detach(ic)
                 engine.reset()
+                resumedWord = null
                 history.clear()
                 seedContext()
             }
@@ -896,6 +902,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
      * nên đầu câu vuốt lên ra chữ thường.
      */
     private fun typeLetter(ch: Char, swipedUp: Boolean) {
+        if (engine.isEmpty) resumedWord = null
         val resumed = resumeWordBeforeCursor()
         val auto = upperNext()
         val upper = auto != swipedUp
@@ -916,7 +923,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
      * Con trỏ đứng ngay sau một từ đã chốt (vừa xoá dấu cách, hoặc chạm vào cuối từ): nạp lại từ đó
      * làm âm tiết đang soạn để phím kế tiếp gõ tiếp vào nó như Gboard: "hiêu␣" ⌫ s → hiếu,
      * chạm sau "ban" rồi gõ s → bán. Con trỏ giữa từ thì không nạp.
-     * @return null nếu không nạp; ngược lại cho biết chữ hoa đầu từ có phải do tự viết hoa đầu câu.
+     * @return null nếu không nạp; ngược lại cho biết chữ hoa đầu từ có phải do ô nhập tự viết hoa ở vị trí đó.
      */
     private fun resumeWordBeforeCursor(): Boolean? {
         if (!engine.isEmpty || emojiSearch || hasSelection() || !telexEnabled || mode != Mode.ABC) return null
@@ -935,11 +942,12 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         sink.setComposing(ic, engine.text(), engine.isSuspicious())
         ic.endBatchEdit()
         history.record(EditHistory.Op.Delete(word))
+        resumedWord = engine.text()
         // Ngữ cảnh dự đoán là phần trước từ này, không phải chính nó
         val head = before.substring(0, i)
         recent.clear(); recent.addAll(PredictionContext.before(head))
-        val start = head.trimEnd()
-        return word[0].isUpperCase() && capRequest() != 0 && (start.isEmpty() || start.last() in ".!?\n")
+        // Ô tự viết hoa ở đầu từ này (đầu câu, hay mọi từ ở ô tên): chữ hoa là tự động, đừng học như tên riêng
+        return word[0].isUpperCase() && TextUtils.getCapsMode(head, head.length, capRequest()) != 0
     }
 
     /** Chữ, số hoặc dấu kết hợp (văn bản NFD): thuộc cùng một từ. */

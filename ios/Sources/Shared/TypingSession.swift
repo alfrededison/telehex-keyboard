@@ -39,6 +39,10 @@ final class TypingSession {
     var suggestionsEnabled = true
     var learningAllowed = true
     var suppressCapitalizationLearning = false
+    /// Ô nhập có tự viết hoa chữ đứng sau đoạn văn bản này không; dùng khi nạp lại từ đã gõ.
+    var capitalizesWord: ((String) -> Bool)?
+    /// Từ đã có trong ô nhập vừa được nạp lại để sửa: chốt y nguyên thì không học lại lần nữa.
+    private var resumedWord: String?
     var englishMode = false { didSet { if oldValue != englishMode { reset() } } }
     private(set) var composing = ""
     private var latestSuggestions: [String] = []
@@ -61,7 +65,7 @@ final class TypingSession {
         vocabulary?.configure(newToneStyle: preferences.newToneStyle, lAsGrave: preferences.lAsGrave, layout: layout)
     }
     private func learn(_ word: String, before: String) {
-        guard learningAllowed, !englishMode, !configuration.incognito, let vocabulary, !word.isEmpty else { return }
+        guard learningAllowed, !englishMode, !configuration.incognito, let vocabulary, !word.isEmpty, word != resumedWord else { return }
         vocabulary.learn(before: before, word: suppressCapitalizationLearning ? word.lowercased() : word)
         onPersonalChanged?(vocabulary.personalData())
     }
@@ -95,7 +99,7 @@ final class TypingSession {
     private func unique(_ words: [String]) -> [String] { var seen = Set<String>(); return words.filter { seen.insert($0).inserted } }
     func reset() {
         engine.reset(); composing = ""; expectedContext = nil; documentID = nil
-        automaticSpace = nil; candidateAnchor = nil; latestSuggestions = []; target = .composition
+        automaticSpace = nil; candidateAnchor = nil; latestSuggestions = []; target = .composition; resumedWord = nil
     }
     func synchronize(with document: TextDocument) {
         if !composing.isEmpty && (document.documentID != documentID || document.beforeInput != expectedContext || document.selection?.isEmpty == false) { reset() }
@@ -141,7 +145,9 @@ final class TypingSession {
         if let next = document.afterInput?.first, next.isLetter || next.isNumber { return }
         let word = String(before.reversed().prefix { $0.isLetter || $0.isNumber }.reversed())
         guard !word.isEmpty, word.count <= 32, engine.resume(word: word) else { return }
-        composing = word; expectedContext = before; documentID = document.documentID
+        composing = word; expectedContext = before; documentID = document.documentID; resumedWord = engine.text()
+        // Chữ hoa đầu từ do ô nhập tự viết hoa ở vị trí đó thì học như chữ thường, đừng coi là tên riêng
+        suppressCapitalizationLearning = word.first?.isUppercase == true && capitalizesWord?(String(before.dropLast(word.count))) == true
     }
     func choose(_ candidate: String, replacement: String? = nil, in document: TextDocument) {
         synchronize(with: document)

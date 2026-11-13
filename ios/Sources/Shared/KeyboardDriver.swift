@@ -41,6 +41,10 @@ final class KeyboardDriver {
         self.loadVocabulary = loadVocabulary
         session.configure(preferences)
         session.onPersonalChanged = { [weak self] text in self?.store.schedulePersonal(text) }
+        session.capitalizesWord = { [weak self] before in
+            guard let self else { return false }
+            return self.capsLock || Self.capitalizes(self.traits().1, before: before, enabled: self.preferences.configuration.autoCapitalization)
+        }
         view.onKey = { [weak self] key in
             guard let self else { return }
             self.update()
@@ -149,6 +153,17 @@ final class KeyboardDriver {
             self.update(); self.view.refreshPanel()
         }
     }
+    /// Ô nhập tự viết hoa chữ đứng sau `before` không (đầu câu, đầu mọi từ…).
+    static func capitalizes(_ capitalization: UITextAutocapitalizationType, before: String, enabled: Bool) -> Bool {
+        guard enabled else { return false }
+        let trimmed = before.trimmingCharacters(in: .whitespaces)
+        switch capitalization {
+        case .allCharacters: return true
+        case .words: return before.isEmpty || before.last?.isWhitespace == true
+        case .sentences: return trimmed.isEmpty || trimmed.last.map { ".!?\n".contains($0) } == true
+        default: return false
+        }
+    }
     func update() {
         let document = document(), (type,capitalization) = traits()
         if document.documentID != currentDocument {
@@ -159,14 +174,7 @@ final class KeyboardDriver {
         let restricted = [.emailAddress,.URL,.numberPad,.phonePad,.decimalPad,.asciiCapable,.asciiCapableNumberPad].contains(type)
         session.learningAllowed = !restricted
         session.suggestionsEnabled = preferences.suggestions && !restricted
-        let before = document.beforeInput ?? "", trimmed = before.trimmingCharacters(in: .whitespaces)
-        switch capitalization {
-        case .allCharacters: automaticCapital = true
-        case .words: automaticCapital = before.isEmpty || before.last?.isWhitespace == true
-        case .sentences: automaticCapital = trimmed.isEmpty || trimmed.last.map { ".!?\n".contains($0) } == true
-        default: automaticCapital = false
-        }
-        if !preferences.configuration.autoCapitalization { automaticCapital = false }
+        automaticCapital = Self.capitalizes(capitalization, before: document.beforeInput ?? "", enabled: preferences.configuration.autoCapitalization)
         view.capsLocked = capsLock
         view.glideAllowed = session.glideAvailable
         // Kéo đổi chỗ phím chỉ khi có Truy cập đầy đủ, để profile tạo ra về được app.

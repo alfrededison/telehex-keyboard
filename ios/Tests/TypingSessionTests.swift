@@ -322,6 +322,30 @@ final class TypingSessionTests: XCTestCase {
         XCTAssertEqual(document.text, "hiêu")
     }
 
+    func testResumedWordIsLearnedOnlyWhenChanged() {
+        let (session,document) = configured()
+        var snapshots: [String] = []; session.onPersonalChanged = { snapshots.append($0) }
+        for key in "ban " { session.press(String(key),in: document) }
+        let learned = snapshots.count
+        for key in ["⌫","h","⌫"," "] { session.press(key,in: document) }
+        XCTAssertEqual(document.text,"ban ")
+        XCTAssertEqual(snapshots.count,learned)
+        for key in ["⌫","s"," "] { session.press(key,in: document) }
+        XCTAssertEqual(document.text,"bán ")
+        XCTAssertEqual(snapshots.count,learned + 1)
+    }
+
+    func testResumedAutoCapitalizedWordIsLearnedLowercase() {
+        let (session,document) = configured()
+        var snapshots: [String] = []; session.onPersonalChanged = { snapshots.append($0) }
+        session.capitalizesWord = { before in before.isEmpty || before.last?.isWhitespace == true }
+        for key in "xin Ban " { session.press(String(key),in: document) }
+        for key in ["⌫","s"," "] { session.press(key,in: document) }
+        XCTAssertEqual(document.text,"xin Bán ")
+        XCTAssertTrue(snapshots.last?.contains("bán") == true)
+        XCTAssertFalse(snapshots.last?.contains("Bán") == true)
+    }
+
     func testTappedWordEndTakesToneButMidWordDoesNot() {
         let session = TypingSession(), document = Document()
         for key in "ban chieeu " { session.press(String(key), in: document) }
