@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.2 — unreleased
+## 0.8.2 — 2026-11-13
 
 - iOS: bản native đầu tiên, trong cùng repo và dùng chung engine Kotlin Multiplatform với Android: gõ Telex VI/EN với từ điển offline, gợi ý và học từ (có ẩn danh), gõ vuốt, emoji tìm bằng tiếng Việt, gõ tắt và sao lưu JSON. Không có bảng chỉnh sửa (chọn văn bản) vì bàn phím iOS không chọn được văn bản thay ứng dụng.
 - iOS: bố cục như Android 0.8.0 — Mặc định (⚙ sát mép trái, zigzag ⚙ Q W E R T G Y H U I O P 123, lớp 123 hai trang gắn theo ô, vuốt xuống Q…P ra 1…0) và "Truyền thống" (QWERTY 10 cột, ⇧ chạm đúp khoá hoa, ⌫ giữ để xoá liên tục), cùng trình sửa các lớp phím.
