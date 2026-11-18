@@ -1348,12 +1348,12 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             code == KeyCode.ABC -> openAbc()
             code == KeyCode.BACKSPACE -> if (!backHeld) deleteBackward()
             code == KeyCode.SHIFT -> pressShift()
-            code == "," || code == "." ->
-                insertChar(if (gesture == Gesture.SWIPE_DOWN && key.hint.isNotEmpty()) key.hint else code, autoSpace)
+            // `,` `.` và hàng số: ở lớp chữ, vuốt xuống gõ ký tự vuốt xuống như phím chữ (rỗng thì không chèn gì, như
+            // iOS); chạm, hay vuốt ở lớp 123, gõ đúng phím
+            code == "," || code == "." || (KeyCode.isDigit(code) && mode == Mode.ABC) ->
+                if (gesture != Gesture.SWIPE_DOWN || mode != Mode.ABC) insertChar(code, autoSpace)
+                else if (key.hint.isNotEmpty()) insertChar(key.hint, autoSpace)
             mode == Mode.DIAL -> commitSyllable(if (gesture == Gesture.SWIPE_DOWN && key.hint.isNotEmpty()) key.hint else code)
-            // Hàng số: chạm gõ số, vuốt xuống gõ ký tự vuốt xuống như `,` `.`
-            KeyCode.isDigit(code) && mode == Mode.ABC ->
-                insertChar(if (gesture == Gesture.SWIPE_DOWN && key.hint.isNotEmpty()) key.hint else code, autoSpace)
             key.isLetter && mode == Mode.ABC -> when (gesture) {
                 Gesture.SWIPE_DOWN -> if (key.hint.isNotEmpty()) insertChar(key.hint, autoSpace) // hint rỗng: không chèn gì
                 Gesture.SWIPE_UP -> typeLetter(code[0], true)
