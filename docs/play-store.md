@@ -124,9 +124,9 @@ Tài khoản cá nhân tạo sau 13/11/2023 phải chạy **closed testing với
 
    Khi app còn ở trạng thái nháp (chưa từng phát hành), Play chỉ nhận `draft`; giữ mặc định đến khi bản đầu tiên được duyệt. Muốn phát hành dần theo tỉ lệ người dùng thì để `draft` rồi chọn tỉ lệ trong Play Console.
 
-   Nếu bước tải lên Play lỗi, sửa nguyên nhân rồi bấm **Re-run jobs**: bước tạo release nháp trên GitHub tự bỏ qua khi release của tag đã có.
+   Nếu bước tải lên Play lỗi, sửa nguyên nhân rồi bấm **Re-run jobs**: bước tạo release trên GitHub tự bỏ qua khi release của tag đã có.
 
-Sau đó `tools/release.sh` và `git push --atomic origin main vX.Y.Z` như cũ: workflow `release` vẫn tạo release nháp trên GitHub, rồi tải AAB, `mapping.txt` và "Có gì mới" lên track đã chọn. Bản dev (`X.Y.Z-dev.N`) không lên Play.
+Sau đó `tools/release.sh` và `git push --atomic origin main vX.Y.Z` như cũ: workflow `release` vẫn phát hành release trên GitHub, rồi tải AAB, `mapping.txt` và "Có gì mới" lên track đã chọn. Bản dev (`X.Y.Z-dev.N`) không lên Play.
 
 Xem trước "Có gì mới" của một tag:
 

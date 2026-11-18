@@ -23,7 +23,7 @@
 # With --force on a main that is behind or has diverged from origin, the printed push adds
 # --force-with-lease=main:<sha fetched during the checks>, so it overwrites only that commit.
 #
-# The tag builds the signed release as a draft. The bump commit on main builds nothing and deletes
+# The tag builds and publishes the signed release. The bump commit on main builds nothing and deletes
 # the old "dev" prerelease (its X.Y.Z-dev.N is below the release); the next code commit publishes
 # <next>-dev.N, whose versionCode is above the release, so dev builds keep installing over it.
 # Without step 3 every dev build would stay at X.Y.Z-dev.N, below X.Y.Z, and Android would refuse
