@@ -128,13 +128,15 @@ class WelcomeActivity : Activity() {
 
     private fun showProfiles() {
         page.add(title("Chọn kiểu bàn phím"))
-        page.add(body("Hai kiểu dùng chung Telex, cử chỉ và gợi ý. Chạm một kiểu rồi gõ thử ngay bên dưới."), dp(8))
+        page.add(body("Các kiểu dùng chung Telex, cử chỉ và gợi ý. Chạm một kiểu rồi gõ thử ngay bên dưới."), dp(8))
         val theme = Theme.resolve(this, prefs.themeMode, prefs.accent)
         val active = prefs.activeProfile.name
         addCard(Profile.DEFAULT, "Tổ ong (Mặc định)",
             "Phím rộng hơn bàn phím 10 cột. Thứ tự chữ gần QWERTY; xoá và chữ hoa bằng cử chỉ vuốt.", theme)
         addCard(Profile.QWERTY, "Truyền thống",
             "Giống bàn phím quen thuộc: QWERTY đủ 10 cột, có phím ⇧ và ⌫.", theme)
+        addCard(Profile.QWERTY_NUM, "Truyền thống có hàng số",
+            "Như Truyền thống, thêm hàng số 1…0 trên cùng để gõ số không cần chuyển lớp.", theme)
         // Đang dùng profile riêng (khôi phục từ bản sao lưu…) thì chưa tô thẻ nào
         markSelected(cards.firstOrNull { it.first.name == active }?.first)
 

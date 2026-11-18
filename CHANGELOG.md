@@ -2,6 +2,9 @@
 
 ## 0.8.4 — unreleased
 
+- Bố cục "Truyền thống": phím cách dời sang trái, mỗi bên ba phím nhỏ (123 ☺ ⚙ · cách · , . ↵). Profile riêng tạo từ trước giữ nguyên chỗ phím cách.
+- Thêm bố cục có sẵn "Có hàng số": như Truyền thống, thêm hàng số 1…0 trên cùng (5 hàng). Vuốt xuống hàng số ra ! @ # $ % ^ & * ( ), hàng Q…P ra ngoặc và ký hiệu.
+
 ## 0.8.3 — 2026-11-13
 
 - Telex: khi chốt từ, từ có dấu mà sai chính tả được trả lại đúng phím đã gõ như UniKey ("user" thay vì "ủe"); gõ tắt vẫn được xét trước. Gõ lại phím dấu để huỷ lại giữ nguyên văn như trước 0.8.2 ("usser" → user, "ass" → as).

@@ -494,12 +494,12 @@ final class HexKeyboardView: UIView {
         return preferences.profile.letters.indices.contains(index) ? preferences.profile.letters[index] : nil
     }
     func isBackspace(_ code: String) -> Bool { code == "#backspace" || (dialpad && code == "⌫") }
-    /// Giá trị lớp 123 hiện thay phím ở ô này, như `SymbolPages.render` của Android: ô chữ luôn lấy giá trị của trang;
+    /// Giá trị lớp 123 hiện thay phím ở ô này, như `SymbolPages.render` của Android: ô chữ, ô số luôn lấy giá trị của trang;
     /// ô ⚙ ⇧ `,` `.` chỉ lấy khi trang có giá trị, trống thì giữ phím của lớp chữ.
     func symbolValue(_ code: String, index: Int) -> String? {
         guard page >= 0, editLayer == nil, !dialpad, KeyboardProfile.symbolUsable(code) else { return nil }
         let value = preferences.profile.symbols[page][index]
-        return KeyboardProfile.isLetter(code) || !value.isEmpty ? value : nil
+        return KeyboardProfile.isCharCell(code) || !value.isEmpty ? value : nil
     }
     func pageLabel(_ value: String, page: Int) -> String { value == "#page" ? "\(page + 1)/2" : value }
     /// Nhãn của ô trong trình sửa lớp vuốt xuống / 123; nil = ô đó hiện phím của lớp chữ.
@@ -531,6 +531,7 @@ final class HexKeyboardView: UIView {
         // ⇧ như iOS: đang bật (hoa một lần hoặc khoá hoa) thì phím sáng lên, icon đặc.
         case "#shift": return capsLocked || (uppercase && inlineDocuments.isEmpty) ? .consonant : .function
         default:
+            if KeyboardProfile.isDigit(code) { return .consonant }
             guard KeyboardProfile.isLetter(code) else { return .function }
             if toneKeys.contains(code) { return .tone }
             return "aeiouyw".contains(code) ? .vowel : .consonant
@@ -724,7 +725,7 @@ final class HexKeyboardView: UIView {
                 let step = CGPoint(x: (dx / (size / 2)).rounded(.toNearestOrAwayFromZero), y: (dy / size).rounded(.toNearestOrAwayFromZero))
                 if inlineDocuments.isEmpty { onCursor?(Int(step.x - cursorStep.x), Int(step.y - cursorStep.y)) }; cursorStep = step
                 keys.forEach { $0.0.alpha = 0.45 }
-            } else if held && (KeyboardProfile.isLetter(code) || editLayer != nil) && (editLayer != nil || (preferences.configuration.rearrange && rearrangeAllowed)) && inlineDocuments.isEmpty {
+            } else if held && (KeyboardProfile.isCharCell(code) || editLayer != nil) && (editLayer != nil || (preferences.configuration.rearrange && rearrangeAllowed)) && inlineDocuments.isEmpty {
                 if dragged == nil {
                     // Phím đang kéo nổi phía trên ngón tay để ngón không che nhãn, như Android.
                     let ghost = UILabel(frame: CGRect(x: 0, y: 0, width: 52, height: 52)); ghost.text = key.0.title(for: .normal); ghost.textAlignment = .center
@@ -793,7 +794,7 @@ final class HexKeyboardView: UIView {
                     } else if inlineDocuments.isEmpty { onCommand?("paste") }
                 } else if dy > 0 { if inlineDocuments.isEmpty { onToggleLanguage?() } else { inlineSession.englishMode.toggle(); updateEditorBar() } } else if inlineDocuments.isEmpty { onCommand?("space-up") }
             } else if KeyboardProfile.isLetter(code) && abs(dy) > abs(dx) && dy < 0 { type(uppercase ? code.lowercased() : code.uppercased()) }
-            else if (KeyboardProfile.isLetter(code) || [",","."].contains(code)) && abs(dy) > abs(dx) && dy > 0 { let value = preferences.profile.swipe[index]; if !value.isEmpty { type(value) } }
+            else if KeyboardProfile.swipeUsable(code) && abs(dy) > abs(dx) && dy > 0 { let value = preferences.profile.swipe[index]; if !value.isEmpty { type(value) } }
         case .cancel: clearGesture()
         }
     }

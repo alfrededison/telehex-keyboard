@@ -308,7 +308,10 @@ class Prefs(context: Context, fileName: String = "telehex") {
         val active = sp.getString(KEY_ACTIVE_PROFILE, null)
         val user = readProfiles()
         Profile.BUILT_IN.firstOrNull { it.name == active }?.let { builtIn ->
-            if (!builtIn.sameLayers(liveLayers())) saveProfiles(user, builtIn)
+            val live = liveLayers()
+            // Bản mới chỉ dời phím chức năng (như phím cách của "Truyền thống" ở 0.8.4): chữ còn nguyên chỗ, giữ độ lệch chạm
+            val lettersStay = ('a'..'z').all { builtIn.letters.find("$it") == live.letters.find("$it") }
+            if (!builtIn.sameLayers(live)) saveProfiles(user, builtIn, keepTouchOffsets = lettersStay)
             return
         }
         if (active != null && user.any { it.name == active }) return

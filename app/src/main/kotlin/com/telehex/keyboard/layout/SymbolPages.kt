@@ -38,8 +38,7 @@ object SymbolPages {
 
     /**
      * Hai trang của bố cục truyền thống: số 1…0 ở hàng trên, phím 1/2 ở ô ⇧ (☺ thành 1234 như mọi bố cục). Hàng giữa
-     * có 9 ô nên `/` sang ô ⚙; dấu phẩy giữ chỗ cạnh phím cách. Trang 2 có `\` ở ô ⚙, `<` `>` hai bên phím cách
-     * (₫ thay ¢).
+     * có 9 ô nên `/` sang ô ⚙; dấu phẩy giữ chỗ cạnh phím cách. Trang 2 có `\` ở ô ⚙, `<` `>` ở ô `,` `.` (₫ thay ¢).
      */
     val QWERTY: List<CellGrid> = listOf(
         CellGrid(
@@ -55,7 +54,32 @@ object SymbolPages {
                 "~ ` | • √ π ÷ × § ∆".split(' '),
                 "£ ₫ € ¥ ^ ° = { }".split(' '),
                 listOf(P) + "% © ® ™ ✓ [ ]".split(' ') + listOf(""),
-                listOf("", "", "\\", "<", "", "", "", "", ">", ""),
+                listOf("", "", "\\", "", "", "", "", "<", ">", ""),
+            )
+        ),
+    )
+
+    /**
+     * Hai trang của bố cục có hàng số: thêm một hàng nên đủ chỗ cho cả `/` `=` `%` và ngoặc ở trang 1, ⚙ giữ nguyên.
+     * Hàng số vẫn là số ở trang 1 (như Gboard), trang 2 thêm ký hiệu toán và chỉ số trên.
+     */
+    val QWERTY_NUM: List<CellGrid> = listOf(
+        CellGrid(
+            listOf(
+                "1 2 3 4 5 6 7 8 9 0".split(' '),
+                "@ # \$ _ & - + ( ) /".split(' '),
+                "* \" ' : ; ! ? = %".split(' '),
+                listOf(P) + "\\ < > [ ] { }".split(' ') + listOf(""),
+                List(10) { "" },
+            )
+        ),
+        CellGrid(
+            listOf(
+                "~ ` | • √ π ÷ × § ∆".split(' '),
+                "£ ₫ € ¥ ¢ ^ ° © ® ™".split(' '),
+                "✓ … « » ± ≤ ≥ ≠ ∞".split(' '),
+                listOf(P) + "¡ ¿ ² ³ ½ ‰ ¶".split(' ') + listOf(""),
+                List(10) { "" },
             )
         ),
     )
@@ -64,6 +88,7 @@ object SymbolPages {
     fun defaultFor(spec: GridSpec): List<CellGrid> = when (spec) {
         GridSpec.HEX7 -> DEFAULT
         GridSpec.QWERTY -> QWERTY
+        GridSpec.QWERTY_NUM -> QWERTY_NUM
     }
 
     private val PAGE1_OF_LETTER: Map<String, String> = mapOf(

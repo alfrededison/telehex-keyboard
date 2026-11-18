@@ -3,8 +3,10 @@ package com.telehex.keyboard.layout
 import kotlin.math.abs
 
 /**
- * Kiểu lưới của một profile: vị trí từng ô (mép trái, theo bề rộng ô), chỗ phím cách và hình phím. Nhận ra từ số ô
- * mỗi hàng ([of]), nên JSON bố cục lưu từ trước (5 hàng × 7 ô) không cần thêm trường.
+ * Kiểu lưới của một profile: vị trí từng ô (mép trái, theo bề rộng ô), hàng và số ô của phím cách, hình phím. Nhận ra
+ * từ số ô mỗi hàng ([of]), nên JSON bố cục lưu từ trước (5 hàng × 7 ô) không cần thêm trường. Phím cách nằm ở đâu
+ * trong hàng cuối là do lớp chữ (các ô `null`), để profile riêng lưu từ trước khi bố cục có sẵn dời phím cách vẫn dùng
+ * được.
  */
 enum class GridSpec(
     /** Mép trái của từng ô, từng hàng, tính theo bề rộng ô. Mỗi ô rộng đúng 1. */
@@ -12,21 +14,20 @@ enum class GridSpec(
     /** Bề rộng lưới tính theo ô. */
     val span: Float,
     val spaceRow: Int,
-    val spaceFirstCol: Int,
     val spaceCells: Int,
     val shape: Shape,
 ) {
     /** Tổ ong 7 cột: 5 hàng lục giác đều lệch xen kẽ ½ ô; phím cách 3 ô giữa hàng cuối. */
-    HEX7(listOf(row(7, .5f), row(7, 0f), row(7, .5f), row(7, 0f), row(7, .5f)), 7.5f, 4, 2, 3, Shape.HEX),
+    HEX7(listOf(row(7, .5f), row(7, 0f), row(7, .5f), row(7, 0f), row(7, .5f)), 7.5f, 4, 3, Shape.HEX),
 
     /**
      * Truyền thống: 4 hàng phím chữ nhật. Q…P đủ 10 ô, A…L lệch ½ ô; hàng Z có ⇧ sát mép trái, Z…M căn giữa (Z ngay
      * dưới S) chừa ½ ô hai bên, ⌫ sát mép phải; hàng cuối 10 ô, phím cách 4 ô.
      */
-    QWERTY(
-        listOf(row(10, 0f), row(9, .5f), listOf(0f) + row(7, 1.5f) + listOf(9f), row(10, 0f)),
-        10f, 3, 4, 4, Shape.RECT,
-    );
+    QWERTY(listOf(row(10, 0f), row(9, .5f), ZROW, row(10, 0f)), 10f, 3, 4, Shape.RECT),
+
+    /** Truyền thống có hàng số: thêm hàng 1…0 (10 ô) trên [QWERTY]. */
+    QWERTY_NUM(listOf(row(10, 0f), row(10, 0f), row(9, .5f), ZROW, row(10, 0f)), 10f, 4, 4, Shape.RECT);
 
     enum class Shape { HEX, RECT }
 
@@ -40,8 +41,6 @@ enum class GridSpec(
     fun centerX(r: Int, c: Int): Float = lefts[r][c] + 0.5f
 
     fun contains(r: Int, c: Int): Boolean = r in lefts.indices && c in lefts[r].indices
-
-    fun isSpace(r: Int, c: Int): Boolean = r == spaceRow && c in spaceFirstCol until spaceFirstCol + spaceCells
 
     /**
      * Các ô kề của ô (r, c): hai ô cùng hàng, và các ô hàng trên/dưới có tâm lệch ngang không quá 1 ô. Lưới lệch ½ ô
@@ -67,3 +66,6 @@ enum class GridSpec(
 
 /** [n] ô liền nhau, ô đầu có mép trái ở [left]. */
 private fun row(n: Int, left: Float): List<Float> = List(n) { left + it }
+
+/** Hàng Z của lưới truyền thống: ⇧ sát mép trái, Z…M căn giữa (Z ngay dưới S) chừa ½ ô hai bên, ⌫ sát mép phải. */
+private val ZROW: List<Float> = listOf(0f) + row(7, 1.5f) + listOf(9f)

@@ -52,11 +52,14 @@ class Profile(val name: String, val letters: LayoutModel, val swipe: CellGrid, v
         /** Bàn phím truyền thống kiểu Gboard (lưới [GridSpec.QWERTY]) cho ai chưa quen lưới tổ ong. */
         val QWERTY = Profile("Truyền thống", LayoutModel.QWERTY, KeyLayers.QWERTY_SWIPE, SymbolPages.QWERTY)
 
+        /** Bàn phím truyền thống thêm hàng số 1…0 (lưới [GridSpec.QWERTY_NUM], 5 hàng). */
+        val QWERTY_NUM = Profile("Có hàng số", LayoutModel.QWERTY_NUM, KeyLayers.QWERTY_NUM_SWIPE, SymbolPages.QWERTY_NUM)
+
         /**
          * Profile có sẵn, hiện trước profile người dùng tạo. "Cân bằng hai ngón" và "Công thái học" bỏ ở 0.7.1: ai đang
          * dùng thì [adopt] giữ nguyên bố cục thành profile "Của tôi".
          */
-        val BUILT_IN: List<Profile> = listOf(DEFAULT, QWERTY)
+        val BUILT_IN: List<Profile> = listOf(DEFAULT, QWERTY, QWERTY_NUM)
 
         /** Profile có sẵn của kiểu lưới [spec]: điểm xuất phát khi tạo mới hay về mặc định. */
         fun builtInFor(spec: GridSpec): Profile = BUILT_IN.first { it.spec == spec }

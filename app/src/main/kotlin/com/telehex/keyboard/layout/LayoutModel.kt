@@ -3,7 +3,7 @@ package com.telehex.keyboard.layout
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Mã phím trong lưới. Chữ thường `a`..`z`, dấu `,` `.`, hoặc mã chức năng bắt đầu bằng `#`. */
+/** Mã phím trong lưới. Chữ thường `a`..`z`, số `0`..`9` (hàng số), dấu `,` `.`, hoặc mã chức năng bắt đầu bằng `#`. */
 object KeyCode {
     const val EMOJI = "#emoji"
     const val NUMBERS = "#123"
@@ -17,6 +17,7 @@ object KeyCode {
     const val SHIFT = "#shift"
 
     fun isLetter(code: String): Boolean = code.length == 1 && code[0] in 'a'..'z'
+    fun isDigit(code: String): Boolean = code.length == 1 && code[0] in '0'..'9'
     fun isFunction(code: String): Boolean = code.startsWith("#")
 }
 
@@ -56,8 +57,9 @@ class LayoutModel(val rows: List<List<String?>>) {
         if (KeyCode.SETTINGS !in codes) return "Thiếu phím ⚙"
         if (KeyCode.ENTER !in codes) return "Thiếu phím ↵"
         val n = spec.spaceCells
-        if ((0 until n).any { rows[spec.spaceRow][spec.spaceFirstCol + it] != null }) return "Phím cách phải chiếm $n ô giữa hàng cuối"
         if (rows.flatten().count { it == null } != n) return "Chỉ có $n ô thuộc phím cách"
+        val first = rows[spec.spaceRow].indexOf(null)
+        if (first < 0 || (0 until n).any { rows[spec.spaceRow].getOrNull(first + it) != null }) return "Phím cách phải chiếm $n ô liền nhau ở hàng cuối"
         return null
     }
 
@@ -101,23 +103,31 @@ class LayoutModel(val rows: List<List<String?>>) {
             )
         )
 
-        /**
-         * Truyền thống: đúng thứ tự QWERTY. Hàng Z: ⇧ sát mép trái, Z…M căn giữa, ⌫ sát mép phải. Hàng cuối:
-         * 123 ☺ ⚙ `,` bên trái phím cách 4 ô, `.` ↵ bên phải.
-         */
-        val QWERTY: LayoutModel = LayoutModel(
-            listOf(
-                "qwertyuiop".map { "$it" },
-                "asdfghjkl".map { "$it" },
-                listOf(KeyCode.SHIFT) + "zxcvbnm".map { "$it" } + listOf(KeyCode.BACKSPACE),
-                listOf(KeyCode.NUMBERS, KeyCode.EMOJI, KeyCode.SETTINGS, ",", null, null, null, null, ".", KeyCode.ENTER),
-            )
+        /** Ba hàng chữ QWERTY của bố cục truyền thống: hàng Z có ⇧ sát mép trái, Z…M căn giữa, ⌫ sát mép phải. */
+        private val QWERTY_LETTER_ROWS: List<List<String?>> = listOf(
+            "qwertyuiop".map { "$it" },
+            "asdfghjkl".map { "$it" },
+            listOf(KeyCode.SHIFT) + "zxcvbnm".map { "$it" } + listOf(KeyCode.BACKSPACE),
         )
+
+        /**
+         * Hàng cuối của bố cục truyền thống: ba phím nhỏ 123 ☺ ⚙ bên trái phím cách 4 ô, ba phím `,` `.` ↵ bên phải
+         * (đến 0.8.3 phím cách lệch phải: 123 ☺ ⚙ `,` bên trái).
+         */
+        private val QWERTY_BOTTOM_ROW: List<String?> =
+            listOf(KeyCode.NUMBERS, KeyCode.EMOJI, KeyCode.SETTINGS, null, null, null, null, ",", ".", KeyCode.ENTER)
+
+        /** Truyền thống: đúng thứ tự QWERTY. */
+        val QWERTY: LayoutModel = LayoutModel(QWERTY_LETTER_ROWS + listOf(QWERTY_BOTTOM_ROW))
+
+        /** Truyền thống có hàng số: hàng 1…0 trên [QWERTY]. */
+        val QWERTY_NUM: LayoutModel = LayoutModel(listOf("1234567890".map { "$it" }) + QWERTY_LETTER_ROWS + listOf(QWERTY_BOTTOM_ROW))
 
         /** Lớp chữ có sẵn của kiểu lưới [spec]. */
         fun defaultFor(spec: GridSpec): LayoutModel = when (spec) {
             GridSpec.HEX7 -> DEFAULT
             GridSpec.QWERTY -> QWERTY
+            GridSpec.QWERTY_NUM -> QWERTY_NUM
         }
 
         fun fromJson(json: String): LayoutModel? = runCatching {

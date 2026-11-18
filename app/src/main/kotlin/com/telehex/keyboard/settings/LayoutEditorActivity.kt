@@ -105,7 +105,7 @@ class LayoutEditorView(context: Context) : KeyboardView(context) {
         }
     }
 
-    private fun hasSwipe(k: Key) = k.isLetter || k.code == "," || k.code == "."
+    private fun hasSwipe(k: Key) = KeyLayers.swipeUsable(k.code)
 
     private fun gridCell(k: Key): GridCell {
         val (r, c) = k.cells.first()

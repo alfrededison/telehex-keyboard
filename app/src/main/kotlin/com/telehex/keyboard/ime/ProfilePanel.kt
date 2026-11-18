@@ -85,6 +85,7 @@ class ProfilePanel(
     private fun kindName(p: Profile) = when (p.spec) {
         GridSpec.HEX7 -> "Tổ ong 7 cột"
         GridSpec.QWERTY -> "QWERTY 10 cột"
+        GridSpec.QWERTY_NUM -> "QWERTY 10 cột, có hàng số"
     }
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()

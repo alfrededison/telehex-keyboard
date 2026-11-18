@@ -47,7 +47,7 @@ enum SettingsScreens {
         SettingsViewController(title: "Profile") { screen in
             let preferences = screen.preferences
             let rows = preferences.allProfiles.map { profile in
-                Row(title: profile.name, detail: profile.builtIn ? (profile.spec.isHex ? "Tổ ong" : "QWERTY") : nil, id: "profile-\(profile.id)",
+                Row(title: profile.name, detail: profile.builtIn ? profile.spec.title : nil, id: "profile-\(profile.id)",
                     kind: .checked(profile.id == preferences.profile.id) { _ in preferences.configuration.activeProfile = profile.id },
                     swipe: profile.builtIn ? [] : [
                         UIContextualAction(style: .destructive, title: "Xoá") { [weak screen] _, _, done in

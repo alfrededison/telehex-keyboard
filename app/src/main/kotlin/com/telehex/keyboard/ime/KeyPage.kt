@@ -64,6 +64,7 @@ object KeyPage {
                 code == "," || code == "." ->
                     Key(code, cell, code, hint = if (mode == Mode.ABC) swipe[r, c] else "", kind = KeyKind.FUNCTION)
                 mode == Mode.SYMBOLS -> Key(code, cell, code, kind = KeyKind.SYMBOL)
+                KeyCode.isDigit(code) -> Key(code, cell, code, hint = swipe[r, c], kind = KeyKind.CONSONANT)
                 else -> letterKey(code, cell, telex, swipe[r, c])
             }
         }

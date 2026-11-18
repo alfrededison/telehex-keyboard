@@ -41,20 +41,23 @@ object KeyLayers {
         "6" to (1 to 4), "7" to (0 to 4), "8" to (0 to 5), "9" to (1 to 6), "0" to (2 to 6),
     )
 
+    /** Ô chữ hay ô số (hàng số): luôn hiện giá trị của lớp 123 thay cho phím của lớp chữ. */
+    fun isCharCell(code: String): Boolean = KeyCode.isLetter(code) || KeyCode.isDigit(code)
+
     /**
-     * Ô giữ được giá trị của lớp 123: ô chữ, cùng ô ⚙, ⇧ và `,` `.` — giá trị ở các ô này (nếu có) thay phím của lớp
-     * chữ khi hiện lớp 123 (phím 1/2 ở ô ⚙ hay ⇧, `<` `>` ở trang 2), ô trống thì vẫn là phím của lớp chữ. Các phím chức năng
-     * khác và phím cách lấy từ lớp chữ.
+     * Ô giữ được giá trị của lớp 123: ô chữ, ô số, cùng ô ⚙, ⇧ và `,` `.` — giá trị ở ⚙ ⇧ `,` `.` (nếu có) thay phím của
+     * lớp chữ khi hiện lớp 123 (phím 1/2 ở ô ⚙ hay ⇧, `<` `>` ở trang 2), ô trống thì vẫn là phím của lớp chữ. Các phím
+     * chức năng khác và phím cách lấy từ lớp chữ.
      */
     fun symbolUsable(code: String): Boolean =
-        KeyCode.isLetter(code) || code == KeyCode.SETTINGS || code == KeyCode.SHIFT || code == "," || code == "."
+        isCharCell(code) || code == KeyCode.SETTINGS || code == KeyCode.SHIFT || code == "," || code == "."
 
-    /** [reconcile] lớp 123: giá trị bị che dời sang ô chữ trước, chỉ khi hết ô chữ trống mới chiếm ô ⚙ / `,` `.` trống. */
+    /** [reconcile] lớp 123: giá trị bị che dời sang ô chữ/số trước, chỉ khi hết ô đó mới chiếm ô ⚙ / `,` `.` trống. */
     fun reconcileSymbols(layout: LayoutModel, pages: List<CellGrid>): List<CellGrid> =
-        reconcile(layout, pages, ::symbolUsable, KeyCode::isLetter)
+        reconcile(layout, pages, ::symbolUsable, ::isCharCell)
 
-    /** Ô dùng được của lớp vuốt xuống: ô chữ và `,` `.`. */
-    fun swipeUsable(code: String): Boolean = KeyCode.isLetter(code) || code == "," || code == "."
+    /** Ô dùng được của lớp vuốt xuống: ô chữ, ô số và `,` `.`. */
+    fun swipeUsable(code: String): Boolean = isCharCell(code) || code == "," || code == "."
 
     fun swap(pages: List<CellGrid>, a: GridCell, b: GridCell): List<CellGrid> {
         val va = pages[a.page][a.r, a.c]
@@ -124,8 +127,23 @@ object KeyLayers {
     /** Lớp vuốt xuống của bố cục truyền thống: số 1…0 dưới hàng Q…P như phím giữ của Gboard. */
     val QWERTY_SWIPE: CellGrid = CellGrid.fromCodes(LayoutModel.QWERTY) { DEFAULT_SWIPE_BY_CODE[it] }
 
+    /**
+     * Ký tự vuốt xuống của bố cục có hàng số: đã có hàng số nên hàng 1…0 cho ký tự Shift+số như bàn phím máy tính,
+     * hàng Q…P cho ngoặc và ký hiệu như Gboard khi bật hàng số (`+` `=` thay `%` `^` đã có ở hàng số), hàng Z…M cho dấu
+     * câu thay cho `@ # & ( )` đã có ở hàng số. Hàng giữa và `,` `.` như mặc định.
+     */
+    val QWERTY_NUM_SWIPE_BY_CODE: Map<String, String> = DEFAULT_SWIPE_BY_CODE + mapOf(
+        "1" to "!", "2" to "@", "3" to "#", "4" to "$", "5" to "%", "6" to "^", "7" to "&", "8" to "*", "9" to "(", "0" to ")",
+        "q" to "+", "w" to "=", "e" to "~", "r" to "|", "t" to "[", "y" to "]", "u" to "<", "i" to ">", "o" to "{", "p" to "}",
+        "z" to "-", "x" to "_", "c" to "/", "v" to ":", "b" to ";", "n" to "'", "m" to "\"",
+    )
+
+    /** Lớp vuốt xuống của bố cục truyền thống có hàng số ([QWERTY_NUM_SWIPE_BY_CODE]). */
+    val QWERTY_NUM_SWIPE: CellGrid = CellGrid.fromCodes(LayoutModel.QWERTY_NUM) { QWERTY_NUM_SWIPE_BY_CODE[it] }
+
     fun defaultSwipe(spec: GridSpec): CellGrid = when (spec) {
         GridSpec.HEX7 -> DEFAULT_SWIPE
         GridSpec.QWERTY -> QWERTY_SWIPE
+        GridSpec.QWERTY_NUM -> QWERTY_NUM_SWIPE
     }
 }

@@ -55,7 +55,7 @@ final class KeyboardFeaturesTests: XCTestCase {
         XCTAssertEqual(decoded.configuration.activeProfile,"builtin.default")
     }
     func testBuiltInLayoutsMatchAndroid080() {
-        XCTAssertEqual(KeyboardProfile.presets.map(\.name),["Mặc định","Truyền thống"])
+        XCTAssertEqual(KeyboardProfile.presets.map(\.name),["Mặc định","Truyền thống","Có hàng số"])
         XCTAssertTrue(KeyboardProfile.presets.allSatisfy { $0.valid() })
         let hex = KeyboardProfile.presets[0], qwerty = KeyboardProfile.presets[1]
         XCTAssertEqual(hex.spec,.hex7); XCTAssertEqual(qwerty.spec,.qwerty)
@@ -76,6 +76,37 @@ final class KeyboardFeaturesTests: XCTestCase {
             XCTAssertEqual(profile.symbols[1][profile.letters.firstIndex(of: ".")!],">")
         }
         XCTAssertEqual(GridSpec.qwerty.count,38); XCTAssertEqual(GridSpec.qwerty.left(20),1.5)
+    }
+    func testTraditionalBottomRowHasThreeKeysEachSideOfSpace() {
+        let qwerty = KeyboardProfile.presets[1]
+        XCTAssertEqual(Array(qwerty.letters[28...]),["#symbols","#emoji","#settings"," ","","","",",",".","\n"])
+        XCTAssertEqual(qwerty.swipe[qwerty.letters.firstIndex(of: ",")!],"?")
+        // Profile riêng lưu đến 0.8.3 (123 ☺ ⚙ , bên trái phím cách) vẫn hợp lệ, không làm hỏng cả cấu hình.
+        var old = qwerty; old.id = "mine"; old.name = "Của tôi"
+        old.letters[31...35] = [","," ","","",""]
+        XCTAssertTrue(old.valid())
+        var split = qwerty; split.id = "mine"; split.name = "Của tôi"
+        split.letters.swapAt(32,36) // phím cách bị tách đôi
+        XCTAssertFalse(split.valid())
+    }
+    func testNumberRowLayout() {
+        let num = KeyboardProfile.presets[2], qwerty = KeyboardProfile.presets[1]
+        XCTAssertEqual(num.id,"builtin.qwertyNum"); XCTAssertEqual(num.spec,.qwertyNum); XCTAssertEqual(GridSpec.qwertyNum.count,48)
+        XCTAssertTrue(num.valid())
+        XCTAssertEqual(Array(num.letters[0..<10]).joined(),"1234567890")
+        XCTAssertEqual(Array(num.letters[10...]),qwerty.letters)
+        XCTAssertEqual(GridSpec.qwertyNum.left(30),1.5)
+        XCTAssertEqual(Array(num.swipe[0..<10]).joined(),"!@#$%^&*()")
+        XCTAssertEqual(Array(num.swipe[10..<20]).joined(),"+=~|[]<>{}")
+        XCTAssertEqual(num.symbols.map(\.count),[48,48])
+        XCTAssertEqual(Array(num.symbols[0][0..<10]).joined(),"1234567890")
+        XCTAssertEqual(num.symbols[0][num.letters.firstIndex(of: "#shift")!],"#page")
+        XCTAssertEqual(num.symbols[0][num.letters.firstIndex(of: "#settings")!],"")
+        // Mọi ô chữ/số của hai trang đều có ký tự, không trùng nhau; reconcile không đổi gì.
+        for page in num.symbols { for (i,code) in num.letters.enumerated() where KeyboardProfile.isCharCell(code) { XCTAssertFalse(page[i].isEmpty, "ô \(i)") } }
+        let values = num.symbols.flatMap { $0 }.filter { !$0.isEmpty && $0 != "#page" }
+        XCTAssertEqual(values.count,Set(values).count)
+        var reconciled = num; reconciled.reconcile(); XCTAssertEqual(reconciled,num)
     }
     func testReconcileMovesSymbolsOffFunctionKeysToLetterCellsFirst() {
         var profile = KeyboardProfile.presets[0]

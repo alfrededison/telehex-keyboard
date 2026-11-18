@@ -144,7 +144,7 @@ extension HexKeyboardView {
             section("Profile")
             for profile in preferences.allProfiles {
                 row(profile.name,id: "profile-\(profile.id)",style: profile.id == preferences.profile.id ? .checked : .plain,
-                    detail: profile.builtIn ? (profile.spec.isHex ? "Tổ ong" : "QWERTY") : nil) { view in
+                    detail: profile.builtIn ? profile.spec.title : nil) { view in
                     view.preferences.configuration.activeProfile = profile.id; view.onPreferencesChanged?(); view.show("settings")
                 }
             }
@@ -280,7 +280,7 @@ extension HexKeyboardView {
         guard profile.letters.indices.contains(a), profile.letters.indices.contains(b),
               !KeyboardProfile.fixed(profile.letters[a]), !KeyboardProfile.fixed(profile.letters[b]) else { return }
         if layer == 0 {
-            guard KeyboardProfile.isLetter(profile.letters[a]) || KeyboardProfile.isLetter(profile.letters[b]) else { return }
+            guard KeyboardProfile.isCharCell(profile.letters[a]) || KeyboardProfile.isCharCell(profile.letters[b]) else { return }
             profile.letters.swapAt(a,b); profile.reconcile()
         } else if layer == 1 {
             guard KeyboardProfile.swipeUsable(profile.letters[a]), KeyboardProfile.swipeUsable(profile.letters[b]) else { return }
