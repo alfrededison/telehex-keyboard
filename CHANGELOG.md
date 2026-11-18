@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.4 — unreleased
+## 0.8.4 — 2026-11-18
 
 - Bố cục "Truyền thống": phím cách dời sang trái, mỗi bên ba phím nhỏ (123 ☺ ⚙ · cách · , . ↵). Profile riêng tạo từ trước giữ nguyên chỗ phím cách.
 - Thêm bố cục có sẵn "Có hàng số": như Truyền thống, thêm hàng số 1…0 trên cùng (5 hàng). Vuốt xuống hàng số ra ! @ # $ % ^ & * ( ), hàng Q…P ra ngoặc và ký hiệu.
