@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.8.5 — unreleased
+
 ## 0.8.4 — 2026-11-18
 
 - Bố cục "Truyền thống": phím cách dời sang trái, mỗi bên ba phím nhỏ (123 ☺ ⚙ · cách · , . ↵). Profile riêng tạo từ trước giữ nguyên chỗ phím cách.
