@@ -46,8 +46,10 @@ final class LayoutOptionButton: UIControl {
         let preferences = KeyboardPreferences(defaults: defaults)
         preferences.configuration.activeProfile = profileID
         preview = HexKeyboardView(preferences: preferences)
-        frameView = PreviewFrame(preview: preview, width: Self.renderWidth,
-                                 height: HexKeyboardView.height(for: Self.renderWidth, screenHeight: 900, spec: preferences.profile.spec))
+        let previewHeight = HexKeyboardView.height(for: Self.renderWidth, screenHeight: 900, spec: preferences.profile.spec)
+        frameView = PreviewFrame(preview: preview, width: Self.renderWidth, height: previewHeight)
+        // Khung cao 315 (vừa Tổ ong, Truyền thống); bàn phím có hàng số cao hơn thì khung cao theo để không bị cắt.
+        let frameRatio = max(315, previewHeight) / Self.renderWidth
         super.init(frame: .zero)
         preview.update(candidates: [], english: false, uppercase: false)
         preview.isUserInteractionEnabled = false; preview.isAccessibilityElement = false; preview.accessibilityElementsHidden = true
@@ -65,7 +67,7 @@ final class LayoutOptionButton: UIControl {
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: topAnchor), stack.bottomAnchor.constraint(equalTo: bottomAnchor),
             stack.leadingAnchor.constraint(equalTo: leadingAnchor), stack.trailingAnchor.constraint(equalTo: trailingAnchor),
-            frameView.heightAnchor.constraint(equalTo: frameView.widthAnchor, multiplier: 315 / Self.renderWidth),
+            frameView.heightAnchor.constraint(equalTo: frameView.widthAnchor, multiplier: frameRatio),
             check.topAnchor.constraint(equalTo: frameView.topAnchor, constant: 6), check.trailingAnchor.constraint(equalTo: frameView.trailingAnchor, constant: -6)
         ])
         isAccessibilityElement = true; accessibilityTraits = .button

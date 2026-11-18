@@ -61,11 +61,19 @@ final class HomeViewController: UIViewController {
         layoutOptions = [
             LayoutOptionButton(profileID: "builtin.default", name: "Tổ ong", detail: "Phím lục giác to hơn, vẫn thứ tự QWERTY"),
             LayoutOptionButton(profileID: "builtin.qwerty", name: "Truyền thống", detail: "QWERTY 10 cột quen thuộc, có ⇧ và ⌫"),
+            LayoutOptionButton(profileID: "builtin.qwertyNum", name: "Có hàng số", detail: "Như Truyền thống, thêm hàng số 1…0 trên cùng"),
         ]
         for option in layoutOptions {
             option.addAction(UIAction { [weak self] _ in self?.chooseLayout(option.profileID) }, for: .touchUpInside)
         }
-        let options = UIStackView(arrangedSubviews: layoutOptions); options.distribution = .fillEqually; options.spacing = 12; options.alignment = .top
+        // Hai ô mỗi hàng để hình xem trước đủ lớn; hàng lẻ thêm ô trống cho ô cuối giữ cùng bề rộng.
+        let rows = stride(from: 0, to: layoutOptions.count, by: 2).map { start -> UIStackView in
+            let pair: [UIView] = Array(layoutOptions[start..<min(start + 2, layoutOptions.count)])
+            let row = UIStackView(arrangedSubviews: pair.count == 2 ? pair : pair + [UIView()])
+            row.distribution = .fillEqually; row.spacing = 12; row.alignment = .top
+            return row
+        }
+        let options = UIStackView(arrangedSubviews: rows); options.axis = .vertical; options.spacing = 16
         layoutNote.font = .preferredFont(forTextStyle: .footnote); layoutNote.textColor = .secondaryLabel; layoutNote.numberOfLines = 0
         layoutNote.text = "Bàn phím đổi theo lựa chọn khi mở lại. Profile riêng và chỉnh phím ở Cài đặt › Bàn phím."
         let layouts = card(title: "Kiểu bàn phím", lines: [], body: [options, layoutNote])
