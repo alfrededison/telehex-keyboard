@@ -12,7 +12,7 @@ Z   X   C   V   B   N   M
   ☺   ,  \___cách___/  .   ↵
 ```
 
-Ai quen bàn phím 10 cột có thể chọn profile **Truyền thống**: thứ tự QWERTY 10 cột quen thuộc, phím chữ nhật, có phím ⇧ và ⌫. Mọi cử chỉ và gợi ý bên dưới dùng như nhau trên cả hai bố cục.
+Ai quen bàn phím 10 cột có thể chọn profile **Truyền thống**: thứ tự QWERTY 10 cột quen thuộc, phím chữ nhật, có phím ⇧ và ⌫, mỗi bên phím cách ba phím nhỏ. Profile **Có hàng số** thêm hàng số 1…0 trên cùng (5 hàng). Mọi cử chỉ và gợi ý bên dưới dùng như nhau trên mọi bố cục.
 
 ```
  Q  W  E  R  T  Y  U  I  O  P
@@ -31,7 +31,7 @@ Ai quen bàn phím 10 cột có thể chọn profile **Truyền thống**: thứ
 
 1. Android: cài APK từ [Releases](../../releases) (hoặc build như dưới). iPhone/iPad: cài bản thử qua [TestFlight](https://testflight.apple.com/join/gvyHeek6), mở TeleHex và làm theo màn chào (chi tiết ở [ios/README.md](ios/README.md)).
 2. Mở app TeleHex. Lần đầu mở, màn chào hướng dẫn hai bước: "Mở Cài đặt bàn phím" để bật TeleHex, rồi "Chọn bàn phím" để dùng TeleHex (hoặc chạm biểu tượng bàn phím ở thanh điều hướng khi đang gõ). Mỗi bước hiện ✓ khi xong.
-3. Chọn kiểu bàn phím: **Tổ ong** (profile "Mặc định") hay **Truyền thống** (QWERTY 10 cột), có hình xem trước và ô gõ thử. Đổi lại sau trong Cài đặt › Bàn phím.
+3. Chọn kiểu bàn phím: **Tổ ong** (profile "Mặc định"), **Truyền thống** (QWERTY 10 cột) hay **Có hàng số** (Truyền thống thêm hàng số), có hình xem trước và ô gõ thử. Đổi lại sau trong Cài đặt › Bàn phím.
 
 Sau lần đầu, hai nút bật/chọn bàn phím vẫn có trong Cài đặt › Bật bàn phím.
 
@@ -61,8 +61,8 @@ Sau lần đầu, hai nút bật/chọn bàn phím vẫn có trong Cài đặt �
 | Vuốt **xuống** phím ⚙ (icon clipboard nhỏ bên dưới) | Bảng sửa văn bản + clipboard history; chạm ⚙ mở Cài đặt |
 | **Giữ** một phím ký tự ~0,8 s đến khi nó nổi lên, kéo thả lên phím khác | Đổi chỗ hai phím ngay trên bàn phím (lớp chữ hoặc trang 123 đang hiện). Chỉ phím ký tự nhấc lên được; phím chức năng đổi chỗ khi phím ký tự thả lên nó; phím cách và ↵ cố định. Tự lưu vào profile đang dùng (profile có sẵn thì thành profile mới "Của tôi"), giữ độ lệch chạm đã học. Nhả tại chỗ thì vẫn gõ ký tự đó. Tắt được trong Cài đặt › Bàn phím |
 | Chạm ⚙ | Cài đặt |
-| Chạm ⇧ (profile Truyền thống) | Chữ kế tiếp đang thường thì viết hoa, đang hoa (đầu câu) thì viết thường; chạm đúp để khoá chữ hoa, chạm lần nữa để tắt |
-| Chạm / giữ ⌫ (profile Truyền thống) | Xoá lùi; giữ để xoá liên tục |
+| Chạm ⇧ (profile Truyền thống, Có hàng số) | Chữ kế tiếp đang thường thì viết hoa, đang hoa (đầu câu) thì viết thường; chạm đúp để khoá chữ hoa, chạm lần nữa để tắt |
+| Chạm / giữ ⌫ (profile Truyền thống, Có hàng số) | Xoá lùi; giữ để xoá liên tục |
 
 Mọi ngưỡng (vuốt, giữ, bước xoá từ, chạm đúp) chỉnh được trong Cài đặt → Cử chỉ.
 
@@ -97,7 +97,7 @@ Gợi ý âm tiết tiếp theo dùng thêm một mô hình n-gram âm tiết n�
 ## Tuỳ biến
 
 - **Chỉnh sửa phím**: kéo một phím thả lên phím khác để đổi chỗ; phím cách và ↵ cố định. Màn này có 3 chế độ: **Chữ**, **Vuốt xuống**, **123**; mỗi lớp đổi chỗ riêng, hai lớp còn lại đứng yên theo ô. Ở chế độ 123, đang kéo thì giữ ngón trên phím 1/2 để sang trang kia. Lớp 123 mặc định theo hai trang ký hiệu của Gboard: số ở hai hàng trên, phím 1/2 ở ô ⚙, trang 2 có `<` `>` thay `,` `.`; vuốt xuống Q…P ra 1…0. Mọi ký tự kéo được như nhau.
-- **Profile**: mỗi profile giữ đủ ba lớp Chữ, Vuốt xuống, 123. Màn chỉnh sửa luôn sửa profile đang dùng; Lưu là áp ngay cho bàn phím. Menu ⋮ có Tạo mới, Nhân bản (gồm cả thay đổi chưa lưu), Đổi tên, Xoá, Bỏ thay đổi. Có sẵn profile "Mặc định" (tổ ong 7 cột) và "Truyền thống" (QWERTY 10 cột), khoá 🔒: sửa thì lưu thành profile mới cùng kiểu lưới. Tạo mới và "Về mặc định" theo kiểu lưới của profile đang dùng. Đổi nhanh profile ngay trong Cài đặt › Bàn phím.
+- **Profile**: mỗi profile giữ đủ ba lớp Chữ, Vuốt xuống, 123. Màn chỉnh sửa luôn sửa profile đang dùng; Lưu là áp ngay cho bàn phím. Menu ⋮ có Tạo mới, Nhân bản (gồm cả thay đổi chưa lưu), Đổi tên, Xoá, Bỏ thay đổi. Có sẵn profile "Mặc định" (tổ ong 7 cột), "Truyền thống" (QWERTY 10 cột) và "Có hàng số" (QWERTY 10 cột thêm hàng số 1…0; vuốt xuống hàng số ra `! @ # $ % ^ & * ( )`), khoá 🔒: sửa thì lưu thành profile mới cùng kiểu lưới. Tạo mới và "Về mặc định" theo kiểu lưới của profile đang dùng. Đổi nhanh profile ngay trong Cài đặt › Bàn phím.
 - **Ký tự vuốt xuống** cho từng ô phím: số, ký hiệu, emoji hoặc đoạn văn bản ngắn (≤ 8 ký tự). Ở chế độ **Vuốt xuống** của màn chỉnh sửa phím, chạm một phím để chọn ký tự, kéo để đổi chỗ.
 - **App tự bật EN**: chọn app (Termux, app code…) trong Cài đặt › Telex để luôn mở bàn phím ở chế độ EN.
 - Kiểu đặt dấu cũ/mới (hòa/hoà), "L cũng là dấu huyền" (`lal` → là), tự viết hoa đầu câu, rung, âm thanh, giao diện sáng/tối, màu nhấn, chế độ một tay, tông da và giới tính emoji mặc định, gõ tắt, clipboard history, chế độ ẩn danh, vùng chạm động (tắt mặc định), học độ lệch chạm.
