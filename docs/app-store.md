@@ -58,7 +58,7 @@ Script dùng khoá API trong `ios/Config/Signing.local.xcconfig` và chạy lạ
 | App Information › Name, Subtitle, Privacy Policy URL (vi, en-US) | `<ngôn ngữ>/name.txt`, `subtitle.txt`, `privacy_url.txt` |
 | Category | Utilities, phụ Productivity |
 | Age Rating | mọi câu None/No, ra 4+ |
-| Phiên bản › số phiên bản | `MARKETING_VERSION` trong `ios/project.json` (phải khớp build) |
+| Phiên bản › số phiên bản | `MARKETING_VERSION` trong `ios/project.json` (phải khớp build); phiên bản trước đã gửi duyệt hay phát hành thì tạo phiên bản mới, phát hành thủ công |
 | Promotional Text, Description, Keywords, Support URL, Marketing URL | `promotional_text.txt` (≤ 170, đổi không cần duyệt lại), `description.txt` (≤ 4000, không emoji), `keywords.txt` (≤ 100 byte, không lặp chữ trong tên), `support_url.txt`, `marketing_url.txt` |
 | What's New | `<ngôn ngữ>/release_notes.txt`, từ phiên bản thứ hai |
 | Copyright | `copyright.txt` |
@@ -118,6 +118,14 @@ Build đầu của mỗi phiên bản phải qua Beta App Review (thường dư�
 ## 6. Gửi App Review
 
 1. Chạy lại `python3 ios/scripts/asc_metadata.py --no-screenshots` để gắn build mới nhất đã xử lý xong vào phiên bản. Build TestFlight hết hạn sau 90 ngày hoặc khi bị expire thủ công; phiên bản gắn build hết hạn thì không gửi được.
-2. Làm xong hai mục chỉ có trên web ở bước 3 (App Privacy, Content Rights).
-3. Trang phiên bản › **Add for Review** › **Submit to App Review**.
-4. Phiên bản đặt phát hành thủ công: duyệt xong thì bấm **Release This Version**.
+2. Lần đầu: làm xong hai mục chỉ có trên web ở bước 3 (App Privacy, Content Rights). Các bản sau giữ nguyên.
+3. `python3 ios/scripts/asc_submit.py` gửi App Review (trên web: trang phiên bản › **Add for Review** › **Submit to App Review**). Chạy lại để xem trạng thái.
+4. Phiên bản đặt phát hành thủ công: duyệt xong thì chạy `python3 ios/scripts/asc_submit.py --release` (hoặc bấm **Release This Version**).
+
+## 7. Cập nhật phiên bản mới
+
+1. Tăng `MARKETING_VERSION` trong `ios/project.json`.
+2. Viết "Có gì mới" vào `fastlane/metadata/ios/<ngôn ngữ>/release_notes.txt` (không emoji).
+3. `ios/scripts/release.sh`, rồi `python3 ios/scripts/asc_testflight.py` nếu muốn đưa ra TestFlight công khai (build đầu của phiên bản mới qua Beta App Review lại).
+4. `python3 ios/scripts/asc_metadata.py`: tạo phiên bản mới trên App Store Connect, điền "Có gì mới" và gắn build khi build đã xử lý xong.
+5. `python3 ios/scripts/asc_submit.py`, duyệt xong thì `--release` như bước 6.

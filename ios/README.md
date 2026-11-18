@@ -1,6 +1,6 @@
 # TeleHex cho iOS
 
-Bản iOS chính thức được phát triển trong cùng repo Android. **Đang thử công khai qua [TestFlight](https://testflight.apple.com/join/gvyHeek6), chưa lên App Store.** Chuẩn tính năng là Android 0.8.1, chỉ phát hành khi các mục iOS hỗ trợ trong [bảng đối chiếu](docs/feature-parity.md) đã được kiểm thử và các khác biệt nền tảng đã được chốt.
+Bản iOS chính thức được phát triển trong cùng repo Android. **Đã lên [App Store](https://apps.apple.com/app/id6833505005); bản thử công khai qua [TestFlight](https://testflight.apple.com/join/gvyHeek6).** Chuẩn tính năng là Android 0.8.1, chỉ phát hành khi các mục iOS hỗ trợ trong [bảng đối chiếu](docs/feature-parity.md) đã được kiểm thử và các khác biệt nền tảng đã được chốt.
 
 ## Cấu trúc
 
@@ -39,6 +39,7 @@ App và keyboard extension dùng chung App Group `group.com.telehex.keyboard.sha
 3. Tạo app trên App Store Connect với bundle ID `com.telehex.keyboard`, rồi chạy `ios/scripts/release.sh` (archive Release, ký, tải lên TestFlight; số build tự tăng). `DESTINATION=export` chỉ xuất `.ipa`.
 4. `python3 ios/scripts/asc_metadata.py` đẩy tên, mô tả, ảnh chụp, xếp hạng tuổi, giá và gắn build vào phiên bản App Store; chi tiết ở [docs/app-store.md](../docs/app-store.md).
 5. `python3 ios/scripts/asc_testflight.py` đưa build mới nhất ra TestFlight công khai (Test Information, What to Test, nhóm Công khai có public link, gửi Beta App Review).
+6. `python3 ios/scripts/asc_submit.py` gửi App Review; duyệt xong thì thêm `--release` để phát hành. Ra phiên bản mới xem [docs/app-store.md](../docs/app-store.md#7-cập-nhật-phiên-bản-mới).
 
 Không đăng nhập Xcode được thì thêm khoá API App Store Connect (vai trò Admin) vào `Signing.local.xcconfig`:
 

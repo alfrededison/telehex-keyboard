@@ -1,6 +1,6 @@
 # TeleHex – Bàn phím Telex tổ ong
 
-Bản Android đã phát hành. Bản **iOS native + engine Kotlin Multiplatform dùng chung** đang được triển khai trong [`ios/`](ios/README.md); theo dõi [mức tương đương với Android 0.8.1](ios/docs/feature-parity.md) và điều kiện phát hành tại đó. Bản thử iOS đang mở công khai qua [TestFlight](https://testflight.apple.com/join/gvyHeek6); quy trình App Store ở [docs/app-store.md](docs/app-store.md).
+Bản Android đã phát hành. Bản **iOS native + engine Kotlin Multiplatform dùng chung** đang được triển khai trong [`ios/`](ios/README.md); theo dõi [mức tương đương với Android 0.8.1](ios/docs/feature-parity.md) và điều kiện phát hành tại đó. Bản iOS đã có trên [App Store](https://apps.apple.com/app/id6833505005), bản thử mở công khai qua [TestFlight](https://testflight.apple.com/join/gvyHeek6); quy trình App Store ở [docs/app-store.md](docs/app-store.md).
 
 Bàn phím tiếng Việt gõ **Telex** trên lưới **lục giác đều 7 cột**. Giữ tinh thần QWERTY (Q-W-E-R-T-…-U-I-O-P đọc zigzag giữa hai hàng trên, G H chen giữa vì hàng giữa chỉ có 7 ô) nhưng mỗi phím rộng hơn khoảng 30% so với bàn phím 10 cột. Thao tác phụ (xoá, chữ hoa, ký tự phụ, con trỏ, chọn, dán…) chuyển sang cử chỉ vuốt, nên lưới chữ không có phím backspace hay shift.
 
@@ -29,7 +29,7 @@ Ai quen bàn phím 10 cột có thể chọn profile **Truyền thống**: thứ
 
 ## Bật bàn phím
 
-1. Android: cài APK từ [Releases](../../releases) (hoặc build như dưới). iPhone/iPad: cài bản thử qua [TestFlight](https://testflight.apple.com/join/gvyHeek6), mở TeleHex và làm theo màn chào (chi tiết ở [ios/README.md](ios/README.md)).
+1. Android: cài APK từ [Releases](../../releases) (hoặc build như dưới). iPhone/iPad: cài từ [App Store](https://apps.apple.com/app/id6833505005) (hoặc bản thử qua [TestFlight](https://testflight.apple.com/join/gvyHeek6)), mở TeleHex và làm theo màn chào (chi tiết ở [ios/README.md](ios/README.md)).
 2. Mở app TeleHex. Lần đầu mở, màn chào hướng dẫn hai bước: "Mở Cài đặt bàn phím" để bật TeleHex, rồi "Chọn bàn phím" để dùng TeleHex (hoặc chạm biểu tượng bàn phím ở thanh điều hướng khi đang gõ). Mỗi bước hiện ✓ khi xong.
 3. Chọn kiểu bàn phím: **Tổ ong** (profile "Mặc định"), **Truyền thống** (QWERTY 10 cột) hay **Có hàng số** (Truyền thống thêm hàng số), có hình xem trước và ô gõ thử. Đổi lại sau trong Cài đặt › Bàn phím.
 

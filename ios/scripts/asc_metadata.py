@@ -12,7 +12,8 @@ Nguồn:
                                            liên hệ cho App Review: REVIEW_FIRST_NAME, REVIEW_LAST_NAME, REVIEW_EMAIL,
                                            REVIEW_PHONE (không commit)
 
-Script cũng: đặt số phiên bản App Store theo MARKETING_VERSION của project.json, trả lời bảng xếp hạng tuổi là không có
+Script cũng: đặt số phiên bản App Store theo MARKETING_VERSION của project.json (phiên bản trước đã gửi duyệt hay
+phát hành thì tạo phiên bản mới, phát hành thủ công), trả lời bảng xếp hạng tuổi là không có
 nội dung nào (4+), đặt giá miễn phí và bán ở mọi quốc gia nếu app chưa có giá, rồi gắn build mới nhất cùng phiên bản đã
 xử lý xong. Không làm được qua API, phải làm trên web: App Privacy ("Data Not Collected") và Content Rights.
 """
@@ -36,7 +37,9 @@ AGE_RATING_LEVELS = ["alcoholTobaccoOrDrugUseOrReferences", "contests", "gamblin
                      "violenceCartoonOrFantasy", "violenceRealistic", "violenceRealisticProlongedGraphicOrSadistic"]
 AGE_RATING_FLAGS = ["advertising", "ageAssurance", "gambling", "healthOrWellnessTopics", "lootBox", "messagingAndChat",
                     "parentalControls", "socialMedia", "unrestrictedWebAccess", "userGeneratedContent"]
-EDITABLE = {"PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED", "METADATA_REJECTED", "INVALID_BINARY"}
+# READY_FOR_REVIEW: đã thêm vào lần gửi duyệt nhưng chưa gửi (asc_submit.py bị ngắt giữa chừng), vẫn sửa và gửi tiếp được.
+EDITABLE = {"PREPARE_FOR_SUBMISSION", "READY_FOR_REVIEW", "DEVELOPER_REJECTED", "REJECTED", "METADATA_REJECTED",
+            "INVALID_BINARY"}
 
 
 def local_setting(name):
@@ -102,11 +105,24 @@ def app_info(client, app_id, locales):
     say("xếp hạng tuổi: không có nội dung nào (4+)")
 
 
+def create_version(client, app_id, all_versions, version_string):
+    """Tạo phiên bản App Store mới theo MARKETING_VERSION khi mọi phiên bản đã gửi duyệt hoặc đã phát hành."""
+    same = next((v for v in all_versions if v["attributes"]["versionString"] == version_string), None)
+    if same:
+        fail(f"phiên bản {version_string} đang ở trạng thái {same['attributes']['appStoreState']}, không sửa được; "
+             "tăng MARKETING_VERSION trong ios/project.json cho bản mới")
+    v = client.call("POST", "/v1/appStoreVersions", {"data": {"type": "appStoreVersions",
+        "attributes": {"platform": "IOS", "versionString": version_string, "releaseType": "MANUAL"},
+        "relationships": {"app": {"data": {"type": "apps", "id": app_id}}}}})["data"]
+    say(f"tạo phiên bản {version_string} (phát hành thủ công)")
+    return v
+
+
 def version(client, app_id, locales, version_string):
-    versions = [v for v in client.get_all(f"/v1/apps/{app_id}/appStoreVersions?filter[platform]=IOS")
-                if v["attributes"]["appStoreState"] in EDITABLE]
+    all_versions = client.get_all(f"/v1/apps/{app_id}/appStoreVersions?filter[platform]=IOS")
+    versions = [v for v in all_versions if v["attributes"]["appStoreState"] in EDITABLE]
     if not versions:
-        fail("không có phiên bản iOS nào đang sửa được; tạo phiên bản mới trên App Store Connect trước")
+        versions = [create_version(client, app_id, all_versions, version_string)]
     if len(versions) > 1:
         say("có nhiều phiên bản đang sửa được; dùng " + versions[0]["attributes"]["versionString"])
     v = versions[0]
@@ -293,8 +309,9 @@ def connect():
 def main():
     client, app_id, version_string = connect()
     locales = sorted(p.name for p in METADATA.iterdir() if p.is_dir() and (p / "name.txt").exists())
-    app_info(client, app_id, locales)
+    # Phiên bản trước thông tin app: thông tin của bản đã phát hành bị khoá, tạo phiên bản mới thì mới có bản sửa được.
     v = version(client, app_id, locales, version_string)
+    app_info(client, app_id, locales)
     review(client, v)
     price_and_availability(client, app_id)
     if "--no-screenshots" not in sys.argv:
