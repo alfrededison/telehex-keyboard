@@ -1,6 +1,8 @@
 Turn it on: open TeleHex and follow the welcome steps (Settings › General › Keyboard › Keyboards › Add New Keyboard › TeleHex), then tap the test field and hold the globe key to pick TeleHex.
 
 Please try:
+• This build changes how taps are recognised: try fast typing, taps near key edges, overlapping two-thumb taps, and two-finger left/right swipes for undo/redo.
+• Three new hexagonal layouts and the new shift/backspace colour: pick them on the app's home screen.
 • Typing Telex in the apps you use (Messages, Safari, Notes, chat apps): are tone marks placed right, are letters ever doubled or lost?
 • Space bar gestures: swipe left to delete, down to switch Vietnamese/English, hold and drag to move the cursor. Glide across letters to slide-type.
 • Switching the Hexagonal/Traditional layout and other settings in the app, then reopening the keyboard to see them applied.

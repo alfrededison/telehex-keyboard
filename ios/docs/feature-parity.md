@@ -22,7 +22,15 @@ Quyết định: phát hành khi đủ tính năng Android 0.8.1 mà iOS hỗ tr
 | Giao diện | Theo bàn phím hệ thống iOS (`KeyboardTheme.swift`): phím trắng có bóng, phím chức năng xám, nguyên âm tô màu nhấn nhạt, phím dấu cam nhạt và ⇧ ⌫ vàng nhạt như Android, ↵ màu nhấn, bong bóng khi chạm, lục giác giữ khe 3pt và phím cách ghép ô; thanh gợi ý chữ trơn ba ô, lối tắt khi chưa có gợi ý; bảng cài đặt dạng danh sách nhóm có điều hướng ‹/Xong; toast tối, dialpad 4×4; hệ thống/sáng/tối, màu nhấn, một tay, chiều cao, font theo Dynamic Type, nhãn và action accessibility, độ lệch chạm có giới hạn và reset; rung/âm phím tuỳ chọn; 🌐 chỉ hiện khi iOS yêu cầu (`needsInputModeSwitchKey`) |
 | Sao lưu | JSON có phiên bản của iOS. App: cấu hình/profile/gõ tắt/gói VI/EN; ⚙ trên bàn phím: bản đầy đủ có cả dữ liệu học. Bỏ qua lịch sử clipboard trong bản sao lưu cũ; whitelist và giới hạn dữ liệu, kiểm tra trước xác nhận restore, staging và rollback file |
 
+## Đồng bộ hành vi với Android (iOS 0.1.2, Android 0.8.6)
+
+Bố cục, ba lớp phím, profile có sẵn, hình học, nhận chạm và học độ lệch chạm, nhóm màu phím nằm ở module KMP `layout/`; quy tắc gõ (khoảng trắng khi chọn gợi ý, thanh gợi ý, gõ tắt, tự viết hoa và ⇧, xoá theo từ, điều kiện gõ vuốt, nhãn ↵) ở `typing/`; `bridge/` gói chúng cùng `telex/` thành `TeleHexCore`. Hai bên khác nhau thì theo Android, trừ ba điểm theo iOS: chọn gợi ý không thêm khoảng trắng trước dấu câu, emoji gợi ý thay chữ đang gõ, âm tiết hợp lệ vẫn có gợi ý sửa gõ sai. Còn viết riêng ở mỗi app: luồng gõ chính (`HexKeyboardService` / `TypingSession`), nhận cử chỉ, khung phím iOS, bảng màu, lưu cài đặt.
+
+Khác biệt còn lại có chủ ý: giữ phím cách của dialpad trên iOS chờ cố định 0,8 giây; điều kiện tự mở dialpad và ô không học từ theo loại ô của từng hệ điều hành; iOS gửi "\n" cho phím ↵ (hệ thống tự chạy nút Return của ô).
+
 ## Bằng chứng kiểm thử
+
+- Đợt đồng bộ: telex 86 JVM + 8 macOS, layout 60, typing 20, bridge 7, Android 17 unit + 23 instrumented, 87 XCTest đều đạt; UI Simulator cho thanh gợi ý, vuốt ngang, kéo phím cách tới đầu dòng, dialpad, gõ vuốt, hai ngón chạm cùng lúc có video trong `test-recordings/`. Chưa thử trên máy thật: vuốt hai ngón lệch nhịp, gõ dồn ba phím, nhãn ↵ trong ô tìm kiếm thật.
 
 - 80 JVM tests, 7 macOS Native tests, 34 Android app tests đều đạt; corpus golden và Unicode NFC/NFD.
 - 62 XCTest đạt: bridge Swift → Native, safe replacement khi đổi field/selection/context, Unicode cursor, keyboard-owned undo/redo, snippets/ẩn danh/EN không học, cấu hình/profile và bố cục 0.8.0, thanh gợi ý/điều hướng bảng, pending write/clear, backup/restore và emoji ghép.
