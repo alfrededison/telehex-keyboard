@@ -133,6 +133,17 @@ final class KeyboardUITests: XCTestCase {
         XCTAssertEqual(app.textViews["typing-field"].value as? String, "xin ")
         Thread.sleep(forTimeInterval: 1.5)
     }
+    func testTwoThumbsDownTogetherTypeBothKeysLikeAndroid() {
+        let app = preview()
+        // Hai ngón chạm xuống cùng lúc (gõ nhanh hai ngón cái): cả hai phím được gõ, không phím nào bị huỷ
+        app.buttons["key-g"].twoFingerTap()
+        let typed = app.textViews["typing-field"].value as? String ?? ""
+        XCTAssertEqual(typed.count, 2, "gõ ra: \(typed)")
+        // Chạm một ngón sau đó vẫn bình thường
+        app.buttons["key-a"].recordedTap(in: app)
+        XCTAssertEqual((app.textViews["typing-field"].value as? String ?? "").count, 3)
+        Thread.sleep(forTimeInterval: 1.5)
+    }
     func testLayoutEditorLayerTransitions() {
         let app = preview()
         openSettings("settings-keyboard", in: app)
