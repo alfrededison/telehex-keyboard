@@ -707,9 +707,15 @@ final class HexKeyboardView: UIView {
         }
         return out
     }
+    /// Điểm chạm có thuộc lưới phím không: phía trên hàng phím đầu là thanh gợi ý, chạm ở đó (kể cả sát mép dưới một gợi
+    /// ý) không được ra phím dù tâm phím gần nhất vẫn trong tầm.
+    private func inGrid(_ point: CGPoint) -> Bool {
+        guard let top = keys.filter({ !$0.0.isHidden }).map({ $0.0.frame.minY }).min() else { return false }
+        return point.y >= top - 2
+    }
     /// Ô đang hiển thị dưới điểm chạm (ô gần nhất), không bù độ lệch học được (dùng khi kéo đổi chỗ và khi nhấc tay).
     func displayedCell(at point: CGPoint) -> Int? {
-        guard visiblePanel == nil || editLayer != nil else { return nil }
+        guard visiblePanel == nil || editLayer != nil, inGrid(point) else { return nil }
         return touchCells().nearest(x: Float(point.x), y: Float(point.y)).first.map { Int($0.id) }
     }
     /// Phím được chạm, theo `TouchModel.keyAt` như Android: phím chức năng, dấu câu, cách theo ô gần nhất; chạm rõ giữa
@@ -717,7 +723,7 @@ final class HexKeyboardView: UIView {
     /// điểm trên đường vuốt).
     func cell(at point: CGPoint, dynamic: Bool = true) -> Int? {
         guard dynamic else { return displayedCell(at: point) }
-        guard visiblePanel == nil || editLayer != nil else { return nil }
+        guard visiblePanel == nil || editLayer != nil, inGrid(point) else { return nil }
         let typing = !dialpad && editLayer == nil && page < 0 && inlineDocuments.isEmpty
         let offsets = typing && preferences.configuration.touchAdaptation ? learnedOffsets() : [:]
         // Không áp vùng chạm động trong trình soạn (tìm emoji, ký tự vuốt xuống): âm tiết đang kiểm là của ô nhập chính.

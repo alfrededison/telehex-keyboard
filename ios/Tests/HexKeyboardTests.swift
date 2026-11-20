@@ -74,6 +74,17 @@ final class HexKeyboardTests: XCTestCase {
         XCTAssertEqual(keyboard.displayedCell(at: CGPoint(x: boundary + 0.4, y: e.0.center.y)), e.1)
         XCTAssertEqual(keyboard.displayedCell(at: CGPoint(x: boundary - 0.4, y: q.0.center.y)), q.1)
         XCTAssertNil(keyboard.displayedCell(at: CGPoint(x: boundary, y: -200)))
+        // Chạm trong thanh gợi ý, ngay trên hàng phím đầu, không ra phím
+        XCTAssertNil(keyboard.cell(at: CGPoint(x: q.0.center.x, y: q.0.frame.minY - 8)))
+        XCTAssertEqual(keyboard.cell(at: CGPoint(x: q.0.center.x, y: q.0.frame.minY + 4)), q.1)
+        // Độ lệch lớn (đơn vị điểm) không làm cấu hình bị coi là hỏng khi nạp lại
+        prefs.configuration.offsets["pt:builtin.default:w"] = [12.5, -9]
+        XCTAssertTrue(prefs.configuration.valid())
+        // Sửa bố cục có sẵn: độ lệch đã học đi theo bản sao
+        var mine = prefs.profile; mine.letters.swapAt(0, 1)
+        XCTAssertTrue(prefs.saveProfile(mine))
+        let copy = try XCTUnwrap(prefs.configuration.profiles.last)
+        XCTAssertEqual(prefs.configuration.offsets["pt:\(copy.id):w"], [12.5, -9])
         var host = ""
         keyboard.onKey = { host += $0 }
         var saved: [String] = []

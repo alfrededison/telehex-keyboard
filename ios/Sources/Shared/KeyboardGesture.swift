@@ -24,7 +24,12 @@ final class KeyboardGesture: UIGestureRecognizer {
     private var cancelledWhileEmitting = false
     /// Đang gọi `emit`: phím vừa nhả có thể tự đổi lớp (gọi `cancel`), lúc đó không huỷ chính lần chạm này.
     private var emitting = false
-    private func send(_ event: Event) { emitting = true; emit?(event); emitting = false }
+    /// Đã phát `.begin` mà chưa phát `.end` / `.cancel`: phím đang sáng, bong bóng đang hiện.
+    private var open = false
+    private func send(_ event: Event) {
+        switch event { case .begin: open = true; case .end, .cancel: open = false; case .move: break }
+        emitting = true; emit?(event); emitting = false
+    }
     /// Huỷ lần chạm đang theo dõi (đổi lớp/bố cục, bàn phím ẩn); phần còn lại của lần chạm bị bỏ qua.
     func cancel() {
         if emitting { cancelledWhileEmitting = true }
@@ -41,6 +46,17 @@ final class KeyboardGesture: UIGestureRecognizer {
                 timer?.invalidate(); multi = true
                 let point = touch.location(in: view)
                 second = Finger(touch: touch, key: key, start: point, last: point)
+                return
+            }
+            // Gõ dồn ba phím: một ngón đã nhấc, ngón mới chạm xuống trước khi ngón kia nhấc. Gõ phím đã nhả, ngón còn chạm
+            // thành ngón đầu, ngón mới thành ngón thứ hai.
+            if multi, !released.isEmpty, touches.count == 1, let touch = touches.first, let view, let key = keyAt?(touch.location(in: view)) {
+                let done = released; released = []
+                cancelledWhileEmitting = false
+                for finger in done where !cancelledWhileEmitting { send(.end(finger.key, finger.start, finger.last, [finger.start, finger.last], [finger.key], false)) }
+                if let rest = second { origin = rest.key; start = rest.start; last = rest.last; primaryTouch = rest.touch }
+                let point = touch.location(in: view)
+                second = Finger(touch: touch, key: cancelledWhileEmitting ? (keyAt?(point) ?? key) : key, start: point, last: point)
                 return
             }
             timer?.invalidate(); send(.cancel); state = state == .possible ? .failed : .cancelled; return
@@ -122,6 +138,9 @@ final class KeyboardGesture: UIGestureRecognizer {
         if state == .possible || state == .began || state == .changed { state = .ended }
     }
     override func reset() {
+        // Bị bộ nhận khác giành quyền (vuốt hai ngón hoàn tác) khi còn ở `.possible`: UIKit không gọi touchesCancelled, nên
+        // tự báo huỷ để phím đầu không kẹt ở trạng thái đang nhấn.
+        if open { open = false; emit?(.cancel) }
         super.reset(); timer?.invalidate(); timer = nil; origin = nil; path = []; visited = []; held = false
         primaryTouch = nil; second = nil; multi = false; released = []
     }

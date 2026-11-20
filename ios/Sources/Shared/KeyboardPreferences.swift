@@ -109,6 +109,8 @@ struct KeyboardConfiguration: Codable, Equatable {
     var swipeThreshold = 24.0, holdDelay = 0.8, cursorDelay = 0.3
     /// Giữ kéo để đổi chỗ phím ngay trên bàn phím: mặc định bật, chỉ chạy khi có Truy cập đầy đủ (để profile tạo ra về được app).
     /// Học độ lệch chạm bật sẵn như Android.
+    /// Giới hạn độ lệch chạm đã học (điểm): `TouchModel` giữ trong 0,4 bề rộng phím, phím rộng nhất chưa tới 100pt.
+    static let maxOffset = 100.0
     var touchAdaptation = true, autoCapitalization = true, rearrange = true
     var haptics = false, sound = false
     var heightScale = 1.0
@@ -135,7 +137,7 @@ struct KeyboardConfiguration: Codable, Equatable {
         heightScale.isFinite && (0.8...1.4).contains(heightScale) && swipeThreshold.isFinite && (12...80).contains(swipeThreshold) && holdDelay.isFinite && (0.4...2).contains(holdDelay) &&
         cursorDelay.isFinite && (0.15...1).contains(cursorDelay) && stepSize.isFinite && (25...100).contains(stepSize) && snippets.count <= 1000 &&
         snippets.allSatisfy { !$0.key.isEmpty && $0.key.count <= 32 && $0.value.count <= 2000 } &&
-        offsets.count <= 200 && offsets.allSatisfy { $0.key.count <= 100 && $0.value.count == 2 && $0.value.allSatisfy { $0.isFinite && abs($0) <= 0.3 } }
+        offsets.count <= 200 && offsets.allSatisfy { $0.key.count <= 100 && $0.value.count == 2 && $0.value.allSatisfy { $0.isFinite && abs($0) <= Self.maxOffset } }
     }
 }
 
@@ -196,8 +198,10 @@ final class KeyboardPreferences {
         if copy.builtIn {
             let originalID = copy.id
             copy.id = UUID().uuidString; copy.name = uniqueName("Của tôi")
-            for (key,value) in configuration.offsets where key.hasPrefix(originalID + ":") {
-                if configuration.offsets.count < 200 { configuration.offsets[copy.id + key.dropFirst(originalID.count)] = value }
+            // Độ lệch chạm đã học đi theo bản sao (khoá "pt:<profile>:<chữ>")
+            let prefix = "pt:" + originalID + ":"
+            for (key,value) in configuration.offsets where key.hasPrefix(prefix) {
+                if configuration.offsets.count < 200 { configuration.offsets["pt:" + copy.id + ":" + key.dropFirst(prefix.count)] = value }
             }
         }
         guard !allProfiles.contains(where: { $0.id != copy.id && $0.name.caseInsensitiveCompare(copy.name) == .orderedSame }) else { return false }
