@@ -11,6 +11,7 @@
 - iOS: như Android, đổi VI/EN giữa chừng thì chốt âm tiết trước (từ sai chính tả trả lại phím đã gõ: "ủe" → user, từ đúng được học); vuốt ngang trên chữ hay vuốt lên dấu câu, số vẫn gõ phím đó; hoàn tác (hai ngón ←) xoá cả từ vừa gõ thay vì từng phím, giữ 50 bước; gõ vuốt tiếng Việt vẫn chạy khi tắt gợi ý.
 - iOS: kéo phím cách sang trái như Android: mỗi dấu xuống dòng là một bước ("abc⏎  " một bước xoá cả khoảng trắng lẫn dấu xuống dòng), kéo tới mép trái lưới phím thì xoá tới đầu dòng; giữ ⌫ (trên lưới và thanh gợi ý) 0,45 giây thì xoá liên tục, mỗi 50 ms.
 - iOS: như Android, chỉ coi là gõ vuốt khi đường vuốt qua ít nhất 3 chữ khác nhau và dài ít nhất 1,5 bề rộng phím; vuốt ngắn qua ba phím sát nhau vẫn là chạm.
+- iOS: học từ như Android: sửa một từ đã gõ tại con trỏ không học từ đó; dán từ lịch sử clipboard khi đang gõ dở thì chốt âm tiết trước như chạm cách ("ủe" thành "user" rồi mới dán).
 
 ## 0.8.5 — 2026-11-20
 

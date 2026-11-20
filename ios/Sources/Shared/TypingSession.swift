@@ -219,8 +219,8 @@ final class TypingSession {
             change(old: "", new: insertion(before: document.afterInput), in: document); learn(value, before: before)
         case let .cursor(head, tail):
             guard tail.isEmpty || document.moveCursor(by: tail.count), document.beforeInput?.hasSuffix(head + tail) == true else { reset(); return }
+            // Như Android: sửa một từ đã gõ tại con trỏ không học từ đó
             change(old: head + tail, new: insertion(before: document.afterInput), in: document)
-            learn(value, before: String(before.dropLast(head.count)))
         }
         reset(); automaticSpace = addedSpace ? DocumentAnchor(document) : nil; refreshCandidates(in: document)
     }
@@ -245,9 +245,8 @@ final class TypingSession {
     func keepsSyllableValid(_ letter: String) -> Bool { englishMode || engine.keepsSyllableValid(letter: letter) }
     /// Chèn nguyên văn (dán từ lịch sử clipboard): chốt âm tiết đang gõ trước, có trong hoàn tác.
     func insertText(_ text: String, in document: TextDocument) {
-        synchronize(with: document)
-        if !composing.isEmpty { learn(composing, before: String((document.beforeInput ?? "").dropLast(composing.count))) }
-        reset()
+        // Như Android: chốt âm tiết đang gõ như chạm cách (từ sai chính tả trả lại phím đã gõ, từ đúng được học) rồi mới dán
+        finishComposition(in: document)
         change(old: "", new: text, in: document)
         refreshCandidates(in: document)
     }
