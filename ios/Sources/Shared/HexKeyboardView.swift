@@ -482,7 +482,12 @@ final class HexKeyboardView: UIView {
         }
     }
     func refreshPanel() { if let visiblePanel { show(visiblePanel) } }
-    func setNumeric(_ value: Bool) { if value { dialpad = true; page = -1 } else { dialpad = false }; reloadKeys() }
+    /// Dialpad có phím `-` (ô số có dấu) và `.` (ô số thập phân) không, như Android: ô chỉ nhận số nguyên dương không có hai phím này.
+    private(set) var dialpadMinus = true, dialpadDot = true
+    func setNumeric(_ value: Bool, minus: Bool = true, dot: Bool = true) {
+        dialpadMinus = minus; dialpadDot = dot
+        if value { dialpad = true; page = -1 } else { dialpad = false }; reloadKeys()
+    }
     func reloadKeys() {
         // Không để chạm đang dở của lớp/bố cục cũ chạy trên phím mới (như Android).
         cancelTouches()
@@ -490,7 +495,7 @@ final class HexKeyboardView: UIView {
         currentProfile = preferences.profile
         let profile = preferences.profile
         if dialpad {
-            for (i, value) in Self.dialpadKeys.enumerated() { addKey(value, index: i) }
+            for (i, value) in Self.dialpadKeys.enumerated() where (value != "-" || dialpadMinus) && (value != "." || dialpadDot) { addKey(value, index: i) }
         } else {
             for (index, code) in profile.letters.enumerated() where !code.isEmpty { addKey(code, index: index) }
         }

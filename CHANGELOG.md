@@ -13,6 +13,7 @@
 - iOS: như Android, chỉ coi là gõ vuốt khi đường vuốt qua ít nhất 3 chữ khác nhau và dài ít nhất 1,5 bề rộng phím; vuốt ngắn qua ba phím sát nhau vẫn là chạm.
 - iOS: học từ như Android: sửa một từ đã gõ tại con trỏ không học từ đó; dán từ lịch sử clipboard khi đang gõ dở thì chốt âm tiết trước như chạm cách ("ủe" thành "user" rồi mới dán).
 - iOS: chế độ EN gợi ý như Android theo cả từ quanh con trỏ, kể cả khi con trỏ nằm trong một từ đã gõ ("hello" ⌫ cách rồi gõ "s" vẫn có gợi ý); chọn gợi ý thay cả từ.
+- iOS: dialpad như Android: ô chỉ nhận số nguyên không có phím `-` và `.`, ô số thập phân không có `-`.
 
 ## 0.8.5 — 2026-11-20
 

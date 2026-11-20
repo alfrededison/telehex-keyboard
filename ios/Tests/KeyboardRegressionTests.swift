@@ -184,4 +184,14 @@ final class KeyboardRegressionTests: XCTestCase {
         XCTAssertEqual(host,""); XCTAssertEqual(glides,0)
         XCTAssertEqual(view.keys.first { $0.2 == "a" }?.0.accessibilityCustomActions?.count,1)
     }
+    func testDialpadHidesMinusAndDotForIntegerFieldsLikeAndroid() {
+        let view = HexKeyboardView(preferences: preferences())
+        view.setNumeric(true, minus: false, dot: false)
+        func has(_ code: String) -> Bool { view.keys.contains { $0.2 == code } }
+        XCTAssertFalse(has("-")); XCTAssertFalse(has("."))
+        view.setNumeric(true, minus: false, dot: true)
+        XCTAssertFalse(has("-")); XCTAssertTrue(has("."))
+        view.setNumeric(true)
+        XCTAssertTrue(has("-"))
+    }
 }

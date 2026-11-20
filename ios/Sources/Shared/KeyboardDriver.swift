@@ -174,7 +174,10 @@ final class KeyboardDriver {
         if document.documentID != currentDocument {
             currentDocument = document.documentID; session.reset(); caps.reset()
             session.englishMode = preferredEnglish || [.emailAddress,.URL,.asciiCapable].contains(type)
-            view.setNumeric([.numberPad,.phonePad,.decimalPad,.asciiCapableNumberPad,.numbersAndPunctuation].contains(type))
+            // Như Android: ô số nguyên không có `-` và `.`, ô số thập phân không có `-`; ô điện thoại có cả hai
+            let integer = [.numberPad,.asciiCapableNumberPad].contains(type)
+            view.setNumeric([.numberPad,.phonePad,.decimalPad,.asciiCapableNumberPad,.numbersAndPunctuation].contains(type),
+                            minus: !integer && type != .decimalPad, dot: !integer)
         }
         let restricted = [.emailAddress,.URL,.numberPad,.phonePad,.decimalPad,.asciiCapable,.asciiCapableNumberPad].contains(type)
         session.learningAllowed = !restricted
