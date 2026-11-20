@@ -50,8 +50,12 @@ final class TypingSession {
     var englishMode = false { didSet { if oldValue != englishMode { reset() } } }
     private(set) var composing = ""
     private var latestSuggestions: [String] = []
-    var candidates: [String] { suggestionsEnabled ? latestSuggestions : [] }
-    private struct Edit { let old: String, new: String; var anchor: DocumentAnchor }
+    /// Gõ vuốt vẫn hiện từ khi tắt gợi ý (như Android), các gợi ý khác thì không.
+    var candidates: [String] {
+        if case .glide = target { return latestSuggestions }
+        return suggestionsEnabled ? latestSuggestions : []
+    }
+    private struct Edit { let old: String; var new: String; var anchor: DocumentAnchor }
     private var undoStack: [Edit] = [], redoStack: [Edit] = []
     var canUndo: Bool { !undoStack.isEmpty }
     var canRedo: Bool { !redoStack.isEmpty }
@@ -125,6 +129,17 @@ final class TypingSession {
         if !composing.isEmpty && (document.documentID != documentID || document.beforeInput != expectedContext || document.selection?.isEmpty == false) { reset() }
         if case .glide = target, candidateAnchor?.matches(document) != true { reset() }
     }
+    /// Chốt âm tiết đang soạn như khi chạm cách mà không chèn gì (đổi VI/EN): khôi phục phím cho từ sai chính tả hoặc học
+    /// từ, như Android.
+    func finishComposition(in document: TextDocument) {
+        synchronize(with: document)
+        if !composing.isEmpty {
+            let context = String((document.beforeInput ?? "").dropLast(composing.count))
+            if !englishMode, let restored = engine.restoredKeys() { replace(with: restored, in: document) }
+            else { learn(composing, before: context) }
+        }
+        reset()
+    }
     func press(_ key: String, in document: TextDocument) {
         synchronize(with: document)
         if case .glide = target { target = .composition; latestSuggestions = [] }
@@ -161,7 +176,7 @@ final class TypingSession {
                 } else { learn(composing, before: context) }
             }
             reset()
-            change(old: removeSpace ? " " : "", new: key, in: document)
+            change(old: removeSpace ? " " : "", new: key, in: document, typing: true)
         }
     }
     /// Con trỏ ngay sau một từ đã chốt (vừa xoá dấu cách, hoặc chạm vào cuối từ): nạp lại từ đó làm âm tiết
@@ -208,8 +223,9 @@ final class TypingSession {
         }
         reset(); automaticSpace = addedSpace ? DocumentAnchor(document) : nil; refreshCandidates(in: document)
     }
-    /// Ô cho phép gõ vuốt: có gợi ý (không phải email, URL, ô số) và đã nạp từ điển.
-    var glideAvailable: Bool { suggestionsEnabled && configuration.glide && vocabulary != nil }
+    /// Ô cho phép gõ vuốt: không phải email, URL, ô số; đã nạp từ điển. Như Android, gõ vuốt tiếng Việt chạy cả khi tắt gợi ý
+    /// (từ gõ vuốt vẫn hiện để chọn); EN thì cần gợi ý.
+    var glideAvailable: Bool { learningAllowed && configuration.glide && vocabulary != nil && (suggestionsEnabled || !englishMode) }
     /// Trả về false khi không gõ vuốt được ở ô/trạng thái này (khác với vuốt mà không nhận ra từ).
     @discardableResult func glide(path: String, centers: String, in document: TextDocument) -> Bool {
         synchronize(with: document)
@@ -242,12 +258,15 @@ final class TypingSession {
     }
     func clearLearned(in document: TextDocument) { vocabulary?.clearPersonal(); refreshCandidates(in: document) }
     private func replace(with text: String, in document: TextDocument) {
-        change(old: composing, new: text, in: document)
+        change(old: composing, new: text, in: document, typing: true)
         composing = text; expectedContext = document.beforeInput; documentID = document.documentID
     }
     /// All edits are confined to verified suffixes or the host's actual selection.
-    private func change(old: String, new: String, in document: TextDocument, history: Bool = true) {
+    /// `typing`: lần sửa do gõ phím (không phải dán, chọn gợi ý…), được gộp với lần trước trong cùng một từ.
+    private func change(old: String, new: String, in document: TextDocument, history: Bool = true, typing: Bool = false) {
         let selected = document.selection ?? ""
+        // Gộp vào lần sửa trước chỉ khi văn bản chưa đổi từ bên ngoài kể từ lần đó
+        let canMerge = typing && undoStack.last?.anchor.matches(document) == true
         if selected.isEmpty {
             guard old.isEmpty || document.beforeInput?.hasSuffix(old) == true else { reset(); return }
             for _ in old { document.deleteBackward() }
@@ -255,8 +274,16 @@ final class TypingSession {
         // Có vùng chọn: chèn thay vùng chọn; xoá thì phải gọi deleteBackward, vì insertText("") của iOS không làm gì.
         } else if new.isEmpty { document.deleteBackward() } else { document.insert(new) }
         if history, document.documentID != nil {
-            undoStack.append(Edit(old: selected.isEmpty ? old : selected, new: new, anchor: DocumentAnchor(document)))
-            if undoStack.count > 80 { undoStack.removeFirst() }
+            // Hoàn tác theo từ như Android: các lần sửa liên tiếp trong cùng một từ (gõ từng phím, đổi dấu) gộp làm một,
+            // đến khoảng trắng thì khép lại: "việt nam" hai ngón ← xoá "nam", không phải một phím.
+            if canMerge, selected.isEmpty, !new.isEmpty, var last = undoStack.last, !last.new.isEmpty,
+               last.new.last?.isWhitespace != true, last.new.hasSuffix(old) {
+                last.new = String(last.new.dropLast(old.count)) + new; last.anchor = DocumentAnchor(document)
+                undoStack[undoStack.count - 1] = last
+            } else {
+                undoStack.append(Edit(old: selected.isEmpty ? old : selected, new: new, anchor: DocumentAnchor(document)))
+                if undoStack.count > 50 { undoStack.removeFirst() }
+            }
             redoStack.removeAll()
         }
     }

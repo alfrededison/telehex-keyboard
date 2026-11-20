@@ -8,6 +8,7 @@
 - iOS: thanh gợi ý theo đúng thứ tự và hoa/thường của Android: hai gợi ý chữ, emoji, rồi biến thể dấu; khoá hoa hay gõ "KH" ra "KHÔNG"; tên riêng đã học viết hoa; sau khoảng trắng luôn có gợi ý từ kế tiếp (kể cả khi sau con trỏ còn chữ) kèm emoji cho từ vừa gõ; chọn gợi ý chèn đúng chữ đang hiện.
 - iOS: gõ tắt khớp như Android: cả phần đã gõ trước âm tiết ("k2", "@@g" bung được), chạm cách khi không đang soạn chữ vẫn bung, khớp chữ đang hiện trước phím đã gõ, gõ tắt có chữ hoa trong viết tắt khớp được.
 - iOS: viết hoa như Android: đầu câu chỉ sau dấu chấm có khoảng trắng ("google.com" không thành "google.Com", "U.S. " không viết hoa); ⇧ hay vuốt lên phím cách cho chữ thường một lần thì dấu câu, ↵, ⌫ bỏ nó; vuốt lên phím cách khi đang khoá hoa thì tắt khoá và tự viết hoa chạy lại, có báo "⇪ Khoá chữ hoa" / "Tắt khoá chữ hoa"; chọn gợi ý không bỏ ⇧ một lần.
+- iOS: như Android, đổi VI/EN giữa chừng thì chốt âm tiết trước (từ sai chính tả trả lại phím đã gõ: "ủe" → user, từ đúng được học); vuốt ngang trên chữ hay vuốt lên dấu câu, số vẫn gõ phím đó; hoàn tác (hai ngón ←) xoá cả từ vừa gõ thay vì từng phím, giữ 50 bước; gõ vuốt tiếng Việt vẫn chạy khi tắt gợi ý.
 
 ## 0.8.5 — 2026-11-20
 

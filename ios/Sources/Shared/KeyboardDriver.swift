@@ -76,7 +76,10 @@ final class KeyboardDriver {
             guard let self else { return }; self.session.forget(word,in: self.document()); self.update()
         }
         view.onToggleLanguage = { [weak self] in
-            guard let self else { return }; self.session.englishMode.toggle(); self.preferredEnglish=self.session.englishMode; self.update()
+            guard let self else { return }
+            // Như Android: chốt âm tiết đang gõ trước khi đổi (khôi phục phím "ủe" → user, học từ)
+            self.session.finishComposition(in: self.document())
+            self.session.englishMode.toggle(); self.preferredEnglish=self.session.englishMode; self.update()
         }
         view.onCapsLock = { [weak self] in
             guard let self else { return }

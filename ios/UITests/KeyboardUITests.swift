@@ -97,6 +97,18 @@ final class KeyboardUITests: XCTestCase {
         XCTAssertEqual(app.textViews["typing-field"].value as? String, word + " ")
         Thread.sleep(forTimeInterval: 1.5)
     }
+    func testSidewaysSwipeOnALetterStillTypesIt() {
+        let app = preview()
+        // Như Android: vuốt ngang ngắn trên một chữ (chưa đủ ba chữ để gõ vuốt) vẫn gõ chữ đó, không mất phím
+        let screen = app.frame
+        for key in ["x","i"] {
+            let f = app.buttons["key-\(key)"].frame
+            app.recordedSwipe(from: CGVector(dx: (f.midX - 12)/screen.width, dy: f.midY/screen.height),
+                              to: CGVector(dx: (f.midX + 18)/screen.width, dy: f.midY/screen.height), hold: 0.05)
+        }
+        XCTAssertEqual(app.textViews["typing-field"].value as? String, "xi")
+        Thread.sleep(forTimeInterval: 1.5)
+    }
     func testLayoutEditorLayerTransitions() {
         let app = preview()
         openSettings("settings-keyboard", in: app)

@@ -122,6 +122,27 @@ final class TypingSessionTests: XCTestCase {
             session.redo(in: document); XCTAssertEqual(document.text,"tôi" + separator + trailing)
         }
     }
+    func testUndoRemovesAWholeWordLikeAndroid() {
+        let (session,document) = configured()
+        for key in "vieejt nam" { session.press(String(key),in: document) }
+        XCTAssertEqual(document.text,"việt nam")
+        XCTAssertTrue(session.undo(in: document))
+        XCTAssertEqual(document.text,"việt ")
+        XCTAssertTrue(session.undo(in: document))
+        XCTAssertEqual(document.text,"")
+    }
+    func testLanguageToggleCommitsTheSyllableLikeAndroid() {
+        let prefs = KeyboardPreferences(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        let document = Document()
+        let driver = KeyboardDriver(preferences: prefs, document: { document }, traits: { (.default, .none) }, loadVocabulary: { _, _ in })
+        driver.update()
+        for key in ["u","s","e","r"] { driver.view.onKey?(key) }
+        XCTAssertEqual(document.text,"ủe")
+        // Đổi sang EN: chốt âm tiết, khôi phục phím cho từ sai chính tả như khi chạm cách
+        driver.view.onToggleLanguage?()
+        XCTAssertEqual(document.text,"user")
+        XCTAssertTrue(driver.session.englishMode)
+    }
     func testCapitalizationFollowsAndroid() {
         // Đầu câu cần khoảng trắng sau dấu chấm: "google.com" không thành "google.Com"
         XCTAssertFalse(KeyboardDriver.capitalizes(.sentences, before: "google.", enabled: true))
