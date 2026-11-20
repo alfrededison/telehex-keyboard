@@ -800,7 +800,8 @@ final class HexKeyboardView: UIView {
             } else if KeyboardProfile.isLetter(code) && abs(dy) > abs(dx) && dy < 0 { type(uppercase ? code.lowercased() : code.uppercased()) }
             else if KeyboardProfile.swipeUsable(code) && abs(dy) > abs(dx) && dy > 0 { let value = preferences.profile.swipe[index]; if !value.isEmpty { type(value) } }
             // Như Android: vuốt ngang trên chữ (chưa đủ để gõ vuốt), vuốt lên dấu câu hay số vẫn gõ đúng phím đó
-            else if KeyboardProfile.swipeUsable(code) { adaptTouch(point,index: index); activate(code,index: index) }
+            // (không học độ lệch chạm: điểm cuối đường vuốt không phải chỗ ngón tay định chạm)
+            else if KeyboardProfile.swipeUsable(code) { activate(code,index: index) }
         case .cancel: clearGesture()
         }
     }

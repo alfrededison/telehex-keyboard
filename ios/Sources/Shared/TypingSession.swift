@@ -165,7 +165,8 @@ final class TypingSession {
             let context = String(before.dropLast(composing.count))
             // Gõ tắt theo quy tắc chung với Android: khớp cả phần đã chốt trước âm tiết ("k2", "@@g"), tách sau dấu mở
             // ("(dc" → "(được", "x.dc" thì không), chữ đang hiện trước rồi phím đã gõ, giữ chữ hoa đầu
-            let shortcut = key == " " ? Shortcuts.shared.match(snippets: configuration.snippets, textBefore: context, typed: composing,
+            // Có vùng chọn thì chạm cách chỉ thay vùng chọn, không bung gõ tắt từ chữ trước vùng chọn
+            let shortcut = key == " " && document.selection?.isEmpty != false ? Shortcuts.shared.match(snippets: configuration.snippets, textBefore: context, typed: composing,
                                                                 keys: englishMode || composing.isEmpty ? composing : engine.rawKeys()) : nil
             if let shortcut {
                 change(old: shortcut.prefix + composing, new: shortcut.expansion, in: document)

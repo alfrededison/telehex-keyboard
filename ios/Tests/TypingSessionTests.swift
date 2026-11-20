@@ -122,6 +122,13 @@ final class TypingSessionTests: XCTestCase {
             session.redo(in: document); XCTAssertEqual(document.text,"tôi" + separator + trailing)
         }
     }
+    func testShortcutDoesNotFireOverASelection() {
+        let (session,document) = configured()
+        // Chữ ngay trước vùng chọn là "k2": chạm cách chỉ thay vùng chọn
+        document.text = "k2abc"; document.cursor = 2; document.selection = "abc"
+        session.press(" ",in: document)
+        XCTAssertEqual(document.text,"k2 ")
+    }
     func testUndoRemovesAWholeWordLikeAndroid() {
         let (session,document) = configured()
         for key in "vieejt nam" { session.press(String(key),in: document) }

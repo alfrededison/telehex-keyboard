@@ -725,6 +725,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                     val inserted = pick + pickSpace()
                     commitSyllable(inserted); pushContext(pick, auto)
                     suggestionSpace = inserted.takeIf { it != pick }
+                    clearOneShotCaps()
                 }
                 candidateBar.showPredictions(next.take(3), emoji, onPick = pickNext, onPickEmoji = { insertEmoji(it) }, onForget = { forget(it) })
                 offerMore(next.map { word -> SuggestionPanel.Choice(word, { forget(word) }) { pickNext(word) } } +
@@ -769,6 +770,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             history.record(EditHistory.Op.Delete(token.head + token.tail))
             history.record(EditHistory.Op.Insert(inserted))
             suggestionSpace = inserted.takeIf { spaced }
+            clearOneShotCaps()
             updateBar()
         }
         candidateBar.showPredictions(suggestions.take(3), emptyList(), onPick = pick, onPickEmoji = {}, onForget = {})
@@ -809,6 +811,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         sink.commit(ic, inserted)
         history.record(EditHistory.Op.Insert(inserted))
         suggestionSpace = inserted.takeIf { it != text }
+        clearOneShotCaps() // chọn gợi ý cũng là đã gõ chữ kế tiếp: bỏ ⇧ một lần, như iOS
         pushContext(text, auto) // học cả từ gợi ý người dùng đã chọn
         updateBar()
     }
@@ -823,6 +826,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         sink.commit(ic, inserted)
         history.record(EditHistory.Op.Insert(inserted))
         suggestionSpace = inserted.takeIf { it != e }
+        clearOneShotCaps()
         prefs.recentEmoji = listOf(emoji) + prefs.recentEmoji.filter { it != emoji }
         emojiPanel?.recent = prefs.recentEmoji
         updateBar()
@@ -865,6 +869,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             c.endBatchEdit()
             history.record(EditHistory.Op.Delete(word)); history.record(EditHistory.Op.Insert(inserted))
             suggestionSpace = inserted.takeIf { spaced }
+            clearOneShotCaps()
             updateBar()
         }
         candidateBar.showSuggestions(word, fixes.take(4), onPick = pickFix)
@@ -887,7 +892,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         var text = (restoredKeys ?: typed) + extra
         var shortcutHead = 0
         var expanded = false
-        if (extra == " " && prefs.shortcuts.isNotEmpty()) {
+        // Có vùng chọn thì chạm cách chỉ thay vùng chọn, không bung gõ tắt từ chữ trước vùng chọn
+        if (extra == " " && prefs.shortcuts.isNotEmpty() && !hasSelection()) {
             // getTextBeforeCursor có cả phần đang soạn (composing) nên bỏ nó đi trước
             val before = (ic.getTextBeforeCursor(32 + typed.length, 0)?.toString() ?: "").removeSuffix(typed)
             Shortcuts.match(prefs.shortcuts, before, typed, keys)?.let { m ->

@@ -70,6 +70,8 @@ final class KeyboardDriver {
             // Gợi ý đã viết hoa/thường sẵn theo quy tắc chung (module typing): chèn đúng chữ đang hiện, như Android
             let value = self.view.emoji?.variant(word,gender: self.preferences.configuration.emojiGender,tone: self.preferences.configuration.emojiTone) ?? word
             self.session.choose(word,replacement: value,in: self.document())
+            // Chọn gợi ý cũng là đã gõ chữ kế tiếp: bỏ ⇧ một lần, như Android
+            self.caps.clearOneShot()
             self.update()
         }
         view.onForgetCandidate = { [weak self] word in
