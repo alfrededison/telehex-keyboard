@@ -2,7 +2,7 @@ TeleHex is a Vietnamese Telex keyboard laid out on a 7-column hexagonal grid. Th
 
 Delete, capitals, extra characters, cursor movement, selection and paste are gestures, so the hexagonal grid needs no backspace or shift key.
 
-Used to a 10-column keyboard? Pick the Traditional layout ("Truyền thống"): full 10-column QWERTY with shift and backspace keys, and every gesture and suggestion still works. Type a lot of numbers? The "Có hàng số" layout adds a 1…0 number row on top.
+Used to a 10-column keyboard? Pick the Traditional layout ("Truyền thống"): full 10-column QWERTY with shift and backspace keys, and every gesture and suggestion still works. Type a lot of numbers? The "Có hàng số" layouts add a 1…0 number row on top, for both the traditional and the hexagonal keyboard.
 
 FULLY OFFLINE
 • The app does not request the Internet permission. What you type never leaves your phone.
@@ -27,12 +27,12 @@ SUGGESTIONS WITHOUT AUTOCORRECT
 
 MAKE IT YOURS
 • Hold a key and drag it onto another to swap them, right on the keyboard.
-• Three built-in layouts: Hexagonal, Traditional and Number row ("Có hàng số"). Create your own profiles and switch quickly with the Profile button on the keyboard; set your own swipe-down character for every key.
+• Four built-in layouts: Hexagonal, Traditional, and each with a number row ("Có hàng số", "Tổ ong có hàng số"). Create your own profiles and switch quickly with the Profile button on the keyboard; set your own swipe-down character for every key.
 • Old or new tone placement (hòa/hoà), text shortcuts, clipboard history, one-handed mode, light/dark theme, accent colour, vibration and sound.
 • Start in English automatically in the apps you choose (terminals, code editors…).
 • Back up and restore all settings to a single file.
 
 TURN IT ON
-Open TeleHex and the welcome screen walks you through it: enable TeleHex in the keyboard settings, select it as your keyboard, then pick the Hexagonal, Traditional or Number row layout. The app is in Vietnamese. Android shows its standard warning that a keyboard may be able to collect the text you type. TeleHex has no Internet permission, so it cannot send that text anywhere.
+Open TeleHex and the welcome screen walks you through it: enable TeleHex in the keyboard settings, select it as your keyboard, then pick the Hexagonal, Traditional or a number-row layout. The app is in Vietnamese. Android shows its standard warning that a keyboard may be able to collect the text you type. TeleHex has no Internet permission, so it cannot send that text anywhere.
 
 Source code and documentation: https://github.com/alfrededison/telehex-keyboard

@@ -2,7 +2,7 @@ TeleHex is a Vietnamese Telex keyboard laid out on a 7-column hexagonal grid. Th
 
 Delete, capitals and extra characters are gestures, so the hexagonal grid needs no backspace or shift key.
 
-Used to a 10-column keyboard? Pick the Traditional layout ("Truyền thống"): full 10-column QWERTY with shift and backspace keys, and every gesture and suggestion still works. Type a lot of numbers? The "Có hàng số" layout adds a 1…0 number row on top.
+Used to a 10-column keyboard? Pick the Traditional layout ("Truyền thống"): full 10-column QWERTY with shift and backspace keys, and every gesture and suggestion still works. Type a lot of numbers? The "Có hàng số" layouts add a 1…0 number row on top, for both the traditional and the hexagonal keyboard.
 
 ON-DEVICE, NO FULL ACCESS NEEDED
 • Telex, suggestions and learned words are processed and stored on your iPhone or iPad. TeleHex has no feature that sends data over the network.
@@ -27,12 +27,12 @@ SUGGESTIONS WITHOUT AUTOCORRECT
 
 MAKE IT YOURS
 • Hold a key and drag it onto another to swap them, right on the keyboard (needs Full Access), or edit layouts in the app.
-• Three built-in layouts: Hexagonal, Traditional and Number row ("Có hàng số"). Create your own profiles, edit each key layer and set your own swipe-down character for every key.
+• Four built-in layouts: Hexagonal, Traditional, and each with a number row ("Có hàng số", "Tổ ong có hàng số"). Create your own profiles, edit each key layer and set your own swipe-down character for every key.
 • Old or new tone placement (hòa/hoà), text shortcuts, clipboard history (needs Full Access), incognito mode, one-handed mode, keyboard height, light/dark theme, accent colour, haptics and key sounds.
 • Import your own language packs for Vietnamese and English suggestions.
 • Back up and restore your settings to a single file.
 
 TURN IT ON
-Open TeleHex and the welcome screen walks you through it: go to Settings › General › Keyboard › Keyboards › Add New Keyboard, pick TeleHex, then choose the Hexagonal, Traditional or Number row layout in the app. The app is in Vietnamese.
+Open TeleHex and the welcome screen walks you through it: go to Settings › General › Keyboard › Keyboards › Add New Keyboard, pick TeleHex, then choose the Hexagonal, Traditional or a number-row layout in the app. The app is in Vietnamese.
 
 Source code and documentation: https://github.com/alfrededison/telehex-keyboard

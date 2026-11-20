@@ -7,7 +7,7 @@ Bản iOS chính thức được phát triển trong cùng repo Android. **Đã 
 - `../telex/src/commonMain`: cùng một engine Telex, sửa lỗi, dự đoán VI/EN, giải mã gõ vuốt và mô hình cá nhân cho Android/iOS.
 - `../telex/src/jvmMain`: Unicode/reader JVM và adapter ByteBuffer, giữ API đang dùng bởi Android và mmap gói ngôn ngữ.
 - `../telex/src/appleMain`: Unicode Foundation và reader Apple.
-- `Sources/App`: màn chào (các bước bật bàn phím, chọn Tổ ong/Truyền thống/Có hàng số), toàn bộ Cài đặt như Android (bàn phím, Telex, gõ tắt, gợi ý và gói ngôn ngữ, chống bấm nhầm, cử chỉ, emoji, sao lưu cài đặt) và trình sửa lớp phím; ô thử dùng extension thật, thông tin giấy phép.
+- `Sources/App`: màn chào (các bước bật bàn phím, chọn Tổ ong/Truyền thống/Có hàng số/Tổ ong có hàng số), toàn bộ Cài đặt như Android (bàn phím, Telex, gõ tắt, gợi ý và gói ngôn ngữ, chống bấm nhầm, cử chỉ, emoji, sao lưu cài đặt) và trình sửa lớp phím; ô thử dùng extension thật, thông tin giấy phép.
 - `Sources/Keyboard`: keyboard extension native UIKit.
 - `Sources/Shared`: hình học phím, adapter văn bản, trạng thái gõ và cài đặt trong sandbox của keyboard.
 - Từ điển VI/EN và thông báo giấy phép lấy trực tiếp từ `../app/src/main/assets`; không có bản sao riêng cho iOS.
