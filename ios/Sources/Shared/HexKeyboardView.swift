@@ -484,6 +484,8 @@ final class HexKeyboardView: UIView {
     func refreshPanel() { if let visiblePanel { show(visiblePanel) } }
     /// Dialpad có phím `-` (ô số có dấu) và `.` (ô số thập phân) không, như Android: ô chỉ nhận số nguyên dương không có hai phím này.
     private(set) var dialpadMinus = true, dialpadDot = true
+    /// Nhãn phím ↵ theo nút Return của ô nhập ("Tìm", "Gửi", "Xong"…), như Android.
+    var enterLabel = "↵" { didSet { if oldValue != enterLabel { reloadKeys() } } }
     func setNumeric(_ value: Bool, minus: Bool = true, dot: Bool = true) {
         dialpadMinus = minus; dialpadDot = dot
         if value { dialpad = true; page = -1 } else { dialpad = false }; reloadKeys()
@@ -598,7 +600,7 @@ final class HexKeyboardView: UIView {
         }
     }
     func label(_ code: String, index: Int) -> String {
-        if dialpad { return code == "\n" ? "↵" : code == " " ? "cách" : code }
+        if dialpad { return code == "\n" ? enterLabel : code == " " ? "cách" : code }
         if let value = editValue(code, index: index) { return value }
         if let value = symbolValue(code, index: index) { return pageLabel(value, page: page) }
         switch code {
@@ -609,7 +611,7 @@ final class HexKeyboardView: UIView {
         case "#shift": return "⇧"
         case "#backspace": return "⌫"
         case " ": return capsLocked ? "⇪ HOA" : english ? "English" : "Tiếng Việt"
-        case "\n": return "↵"
+        case "\n": return enterLabel
         default: return uppercase && inlineDocuments.isEmpty ? code.uppercased() : code
         }
     }

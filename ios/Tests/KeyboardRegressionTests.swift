@@ -194,4 +194,15 @@ final class KeyboardRegressionTests: XCTestCase {
         view.setNumeric(true)
         XCTAssertTrue(has("-"))
     }
+    func testEnterKeyShowsTheFieldActionLikeAndroid() {
+        XCTAssertEqual(KeyboardDriver.enterLabel(.search), "Tìm")
+        XCTAssertEqual(KeyboardDriver.enterLabel(.send), "Gửi")
+        XCTAssertEqual(KeyboardDriver.enterLabel(.done), "Xong")
+        XCTAssertEqual(KeyboardDriver.enterLabel(.default), "↵")
+        let view = HexKeyboardView(preferences: preferences())
+        view.enterLabel = "Tìm"
+        XCTAssertEqual(view.label("\n", index: 0), "Tìm")
+        view.setNumeric(true)
+        XCTAssertEqual(view.label("\n", index: 15), "Tìm") // dialpad cũng vậy
+    }
 }

@@ -9,8 +9,13 @@ protocol TextDocument: AnyObject {
     func insert(_ text: String)
     func deleteBackward()
     func moveCursor(by offset: Int) -> Bool
+    /// Nút Return của ô nhập (Tìm, Gửi…), để ghi nhãn phím ↵ như Android.
+    var returnKey: UIReturnKeyType { get }
 }
-extension TextDocument { func moveCursor(by offset: Int) -> Bool { false } }
+extension TextDocument {
+    func moveCursor(by offset: Int) -> Bool { false }
+    var returnKey: UIReturnKeyType { .default }
+}
 
 struct DocumentAnchor: Equatable {
     let id: UUID?
@@ -359,6 +364,7 @@ final class ProxyDocument: TextDocument {
     }
     func insert(_ text: String) { proxy.insertText(text) }
     func deleteBackward() { proxy.deleteBackward() }
+    var returnKey: UIReturnKeyType { proxy.returnKeyType ?? .default }
     func moveCursor(by offset: Int) -> Bool {
         let before = proxy.documentContextBeforeInput ?? "", after = proxy.documentContextAfterInput ?? ""
         guard offset >= -before.count && offset <= after.count else { return false }

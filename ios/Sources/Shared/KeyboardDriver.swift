@@ -156,6 +156,19 @@ final class KeyboardDriver {
             self.update(); self.view.refreshPanel()
         }
     }
+    /// Nhãn phím ↵ theo nút Return của ô nhập, cùng chữ với Android (module typing).
+    static func enterLabel(_ type: UIReturnKeyType) -> String {
+        let action: EnterKey.Action
+        switch type {
+        case .search, .google, .yahoo: action = .search
+        case .send: action = .send
+        case .go, .route, .join: action = .go
+        case .next: action = .next
+        case .done, .continue: action = .done
+        default: action = .none
+        }
+        return EnterKey.shared.label(action: action)
+    }
     /// Ô nhập tự viết hoa chữ đứng sau `before` không (đầu câu, đầu mọi từ…), theo quy tắc của Android (`AutoCap`): đầu
     /// câu cần khoảng trắng sau dấu chấm nên "google.com" không thành "google.Com".
     static func capitalizes(_ capitalization: UITextAutocapitalizationType, before: String, enabled: Bool) -> Bool {
@@ -190,6 +203,7 @@ final class KeyboardDriver {
         view.clipboardEnabled = clipboardEnabled
         view.validNextLetter = preferences.configuration.dynamicHitZones && !session.englishMode
             ? { [weak self] letter in self?.session.keepsSyllableValid(letter) ?? true } : nil
+        view.enterLabel = Self.enterLabel(document.returnKey)
         session.capsLock = capsLock; session.capitalizeNext = upperNext
         session.refreshCandidates(in: document)
         view.update(candidates: session.candidates,english: session.englishMode,uppercase: upperNext)

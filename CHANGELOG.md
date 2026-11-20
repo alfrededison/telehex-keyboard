@@ -15,6 +15,7 @@
 - iOS: chế độ EN gợi ý như Android theo cả từ quanh con trỏ, kể cả khi con trỏ nằm trong một từ đã gõ ("hello" ⌫ cách rồi gõ "s" vẫn có gợi ý); chọn gợi ý thay cả từ.
 - iOS: dialpad như Android: ô chỉ nhận số nguyên không có phím `-` và `.`, ô số thập phân không có `-`.
 - iOS: phím cách của dialpad có cử chỉ như phím cách thường (giữ để di con trỏ, kéo trái để xoá theo từ), như Android.
+- iOS: phím ↵ (trên lưới chữ và dialpad) ghi theo nút Return của ô nhập như Android: "Tìm", "Gửi", "Đi", "Tiếp", "Xong".
 
 ## 0.8.5 — 2026-11-20
 

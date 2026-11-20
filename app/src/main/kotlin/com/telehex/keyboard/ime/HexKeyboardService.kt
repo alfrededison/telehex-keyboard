@@ -22,6 +22,7 @@ import com.telehex.layout.KeyCode
 import com.telehex.layout.Profile
 import com.telehex.keyboard.settings.SettingsActivity
 import com.telehex.typing.CapsState
+import com.telehex.typing.EnterKey
 import com.telehex.typing.Shortcuts
 import com.telehex.typing.Spacing
 import com.telehex.typing.Suggestions
@@ -583,14 +584,14 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private fun enterLabelFor(info: EditorInfo?): String {
         info ?: return "↵"
         if (info.imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION != 0) return "↵"
-        return when (info.imeOptions and EditorInfo.IME_MASK_ACTION) {
-            EditorInfo.IME_ACTION_SEARCH -> "Tìm"
-            EditorInfo.IME_ACTION_SEND -> "Gửi"
-            EditorInfo.IME_ACTION_GO -> "Đi"
-            EditorInfo.IME_ACTION_NEXT -> "Tiếp"
-            EditorInfo.IME_ACTION_DONE -> "Xong"
-            else -> "↵"
-        }
+        return EnterKey.label(when (info.imeOptions and EditorInfo.IME_MASK_ACTION) {
+            EditorInfo.IME_ACTION_SEARCH -> EnterKey.Action.SEARCH
+            EditorInfo.IME_ACTION_SEND -> EnterKey.Action.SEND
+            EditorInfo.IME_ACTION_GO -> EnterKey.Action.GO
+            EditorInfo.IME_ACTION_NEXT -> EnterKey.Action.NEXT
+            EditorInfo.IME_ACTION_DONE -> EnterKey.Action.DONE
+            else -> EnterKey.Action.NONE
+        })
     }
 
     override fun onUpdateSelection(
