@@ -452,22 +452,16 @@ open class KeyboardView @JvmOverloads constructor(
         for (d in drawn) {
             val k = d.key
             val isShift = k.code == KeyCode.SHIFT
-            fill.color = when {
-                isShift && capsLock -> theme.enterBg
-                isShift && shifted -> theme.vowelBg
-                else -> theme.bgFor(k.kind)
-            }
+            // ⇧ đang bật (chữ kế tiếp hoa, hoặc khoá hoa) sáng lên như phím chữ, như iOS; nhãn ⬆ / ⇪ cho biết kiểu
+            val shiftOn = isShift && (capsLock || shifted)
+            fill.color = if (shiftOn) theme.bgFor(KeyKind.CONSONANT) else theme.bgFor(k.kind)
             if (dimmed) fill.alpha = 110
             canvas.drawPath(d.path, fill)
             if (k in pressedKeys) {
                 fill.color = theme.pressedOverlay
                 canvas.drawPath(d.path, fill)
             }
-            val fg = when {
-                isShift && capsLock -> theme.enterFg
-                isShift && shifted -> theme.vowelFg
-                else -> theme.fgFor(k.kind)
-            }
+            val fg = if (shiftOn) theme.fgFor(KeyKind.CONSONANT) else theme.fgFor(k.kind)
             labelPaint.color = fg
             labelPaint.textSize = when {
                 k.kind == KeyKind.FUNCTION && k.label.length > 1 -> smallSize

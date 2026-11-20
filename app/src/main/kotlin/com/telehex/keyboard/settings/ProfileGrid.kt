@@ -88,6 +88,9 @@ internal class ProfileGrid(context: Context) : LinearLayout(context) {
 
 /** Bàn phím chỉ để xem: không nhận chạm (thẻ chứa nó mới là nút). */
 internal class PreviewKeyboardView(context: Context) : KeyboardView(context) {
+    // Hình xem trước ở trạng thái thường: chữ thường, ⇧ không bật (thấy đúng màu nhóm ⇧ / ⌫)
+    init { shifted = false }
+
     @Suppress("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean = false
 }
