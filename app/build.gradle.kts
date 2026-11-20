@@ -73,6 +73,7 @@ kotlin {
 dependencies {
     implementation(project(":telex"))
     implementation(project(":layout"))
+    implementation(project(":typing"))
     implementation(libs.androidx.core.ktx)
     testImplementation(libs.junit)
     // Platform instrumentation libraries are needed only by the device tests.

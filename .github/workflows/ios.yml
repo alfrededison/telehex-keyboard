@@ -6,7 +6,7 @@ on:
   push:
     branches: [main]
     # Shared engine, dictionaries and Gradle build, minus files CI never builds or runs.
-    paths: &paths ['ios/**', 'telex/**', 'layout/**', 'bridge/**', 'app/src/main/assets/**', 'gradle/**', '*.gradle.kts', 'gradle.properties', 'gradlew',
+    paths: &paths ['ios/**', 'telex/**', 'layout/**', 'typing/**', 'bridge/**', 'app/src/main/assets/**', 'gradle/**', '*.gradle.kts', 'gradle.properties', 'gradlew',
             '.github/workflows/ios.yml',
             '!**.md', '!ios/docs/**', '!ios/scripts/asc_*.py', '!ios/scripts/release.sh', '!ios/scripts/render-app-icon.swift']
   pull_request:
@@ -34,7 +34,7 @@ jobs:
       - name: Install project generator
         run: command -v xcodegen || brew install xcodegen
       - name: Shared JVM and Native tests
-        run: ./gradlew --no-daemon -PskipAndroid=true :telex:test :telex:macosArm64Test :layout:test :bridge:test
+        run: ./gradlew --no-daemon -PskipAndroid=true :telex:test :telex:macosArm64Test :layout:test :typing:test :bridge:test
       - name: Build Simulator app and keyboard
         run: ios/scripts/build.sh
       - name: Test native iOS behavior

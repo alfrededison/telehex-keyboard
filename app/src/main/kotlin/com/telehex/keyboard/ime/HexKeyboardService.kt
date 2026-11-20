@@ -21,6 +21,7 @@ import com.telehex.keyboard.data.Prefs
 import com.telehex.layout.KeyCode
 import com.telehex.layout.Profile
 import com.telehex.keyboard.settings.SettingsActivity
+import com.telehex.typing.Spacing
 import com.telehex.telex.Corrector
 import com.telehex.telex.TelexDecomposer
 import com.telehex.telex.TelexEngine
@@ -670,9 +671,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                     val ic = currentInputConnection ?: run { updateBar(); return@pick }
                     val previous = ic.getTextBeforeCursor(1, 0)?.lastOrNull()
                     // Cách sau chữ và dấu câu ("hello,|"), không cách sau khoảng trắng hay dấu mở ngoặc
-                    val lead = if (previous != null && !previous.isWhitespace() && previous !in OPENERS) " " else ""
-                    // Đã có khoảng trắng sau con trỏ thì đừng thêm cái thứ hai
-                    val spaced = ic.getTextAfterCursor(1, 0)?.firstOrNull()?.isWhitespace() != true
+                    val lead = if (Spacing.spaceBeforeGlide(previous)) " " else ""
+                    // Đã có khoảng trắng hay dấu câu đứng sát sau con trỏ thì đừng thêm khoảng trắng
+                    val spaced = Spacing.spaceAfterPick(ic.getTextAfterCursor(1, 0)?.firstOrNull())
                     val text = lead + word + if (spaced) " " else ""
                     clearOneShotCaps()
                     commitSyllable(text)
@@ -680,9 +681,10 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                 } else if (!engine.isEmpty) {
                     replaceComposing(word)
                 } else {
-                    commitSyllable("$word ")
+                    val inserted = word + pickSpace()
+                    commitSyllable(inserted)
                     pushContext(word, auto)
-                    suggestionSpace = "$word "
+                    suggestionSpace = inserted.takeIf { it != word }
                     clearOneShotCaps()
                     updateBar()
                 }
@@ -719,10 +721,10 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             val completions = if (prefs.predictions) predictions.predictor.next(recent.toList(), typed, 24)
                 .map { casedCompletion(it, typed) }.filter { c -> variants.none { it.text == c } } else emptyList()
             val emoji = emojiFor(typed)
-            candidateBar.show(variants, completions.take(2), emoji, onPickText = { replaceComposing(it) }, onPickEmoji = { insertEmoji(it) })
+            candidateBar.show(variants, completions.take(2), emoji, onPickText = { replaceComposing(it) }, onPickEmoji = { replaceComposingWithEmoji(it) })
             offerMore(completions.map { word -> SuggestionPanel.Choice(word) { replaceComposing(word) } } +
                 variants.map { candidate -> SuggestionPanel.Choice(candidate.text) { engine.setTone(candidate.tone); replaceComposing(engine.text()) } } +
-                emoji.map { e -> SuggestionPanel.Choice(e) { insertEmoji(e) } }, 2 + variants.size + emoji.size)
+                emoji.map { e -> SuggestionPanel.Choice(e) { replaceComposingWithEmoji(e) } }, 2 + variants.size + emoji.size)
         } else if (prefs.predictions && mode == Mode.ABC && telexEnabled && afterSpace()) {
             val next = predictions.predictor.next(recent.toList(), "", 24).map { casedPrediction(it) }
             val emoji = recent.lastOrNull()?.let { emojiFor(it) } ?: emptyList()
@@ -731,8 +733,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                 val pickNext: (String) -> Unit = { pick ->
                     // Gợi ý được viết hoa vì đầu câu (không phải tên riêng đã học) thì học như chữ thường
                     val auto = (capsLockActive() || capsSentenceStart()) && !predictions.predictor.personal.usuallyCapitalized(pick)
-                    commitSyllable("$pick "); pushContext(pick, auto)
-                    suggestionSpace = "$pick "
+                    val inserted = pick + pickSpace()
+                    commitSyllable(inserted); pushContext(pick, auto)
+                    suggestionSpace = inserted.takeIf { it != pick }
                 }
                 candidateBar.showPredictions(next.take(3), emoji, onPick = pickNext, onPickEmoji = { insertEmoji(it) }, onForget = { forget(it) })
                 offerMore(next.map { word -> SuggestionPanel.Choice(word, { forget(word) }) { pickNext(word) } } +
@@ -758,7 +761,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             capsLock = capsLockActive(), capitalize = capsSentenceStart())
         else predictions.englishPredictor.complete(token.head, capsLock = capsLockActive(), context = query.context)
         if (suggestions.isEmpty()) { candidateBar.clear(); return }
-        val space = if (after.drop(token.tail.length).startsWith(" ")) " " else ""
+        val spaced = Spacing.spaceAfterPick(after.drop(token.tail.length).firstOrNull())
         val pick: (String) -> Unit = pick@ { word ->
             val connection = currentInputConnection ?: return@pick
             // Gợi ý chỉ thay đúng token đã hiển thị, kể cả khi editor đổi con trỏ mà callback đến trễ.
@@ -768,14 +771,15 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
                 connection.getTextAfterCursor(64, 0)?.toString() != after) {
                 updateBar(); return@pick
             }
-            val inserted = "$word "
+            // Như chọn gợi ý tiếng Việt: thêm khoảng trắng trừ khi sau từ đã có khoảng trắng hay dấu câu đứng sát
+            val inserted = if (spaced) "$word " else word
             connection.beginBatchEdit()
-            connection.deleteSurroundingText(token.head.length, token.tail.length + space.length)
+            connection.deleteSurroundingText(token.head.length, token.tail.length)
             connection.commitText(inserted, 1)
             connection.endBatchEdit()
-            history.record(EditHistory.Op.Delete(token.head + token.tail + space))
+            history.record(EditHistory.Op.Delete(token.head + token.tail))
             history.record(EditHistory.Op.Insert(inserted))
-            suggestionSpace = inserted
+            suggestionSpace = inserted.takeIf { spaced }
             updateBar()
         }
         candidateBar.showPredictions(suggestions.take(3), emptyList(), onPick = pick, onPickEmoji = {}, onForget = {})
@@ -804,15 +808,35 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         updateBar()
     }
 
+    /** Khoảng trắng thêm sau từ chọn trên thanh gợi ý ([Spacing.spaceAfterPick] theo ký tự ngay sau con trỏ). */
+    private fun pickSpace(): String =
+        if (Spacing.spaceAfterPick(currentInputConnection?.getTextAfterCursor(1, 0)?.firstOrNull())) " " else ""
+
     /** Thay âm tiết đang gõ bằng gợi ý người dùng chạm, rồi thêm khoảng trắng như khi chạm cách. */
     private fun replaceComposing(text: String) {
         val ic = currentInputConnection ?: return
         val auto = autoCappedFirst
+        val inserted = text + pickSpace()
         engine.reset()
-        sink.commit(ic, "$text ")
-        history.record(EditHistory.Op.Insert("$text "))
-        suggestionSpace = "$text "
+        sink.commit(ic, inserted)
+        history.record(EditHistory.Op.Insert(inserted))
+        suggestionSpace = inserted.takeIf { it != text }
         pushContext(text, auto) // học cả từ gợi ý người dùng đã chọn
+        updateBar()
+    }
+
+    /** Chạm emoji gợi ý cho âm tiết đang gõ: emoji thay chữ đó ("tim" → "❤️ "), không học chữ. */
+    private fun replaceComposingWithEmoji(emoji: String) {
+        val ic = currentInputConnection ?: return
+        val e = preferredEmoji(emoji)
+        val inserted = e + pickSpace()
+        engine.reset()
+        resumedWord = null
+        sink.commit(ic, inserted)
+        history.record(EditHistory.Op.Insert(inserted))
+        suggestionSpace = inserted.takeIf { it != e }
+        prefs.recentEmoji = listOf(emoji) + prefs.recentEmoji.filter { it != emoji }
+        emojiPanel?.recent = prefs.recentEmoji
         updateBar()
     }
 
@@ -843,7 +867,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         // Như iOS: thêm khoảng trắng sau từ sửa, trừ khi sau từ đã có khoảng trắng hay dấu câu đứng sát.
         // Không thêm thì phím kế tiếp nạp lại từ vừa sửa và gõ dính vào nó.
         val next = after.getOrNull(tail.length)
-        val spaced = next == null || (!next.isWhitespace() && next !in NO_SPACE_BEFORE)
+        val spaced = Spacing.spaceAfterPick(next)
         val pickFix: (String) -> Unit = pick@ { fix ->
             val c = currentInputConnection ?: return@pick
             val inserted = if (spaced) "$fix " else fix
@@ -916,7 +940,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private fun shortcutMatch(head: String, typed: String, keys: String): Pair<Int, String>? {
         for (start in 0..head.length) {
             // Chỉ tách sau dấu mở và khi vừa gõ chữ: "file.ko", link dán "https://x.co" không bị bung
-            if (start > 0 && (typed.isEmpty() || head[start - 1] !in SHORTCUT_OPENERS)) continue
+            if (start > 0 && (typed.isEmpty() || !Spacing.opensShortcut(head[start - 1]))) continue
             val part = head.substring(start)
             for (word in listOf(typed, keys).distinct()) {
                 val token = part + word
@@ -1416,7 +1440,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     private fun insertChar(text: String, autoSpace: String?) {
         val ic = currentInputConnection
         if (autoSpace != null && ic != null && engine.isEmpty && !hasSelection() &&
-            text.length == 1 && text[0] in NO_SPACE_BEFORE &&
+            Spacing.removesAutoSpace(text) &&
             ic.getTextBeforeCursor(autoSpace.length, 0)?.toString() == autoSpace) {
             ic.deleteSurroundingText(1, 0)
             history.trimLastInsert(1)
@@ -1435,14 +1459,8 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     companion object {
         /** Đặt vào `privateImeOptions` của ô nhập để không tự viết hoa (ô gõ tắt: viết tắt so khớp theo chữ thường). */
         const val NO_AUTO_CAP = "com.telehex.keyboard.noAutoCap"
-        /** Dấu mở: gõ tắt vẫn bung khi gõ ngay sau chúng ("(dc" → "(được"). */
-        private const val SHORTCUT_OPENERS = "([{\"'“‘«<"
 
         /** Giữ tối thiểu (ms) trước khi phím nhấc lên để kéo đổi chỗ. */
         private const val DRAG_HOLD_MS = 800L
-
-        /** Dấu câu đứng sát chữ phía trước. */
-        private const val NO_SPACE_BEFORE = ".,!?:;…)]}"
-        private const val OPENERS = "([{\"'“‘"
     }
 }

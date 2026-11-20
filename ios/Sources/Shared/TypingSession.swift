@@ -109,7 +109,7 @@ final class TypingSession {
         synchronize(with: document)
         if case .glide = target { target = .composition; latestSuggestions = [] }
         defer { refreshCandidates(in: document) }
-        let removeSpace = key.count == 1 && ".,!?;:…)]}".contains(key) && automaticSpace?.matches(document) == true
+        let removeSpace = Spacing.shared.removesAutoSpace(typed: key) && automaticSpace?.matches(document) == true
         automaticSpace = nil
         if key == "⌫" {
             if composing.isEmpty {
@@ -130,7 +130,7 @@ final class TypingSession {
             if !composing.isEmpty {
                 let context = String(before.dropLast(composing.count))
                 // Gõ tắt chỉ bung khi âm tiết đứng đầu từ hoặc ngay sau dấu mở như Android: "(dc" bung, "x.dc" thì không
-                let standalone = context.last.map { $0.isWhitespace || Self.snippetOpeners.contains($0) } ?? true
+                let standalone = Spacing.shared.shortcutCanFollow(textBeforeSyllable: context)
                 if key == " ", standalone, let snippet = configuration.snippets[engine.rawKeys().lowercased()] ?? configuration.snippets[composing.lowercased()] {
                     let expanded = composing.first?.isUppercase == true ? snippet.prefix(1).uppercased() + snippet.dropFirst() : snippet
                     replace(with: expanded, in: document)
@@ -160,17 +160,16 @@ final class TypingSession {
         let before = document.beforeInput ?? ""
         let value = replacement ?? candidate
         var addedSpace = false
+        // Quy tắc chung với Android: thêm khoảng trắng trừ khi sau đó đã có khoảng trắng hay dấu câu đứng sát
         func insertion(before trailing: String?) -> String {
-            if let first = trailing?.first {
-                addedSpace = !first.isWhitespace && !".,!?;:…)]}".contains(first)
-            } else { addedSpace = true }
+            addedSpace = Spacing.shared.pickAddsSpace(textAfterCursor: trailing)
             return value + (addedSpace ? " " : "")
         }
         switch target {
         case .glide where englishMode:
             // EN không soạn âm tiết và không học: chèn thẳng sau chữ đang có, cách khỏi chữ hay dấu câu ngay trước
             // ("hello,|" → "hello, world"), không cách sau khoảng trắng hay dấu mở ngoặc. Như Android.
-            let lead = before.last.map { !$0.isWhitespace && !Self.openers.contains($0) } == true ? " " : ""
+            let lead = Spacing.shared.glideNeedsLeadingSpace(textBeforeCursor: before) ? " " : ""
             change(old: "", new: lead + insertion(before: document.afterInput), in: document)
         case .composition, .glide:
             guard composing.isEmpty || before.hasSuffix(composing) else { reset(); return }
@@ -186,10 +185,6 @@ final class TypingSession {
         }
         reset(); automaticSpace = addedSpace ? DocumentAnchor(document) : nil; refreshCandidates(in: document)
     }
-    /// Dấu mở: gõ tắt vẫn bung khi gõ ngay sau chúng ("(dc" → "(được"), như Android.
-    static let snippetOpeners: Set<Character> = ["(", "[", "{", "\"", "'", "“", "‘", "«", "<"]
-    /// Dấu mở ngoặc/nháy: từ gõ vuốt EN chèn ngay sau, không thêm dấu cách.
-    static let openers: Set<Character> = ["(", "[", "{", "\"", "'", "“", "‘", "«"]
     /// Ô cho phép gõ vuốt: có gợi ý (không phải email, URL, ô số) và đã nạp từ điển.
     var glideAvailable: Bool { suggestionsEnabled && configuration.glide && vocabulary != nil }
     /// Trả về false khi không gõ vuốt được ở ô/trạng thái này (khác với vuốt mà không nhận ra từ).

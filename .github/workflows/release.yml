@@ -41,7 +41,7 @@ jobs:
           cat "$RUNNER_TEMP/notes.md"
       - name: Tests and lint
         run: |
-          ./gradlew --no-daemon :telex:test :layout:test :app:testDebugUnitTest :app:lintDebug
+          ./gradlew --no-daemon :telex:test :layout:test :typing:test :app:testDebugUnitTest :app:lintDebug
           python3 tools/test_version.py
           python3 tools/test_signing.py
           python3 tools/test_release.py

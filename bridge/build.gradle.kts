@@ -17,6 +17,7 @@ kotlin {
                 isStatic = true
                 binaryOption("bundleId", "com.telehex.keyboard.core")
                 export(project(":telex"))
+                export(project(":typing"))
                 xcframework.add(this)
             }
         }
@@ -24,6 +25,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":telex"))
+            api(project(":typing"))
             // Chỉ lớp chuyển đổi ở đây ra Swift; GridSpec, Profile… của layout không lộ ra để không trùng tên kiểu Swift
             implementation(project(":layout"))
         }

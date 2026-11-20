@@ -2,6 +2,9 @@
 
 ## 0.8.6 — unreleased
 
+- Chọn gợi ý chỉ thêm khoảng trắng khi sau con trỏ chưa có khoảng trắng hay dấu câu đứng sát ("khong|," chọn "không" ra "không,"), như iOS; gợi ý từ tiếng Anh cũng vậy.
+- Chạm emoji gợi ý khi đang gõ một chữ thì emoji thay chữ đó ("tim" → 💕), như iOS.
+
 ## 0.8.5 — 2026-11-20
 
 - Thêm bố cục có sẵn "Tổ ong có hàng số": lưới tổ ong thêm hàng 1…0 gồm 10 lục giác nhỏ trên cùng. Hàng số không có ký tự vuốt xuống vì phím nhỏ; lớp 123 cùng bộ ký tự với "Có hàng số".

@@ -27,7 +27,7 @@ jobs:
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
       - name: Telex engine, app unit tests, lint
-        run: ./gradlew --no-daemon :telex:test :layout:test :app:testDebugUnitTest :app:lintDebug
+        run: ./gradlew --no-daemon :telex:test :layout:test :typing:test :app:testDebugUnitTest :app:lintDebug
       - name: Version numbering across version changes and tags
         run: python3 tools/test_version.py
       - name: Vietnamese and English n-gram pipeline
