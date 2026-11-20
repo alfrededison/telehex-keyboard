@@ -19,6 +19,9 @@ final class HomeViewController: UIViewController {
         if ProcessInfo.processInfo.arguments.contains("--reset-test-data") {
             if let bundle = Bundle.main.bundleIdentifier { UserDefaults.standard.removePersistentDomain(forName: bundle) }
             try? FileManager.default.removeItem(at: KeyboardDataStore().root)
+            // AppSettings.shared đã nạp cấu hình trước khi xoá: đặt lại cả bản trong bộ nhớ, không thì bố cục test trước
+            // chọn bị ghi lại và lọt sang test sau
+            settings.preferences.configuration = KeyboardConfiguration()
         }
         #endif
         title = "TeleHex"
