@@ -129,6 +129,13 @@ final class TypingSessionTests: XCTestCase {
         session.press(" ",in: document)
         XCTAssertEqual(document.text,"k2 ")
     }
+    func testWordDeletionStepsLikeAndroid() {
+        let (session,document) = configured()
+        document.text = "abc\n  "; document.cursor = document.text.count
+        XCTAssertEqual(session.wordsToDelete(1,in: document),"\n  ")
+        document.text = "dòng một\nxin chào"; document.cursor = document.text.count
+        XCTAssertEqual(session.wordsToDelete(1,toLineStart: true,in: document),"xin chào")
+    }
     func testUndoRemovesAWholeWordLikeAndroid() {
         let (session,document) = configured()
         for key in "vieejt nam" { session.press(String(key),in: document) }

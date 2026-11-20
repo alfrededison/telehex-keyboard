@@ -325,19 +325,14 @@ final class TypingSession {
         }
         moveCursor(offset, in: document)
     }
-    func wordsToDelete(_ count: Int, in document: TextDocument) -> String {
-        var remaining = document.beforeInput ?? ""
-        let original = remaining
-        for _ in 0..<max(0, min(20, count)) {
-            if remaining.last == "\n" { remaining.removeLast(); continue }
-            while remaining.last?.isWhitespace == true && remaining.last != "\n" { remaining.removeLast() }
-            while let last = remaining.last, !last.isWhitespace { remaining.removeLast() }
-        }
-        return String(original.suffix(original.count - remaining.count))
+    /// Đoạn sẽ xoá khi kéo phím cách sang trái, theo quy tắc chung với Android (`WordStep`): mỗi dấu xuống dòng là một bước,
+    /// "abc\n  " một bước xoá cả khoảng trắng lẫn dấu xuống dòng; quá mép trái thì tới đầu dòng.
+    func wordsToDelete(_ count: Int, toLineStart: Bool = false, in document: TextDocument) -> String {
+        WordStep.shared.deletion(textBefore: document.beforeInput ?? "", words: Int32(max(0, min(20, count))), toLineStart: toLineStart)
     }
-    func deleteWords(_ count: Int, anchor: DocumentAnchor, in document: TextDocument) {
+    func deleteWords(_ count: Int, toLineStart: Bool = false, anchor: DocumentAnchor, in document: TextDocument) {
         guard anchor.matches(document) else { return }
-        let deleted = wordsToDelete(count, in: document)
+        let deleted = wordsToDelete(count, toLineStart: toLineStart, in: document)
         reset(); change(old: deleted, new: "", in: document); refreshCandidates(in: document)
     }
 }

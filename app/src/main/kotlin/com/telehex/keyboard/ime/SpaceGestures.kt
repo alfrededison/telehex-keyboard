@@ -4,6 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import com.telehex.typing.WordStep
 
 /**
  * Máy trạng thái cho các cử chỉ bắt đầu từ **phím cách** (mục 9.2):
@@ -204,32 +205,10 @@ class SpaceGestures(private val host: Host) {
     }
 
     companion object {
-        /**
-         * Chỉ số bắt đầu của [words] bước từ cuối chuỗi (bỏ khoảng trắng cuối). Mỗi dấu xuống dòng
-         * là một bước riêng, nên kéo tiếp sẽ lên dòng trên mà không phải nhả tay.
-         */
-        fun wordStart(text: CharSequence, words: Int): Int {
-            var i = text.length
-            repeat(words) {
-                while (i > 0 && text[i - 1].isWhitespace() && text[i - 1] != '\n') i--
-                if (i > 0 && text[i - 1] == '\n') i--
-                else while (i > 0 && !text[i - 1].isWhitespace()) i--
-            }
-            return i
-        }
+        /** Xem [WordStep.wordStart] (dùng chung với iOS). */
+        fun wordStart(text: CharSequence, words: Int): Int = WordStep.wordStart(text, words)
 
-        /**
-         * Đích của "kéo quá mép trái": đầu dòng chứa con trỏ (cuối [text]). Nếu con trỏ đã ở ngay
-         * đầu dòng thì lấy đầu dòng trên, kèm dấu xuống dòng.
-         */
-        fun lineStart(text: CharSequence): Int {
-            var i = text.length
-            while (i > 0 && text[i - 1] != '\n') i--
-            if (i == text.length && i > 0) {
-                i--
-                while (i > 0 && text[i - 1] != '\n') i--
-            }
-            return i
-        }
+        /** Xem [WordStep.lineStart] (dùng chung với iOS). */
+        fun lineStart(text: CharSequence): Int = WordStep.lineStart(text)
     }
 }

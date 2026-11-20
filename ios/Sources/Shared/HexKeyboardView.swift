@@ -225,7 +225,8 @@ final class HexKeyboardView: UIView {
     /// Chèn nguyên văn vào ô nhập (dán từ lịch sử clipboard).
     var onInsertText: ((String) -> Void)?
     var onCursor: ((Int, Int) -> Void)?
-    var onWordDelete: ((Int, Bool) -> Void)?
+    /// Kéo phím cách sang trái: (số từ, đã nhả tay, kéo quá mép trái để xoá tới đầu dòng).
+    var onWordDelete: ((Int, Bool, Bool) -> Void)?
     var onShift: (() -> Void)?
     /// Bàn phím cần cao thêm (`extraHeight` đổi): host cập nhật ràng buộc chiều cao.
     var onHeightChange: (() -> Void)?
@@ -318,7 +319,7 @@ final class HexKeyboardView: UIView {
         more.accessibilityLabel = "Xem thêm gợi ý"; more.layer.cornerRadius = 17
         [mode,globe,backspace,more].forEach { addSubview($0) }
         let repeatPress = UILongPressGestureRecognizer(target: self, action: #selector(repeatDelete(_:)))
-        repeatPress.minimumPressDuration = 0.35; backspace.addGestureRecognizer(repeatPress)
+        repeatPress.minimumPressDuration = Self.backspaceHold; backspace.addGestureRecognizer(repeatPress)
         panel.accessibilityIdentifier = "keyboard-panel"
         configure(panelBack,"Xong","close-settings") { [weak self] in
             guard let self else { return }
@@ -355,7 +356,7 @@ final class HexKeyboardView: UIView {
         gesture.trackAt = { [weak self] point in self?.cell(at: point, dynamic: false) }
         gesture.holdDelay = { [weak self] index in
             guard let self, let code = self.code(at: index) else { return 0.8 }
-            if self.isBackspace(code) { return 0.4 } // giữ ⌫ để xoá liên tục, như Android
+            if self.isBackspace(code) { return Self.backspaceHold } // giữ ⌫ để xoá liên tục, như Android
             if self.dialpad { return 0.8 }
             return code == " " ? self.preferences.configuration.cursorDelay : self.preferences.configuration.holdDelay
         }
@@ -375,6 +376,8 @@ final class HexKeyboardView: UIView {
     /// Trần bề rộng ô tổ ong: iPhone dọc lớn nhất có ô 56,5pt nên không đổi; iPad giữ ô cỡ iPhone, lưới nằm giữa thay vì
     /// lục giác to nửa màn hình mà chữ vẫn nhỏ. Bố cục chữ nhật vẫn trải hết bề ngang như bàn phím iPad.
     static let hexMaxKey: CGFloat = 60
+    /// Giữ ⌫ (trên lưới và trên thanh gợi ý) bao lâu thì xoá liên tục, và nhịp xoá: như mặc định của Android (450 ms, 50 ms).
+    static let backspaceHold: TimeInterval = 0.45, backspaceRepeat: TimeInterval = 0.05
     static func height(for width: CGFloat, screenHeight: CGFloat, spec: GridSpec = .hex7) -> CGFloat {
         let fullWidth: CGFloat = max(0,width - 2 * gridPad(spec)) / spec.span
         let keyWidth: CGFloat = spec.isHex ? min(fullWidth, hexMaxKey) : fullWidth
@@ -642,6 +645,11 @@ final class HexKeyboardView: UIView {
     }
     /// Kéo phím cách sang trái quá 1,2 bước thì xoá theo từ, mỗi bước thêm một từ (như Android).
     var wordThreshold: CGFloat { CGFloat(preferences.configuration.stepSize) * 1.2 }
+    /// Ngón tay đã tới mép trái lưới phím (kéo xoá theo từ thì xoá tới đầu dòng).
+    func pastLeftEdge(_ point: CGPoint) -> Bool {
+        guard let left = keys.filter({ !$0.0.isHidden }).map({ $0.0.frame.minX }).min() else { return false }
+        return point.x <= left
+    }
     func wordCount(_ dx: CGFloat) -> Int {
         -dx < wordThreshold ? 0 : Int((-dx - wordThreshold) / CGFloat(preferences.configuration.stepSize)) + 1
     }
@@ -709,7 +717,7 @@ final class HexKeyboardView: UIView {
     func handle(_ event: KeyboardGesture.Event) {
         switch event {
         case let .begin(index, _):
-            cursorStep = .zero; deletingWords = false; setPressed(index); onWordDelete?(0, false); showPopup(index)
+            cursorStep = .zero; deletingWords = false; setPressed(index); onWordDelete?(0, false, false); showPopup(index)
         case let .move(index, start, point, path, visited, held):
             guard let key = keys.first(where: { $0.1 == index }) else { return }
             // Bong bóng chỉ cho chạm: giữ, vuốt hay lướt thì ẩn.
@@ -717,7 +725,7 @@ final class HexKeyboardView: UIView {
             if isBackspace(key.2) && editLayer == nil {
                 if held && repeatTimer == nil {
                     type("⌫")
-                    repeatTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in self?.type("⌫") }
+                    repeatTimer = Timer.scheduledTimer(withTimeInterval: Self.backspaceRepeat, repeats: true) { [weak self] _ in self?.type("⌫") }
                 }
                 return
             }
@@ -744,8 +752,9 @@ final class HexKeyboardView: UIView {
                 let over = displayedCell(at: point)
                 setHover(over != index ? over : nil)
             } else if code == " " && -dx >= wordThreshold && abs(dx) > abs(dy) {
-                deletingWords = true; let count = wordCount(dx)
-                showBanner("Xoá \(count) từ"); onWordDelete?(count, false)
+                // Như Android: kéo tới mép trái lưới phím thì xoá tới đầu dòng
+                deletingWords = true; let count = wordCount(dx), toLineStart = pastLeftEdge(point)
+                showBanner(toLineStart ? "Xoá tới đầu dòng" : "Xoá \(count) từ"); onWordDelete?(count, false, toLineStart)
             } else if KeyboardProfile.isLetter(code) && visited.filter({ KeyboardProfile.isLetter(preferences.profile.letters[$0]) }).count >= 3 && glideAllowed && preferences.configuration.glide && page < 0 && editLayer == nil && inlineDocuments.isEmpty {
                 let line = UIBezierPath(); if let first = path.first { line.move(to: first) }; path.dropFirst().forEach { line.addLine(to: $0) }; traceLayer.path = line.cgPath
                 setPressed(nil)
@@ -794,7 +803,7 @@ final class HexKeyboardView: UIView {
             if code == " " {
                 if abs(dx) > abs(dy) {
                     if dx < 0 {
-                        if !inlineDocuments.isEmpty { type("⌫") } else if deletingWords { onWordDelete?(wordCount(dx),true) } else { onCommand?("space-left") }
+                        if !inlineDocuments.isEmpty { type("⌫") } else if deletingWords { onWordDelete?(wordCount(dx),true,pastLeftEdge(point)) } else { onCommand?("space-left") }
                     } else if inlineDocuments.isEmpty { onCommand?("paste") }
                 } else if dy > 0 { if inlineDocuments.isEmpty { onToggleLanguage?() } else { inlineSession.englishMode.toggle(); updateEditorBar() } } else if inlineDocuments.isEmpty { onCommand?("space-up") }
             } else if KeyboardProfile.isLetter(code) && abs(dy) > abs(dx) && dy < 0 { type(uppercase ? code.lowercased() : code.uppercased()) }
@@ -828,7 +837,7 @@ final class HexKeyboardView: UIView {
     func hidePopup() { popup.isHidden = true }
     @objc private func repeatDelete(_ recognizer: UILongPressGestureRecognizer) {
         if recognizer.state == .began {
-            type("⌫"); repeatTimer = Timer.scheduledTimer(withTimeInterval: 0.08, repeats: true) { [weak self] _ in self?.type("⌫") }
+            type("⌫"); repeatTimer = Timer.scheduledTimer(withTimeInterval: Self.backspaceRepeat, repeats: true) { [weak self] _ in self?.type("⌫") }
         } else if recognizer.state != .changed { repeatTimer?.invalidate(); repeatTimer = nil }
     }
     @objc private func twoFinger(_ recognizer: UISwipeGestureRecognizer) { guard inlineDocuments.isEmpty else { return }; onCommand?(recognizer.direction == .left ? "undo" : "redo") }

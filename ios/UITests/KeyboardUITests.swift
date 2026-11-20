@@ -109,6 +109,17 @@ final class KeyboardUITests: XCTestCase {
         XCTAssertEqual(app.textViews["typing-field"].value as? String, "xi")
         Thread.sleep(forTimeInterval: 1.5)
     }
+    func testDraggingSpacePastTheLeftEdgeDeletesToLineStart() {
+        let app = preview()
+        for key in ["x","i","n"," ","c","h","a","o","f"," ","b","a","n","j"] { app.buttons["key-\(key)"].recordedTap(in: app) }
+        XCTAssertEqual(app.textViews["typing-field"].value as? String, "xin chào bạn")
+        // Như Android: kéo phím cách sang trái tới mép lưới phím thì xoá tới đầu dòng, không chỉ từng từ
+        let space = app.buttons["key- "].frame, screen = app.frame
+        app.recordedSwipe(from: CGVector(dx: space.midX/screen.width, dy: space.midY/screen.height),
+                          to: CGVector(dx: 2/screen.width, dy: space.midY/screen.height), hold: 0.05)
+        XCTAssertEqual(app.textViews["typing-field"].value as? String, "")
+        Thread.sleep(forTimeInterval: 1.5)
+    }
     func testLayoutEditorLayerTransitions() {
         let app = preview()
         openSettings("settings-keyboard", in: app)

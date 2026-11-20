@@ -106,12 +106,12 @@ final class KeyboardDriver {
             if vertical != 0 { self.session.moveLine(vertical,in: self.document()) }
             self.update()
         }
-        view.onWordDelete = { [weak self] count, commit in
+        view.onWordDelete = { [weak self] count, commit, toLineStart in
             guard let self else { return }
-            if count == 0 && !commit { self.wordDeleteAnchor = DocumentAnchor(self.document()) }
+            if count == 0 && !commit && !toLineStart { self.wordDeleteAnchor = DocumentAnchor(self.document()) }
             if commit, let anchor = self.wordDeleteAnchor {
                 if !anchor.selected.isEmpty { self.command("space-left") }
-                else { self.session.deleteWords(count,anchor: anchor,in: self.document()) }
+                else { self.session.deleteWords(count,toLineStart: toLineStart,anchor: anchor,in: self.document()) }
                 self.wordDeleteAnchor=nil; self.update()
             }
         }
