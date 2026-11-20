@@ -21,6 +21,7 @@ import com.telehex.keyboard.data.Prefs
 import com.telehex.layout.KeyCode
 import com.telehex.layout.Profile
 import com.telehex.keyboard.settings.SettingsActivity
+import com.telehex.typing.CapsState
 import com.telehex.typing.Shortcuts
 import com.telehex.typing.Spacing
 import com.telehex.typing.Suggestions
@@ -99,18 +100,11 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     /** Từ đã có trong ô nhập vừa được nạp lại để sửa: chốt y nguyên thì không học lại lần nữa. */
     private var resumedWord: String? = null
 
-    /**
-     * Ghi đè tự viết hoa (vuốt lên phím cách, phím ⇧): [LOCK] đến khi tắt; [LOWER] / [UPPER] chỉ cho chữ kế tiếp.
-     */
-    private enum class CapsOverride { LOCK, LOWER, UPPER }
-    private var capsOverride: CapsOverride? = null
-    /** Lần chạm ⇧ trước (uptime ms), để chạm đúp khoá chữ hoa. */
-    private var lastShiftTap = 0L
+    /** Ghi đè tự viết hoa (phím ⇧, vuốt lên phím cách), dùng chung quy tắc với iOS. */
+    private val caps = CapsState()
 
     /** Bỏ chữ hoa/thường một lần (chỉ dành cho chữ kế tiếp); giữ khoá chữ hoa. */
-    private fun clearOneShotCaps() {
-        if (capsOverride == CapsOverride.LOWER || capsOverride == CapsOverride.UPPER) capsOverride = null
-    }
+    private fun clearOneShotCaps() = caps.clearOneShot()
     /**
      * Văn bản vừa chèn từ một gợi ý trên thanh, kết thúc bằng khoảng trắng tự thêm. Dấu câu gõ ngay
      * sau đó (phím kế tiếp) xoá khoảng trắng này: chọn "không" rồi gõ "," ra "không,".
@@ -300,7 +294,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     }
 
     /** Đầu câu ở ô có tự viết hoa: gợi ý cũng viết hoa như chữ sắp gõ. */
-    private fun capsSentenceStart(): Boolean = capsOverride == null && capRequest() != 0 && atSentenceStart()
+    private fun capsSentenceStart(): Boolean = caps.override == null && capRequest() != 0 && atSentenceStart()
 
     /**
      * Gợi ý hoàn thành âm tiết đang gõ theo hoa/thường của phần đã gõ, như biến thể dấu:
@@ -529,7 +523,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         closeMoreSuggestions()
         clearGlide()
         suggestionSpace = null
-        if (!restarting) capsOverride = null
+        if (!restarting) caps.reset()
         engine.reset()
         history.clear()
         emojiSearch = false
@@ -936,7 +930,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         val auto = upperNext()
         val upper = auto != swipedUp
         // Chữ hoa vì ⇧ là chủ ý (tên riêng): học như đã gõ; chỉ đầu câu hay khoá hoa mới học như chữ thường
-        if (engine.isEmpty) autoCappedFirst = auto && !swipedUp && capsOverride != CapsOverride.UPPER
+        if (engine.isEmpty) autoCappedFirst = auto && !swipedUp && !caps.oneShotUpper
         else if (resumed != null) autoCappedFirst = resumed
         clearOneShotCaps()
         // Tìm emoji đọc chữ từ engine nên vẫn gõ vào engine dù đang EN
@@ -995,18 +989,12 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
     }
 
     /** Chữ sắp gõ là hoa: tự viết hoa của ô nhập, trừ khi vuốt lên phím cách đã ghi đè. */
-    private fun upperNext(): Boolean = when {
-        mode != Mode.ABC || emojiSearch -> false
-        capsOverride == CapsOverride.LOCK -> true
-        capsOverride == CapsOverride.LOWER -> false
-        capsOverride == CapsOverride.UPPER -> true
-        else -> autoCaps()
-    }
+    private fun upperNext(): Boolean = mode == Mode.ABC && !emojiSearch && caps.upperNext(autoCaps())
 
-    private fun capsLockActive(): Boolean = capsOverride == CapsOverride.LOCK && mode == Mode.ABC && !emojiSearch
+    private fun capsLockActive(): Boolean = caps.capsLock && mode == Mode.ABC && !emojiSearch
 
     /** Vừa chạm ⇧ để viết hoa chữ kế tiếp (gợi ý và gõ vuốt cũng viết hoa chữ đầu). */
-    private fun oneShotUpper(): Boolean = capsOverride == CapsOverride.UPPER && mode == Mode.ABC && !emojiSearch
+    private fun oneShotUpper(): Boolean = caps.oneShotUpper && mode == Mode.ABC && !emojiSearch
 
     /**
      * Vuốt lên phím cách: đang khoá hoa thì tắt; chữ sắp gõ đang hoa (tự viết hoa đầu câu) thì chữ
@@ -1014,15 +1002,10 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
      */
     private fun toggleCaps() {
         if (mode != Mode.ABC || emojiSearch) return
-        capsOverride = when {
-            capsOverride == CapsOverride.LOCK -> null
-            capsOverride == null && autoCaps() -> CapsOverride.LOWER
-            else -> CapsOverride.LOCK
-        }
-        when (capsOverride) {
-            CapsOverride.LOCK -> flash("⇪ Khoá chữ hoa")
-            null -> flash("Tắt khoá chữ hoa")
-            CapsOverride.LOWER, CapsOverride.UPPER -> {}
+        when (caps.toggleLock(autoCaps())) {
+            true -> flash("⇪ Khoá chữ hoa")
+            false -> flash("Tắt khoá chữ hoa")
+            null -> {}
         }
         updateBar() // nhãn phím + gợi ý viết hoa theo trạng thái mới
     }
@@ -1033,15 +1016,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
      */
     private fun pressShift() {
         if (mode != Mode.ABC || emojiSearch) return
-        val now = android.os.SystemClock.uptimeMillis()
-        val quick = now - lastShiftTap < prefs.doubleTapMs
-        lastShiftTap = now
-        capsOverride = when {
-            capsOverride == CapsOverride.LOCK -> { lastShiftTap = 0L; if (autoCaps()) CapsOverride.LOWER else null }
-            quick -> CapsOverride.LOCK
-            upperNext() -> CapsOverride.LOWER
-            else -> CapsOverride.UPPER
-        }
+        caps.pressShift(android.os.SystemClock.uptimeMillis(), prefs.doubleTapMs.toLong(), autoCaps())
         updateBar()
     }
 
@@ -1324,7 +1299,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         // Chỉ lần nhả ⌫ mới dừng xoá liên tục: hai ngón thì phím kia nhả trước không được ăn mất cờ đã lặp
         val backHeld = code == KeyCode.BACKSPACE && stopBackRepeat()
         // Phím khác chen giữa hai lần chạm ⇧ thì không còn là chạm đúp
-        if (code != KeyCode.SHIFT) lastShiftTap = 0L
+        if (code != KeyCode.SHIFT) caps.otherKey()
         // Chỉ phím ngay sau lần chọn gợi ý mới được xoá khoảng trắng tự thêm
         val autoSpace = suggestionSpace
         suggestionSpace = null

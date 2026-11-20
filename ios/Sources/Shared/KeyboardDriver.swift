@@ -1,5 +1,6 @@
 import UIKit
 import AudioToolbox
+import TeleHexCore
 
 final class KeyboardDriver {
     let preferences: KeyboardPreferences
@@ -23,11 +24,15 @@ final class KeyboardDriver {
     private var currentDocument: UUID?
     private var wordDeleteAnchor: DocumentAnchor?
     private var generation = 0
-    private var capsLock = false, suppressAutoCapital = false, automaticCapital = false
-    /// ⇧ vừa chạm: chỉ chữ kế tiếp viết hoa. `lastShift`: lần chạm ⇧ trước, để nhận chạm đúp khoá chữ hoa.
-    private var shiftOnce = false, lastShift = Date.distantPast
-    /// Chữ sắp gõ là hoa: khoá hoa, ⇧ một lần, hoặc tự viết hoa đầu câu chưa bị tắt.
-    private var upperNext: Bool { capsLock || shiftOnce || (automaticCapital && !suppressAutoCapital) }
+    /// Khoá hoa, hoa/thường một lần (⇧, vuốt lên phím cách): quy tắc chung với Android (module typing).
+    private let caps = CapsState()
+    /// Ô nhập tự viết hoa ở vị trí con trỏ (đầu câu…).
+    private var automaticCapital = false
+    private var capsLock: Bool { caps.capsLock }
+    /// Chữ sắp gõ là hoa: khoá hoa, ⇧ một lần, hoặc tự viết hoa của ô nhập chưa bị ghi đè.
+    private var upperNext: Bool { caps.upperNext(auto: automaticCapital) }
+    /// Ngưỡng chạm đúp ⇧ (ms), như mặc định của Android.
+    static let doubleTapMs: Int64 = 300
     var onNextKeyboard: (() -> Void)?
     var fullAccess: () -> Bool = { false }
     /// Clipboard cho cắt/chép/dán trên phím cách; test dùng clipboard riêng.
@@ -54,10 +59,10 @@ final class KeyboardDriver {
                 if self.preferences.configuration.sound { AudioServicesPlaySystemSound(1104) }
             }
             self.session.press(key, in: self.document())
-            if key.first?.isLetter == true { self.suppressAutoCapital = false }
-            // Hoa một lần chỉ cho chữ kế tiếp; dấu câu, ↵, ⌫ cũng bỏ nó. Phím khác chen giữa thì không còn là chạm đúp ⇧.
-            if key != " " { self.shiftOnce = false }
-            self.lastShift = .distantPast
+            // Như Android: hoa/thường một lần chỉ cho chữ kế tiếp; dấu câu, ↵, ⌫ cũng bỏ nó (cách thì không). Phím khác
+            // chen giữa thì không còn là chạm đúp ⇧.
+            if key != " " { self.caps.clearOneShot() }
+            self.caps.otherKey()
             self.update()
         }
         view.onCandidate = { [weak self] word in
@@ -65,7 +70,6 @@ final class KeyboardDriver {
             // Gợi ý đã viết hoa/thường sẵn theo quy tắc chung (module typing): chèn đúng chữ đang hiện, như Android
             let value = self.view.emoji?.variant(word,gender: self.preferences.configuration.emojiGender,tone: self.preferences.configuration.emojiTone) ?? word
             self.session.choose(word,replacement: value,in: self.document())
-            self.shiftOnce = false
             self.update()
         }
         view.onForgetCandidate = { [weak self] word in
@@ -76,10 +80,9 @@ final class KeyboardDriver {
         }
         view.onCapsLock = { [weak self] in
             guard let self else { return }
-            if self.capsLock { self.capsLock=false; self.suppressAutoCapital=true }
-            else if self.automaticCapital && !self.suppressAutoCapital { self.suppressAutoCapital=true }
-            else { self.capsLock=true; self.suppressAutoCapital=false }
-            self.shiftOnce = false
+            // Như Android: tắt khoá thì tự viết hoa chạy lại; đầu câu thì chữ kế tiếp ra thường; còn lại khoá hoa
+            let locked = self.caps.toggleLock(auto: self.automaticCapital)
+            if let locked { self.view.message(locked.boolValue ? "⇪ Khoá chữ hoa" : "Tắt khoá chữ hoa") }
             self.update()
         }
         view.onShift = { [weak self] in self?.pressShift() }
@@ -117,12 +120,7 @@ final class KeyboardDriver {
     /// Phím ⇧ của bố cục truyền thống, như Android: chữ kế tiếp đang thường thì viết hoa, đang hoa (cả tự viết hoa
     /// đầu câu) thì viết thường; chạm đúp thì khoá chữ hoa, chạm lần nữa để tắt.
     func pressShift() {
-        let now = Date(), quick = now.timeIntervalSince(lastShift) < 0.3
-        lastShift = now
-        if capsLock { capsLock = false; shiftOnce = false; lastShift = .distantPast; suppressAutoCapital = automaticCapital }
-        else if quick { capsLock = true; shiftOnce = false; suppressAutoCapital = false }
-        else if upperNext { shiftOnce = false; suppressAutoCapital = true }
-        else { shiftOnce = true }
+        caps.pressShift(nowMs: Int64(Date().timeIntervalSince1970 * 1000), doubleTapMs: Self.doubleTapMs, auto: automaticCapital)
         update()
     }
     /// Cài đặt app gửi qua App Group: áp khi bàn phím mở ra, chạy lệnh xoá dữ liệu học/nạp lại gói ngôn ngữ.
@@ -153,21 +151,23 @@ final class KeyboardDriver {
             self.update(); self.view.refreshPanel()
         }
     }
-    /// Ô nhập tự viết hoa chữ đứng sau `before` không (đầu câu, đầu mọi từ…).
+    /// Ô nhập tự viết hoa chữ đứng sau `before` không (đầu câu, đầu mọi từ…), theo quy tắc của Android (`AutoCap`): đầu
+    /// câu cần khoảng trắng sau dấu chấm nên "google.com" không thành "google.Com".
     static func capitalizes(_ capitalization: UITextAutocapitalizationType, before: String, enabled: Bool) -> Bool {
         guard enabled else { return false }
-        let trimmed = before.trimmingCharacters(in: .whitespaces)
+        let mode: AutoCap.Mode
         switch capitalization {
-        case .allCharacters: return true
-        case .words: return before.isEmpty || before.last?.isWhitespace == true
-        case .sentences: return trimmed.isEmpty || trimmed.last.map { ".!?\n".contains($0) } == true
-        default: return false
+        case .allCharacters: mode = .characters
+        case .words: mode = .words
+        case .sentences: mode = .sentences
+        default: mode = .none
         }
+        return AutoCap.shared.capitalizes(textBefore: before, mode: mode)
     }
     func update() {
         let document = document(), (type,capitalization) = traits()
         if document.documentID != currentDocument {
-            currentDocument = document.documentID; session.reset(); capsLock=false; suppressAutoCapital=false; shiftOnce=false
+            currentDocument = document.documentID; session.reset(); caps.reset()
             session.englishMode = preferredEnglish || [.emailAddress,.URL,.asciiCapable].contains(type)
             view.setNumeric([.numberPad,.phonePad,.decimalPad,.asciiCapableNumberPad,.numbersAndPunctuation].contains(type))
         }

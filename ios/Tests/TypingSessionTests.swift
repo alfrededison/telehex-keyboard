@@ -122,6 +122,30 @@ final class TypingSessionTests: XCTestCase {
             session.redo(in: document); XCTAssertEqual(document.text,"tôi" + separator + trailing)
         }
     }
+    func testCapitalizationFollowsAndroid() {
+        // Đầu câu cần khoảng trắng sau dấu chấm: "google.com" không thành "google.Com"
+        XCTAssertFalse(KeyboardDriver.capitalizes(.sentences, before: "google.", enabled: true))
+        XCTAssertTrue(KeyboardDriver.capitalizes(.sentences, before: "Xong. ", enabled: true))
+        let prefs = KeyboardPreferences(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        let document = Document()
+        let driver = KeyboardDriver(preferences: prefs, document: { document }, traits: { (.default, .sentences) }, loadVocabulary: { _, _ in })
+        driver.update()
+        // ⇧ ở đầu câu cho chữ thường một lần; dấu câu gõ sau đó bỏ nó nên chữ kế tiếp lại tự viết hoa
+        driver.pressShift(); driver.view.activate(".", index: 0); driver.view.activate(" ", index: 0); driver.view.activate("x", index: 0)
+        XCTAssertEqual(document.text, ". X")
+        // Giữa câu: vuốt lên phím cách khoá hoa, vuốt lần nữa tắt khoá
+        driver.view.onCommand?("space-up")
+        XCTAssertTrue(driver.view.capsLocked)
+        driver.view.onCommand?("space-up")
+        XCTAssertFalse(driver.view.capsLocked)
+        // Tắt khoá ở đầu câu thì tự viết hoa chạy lại (không bị ép chữ thường như trước)
+        driver.view.activate(".", index: 0); driver.view.activate(" ", index: 0)
+        driver.view.onCommand?("space-up"); driver.view.onCommand?("space-up")
+        XCTAssertTrue(driver.view.capsLocked)
+        driver.view.onCommand?("space-up")
+        driver.view.activate("y", index: 0)
+        XCTAssertTrue(document.text.hasSuffix(". Y"), document.text)
+    }
     func testShortcutsMatchTheCommittedHeadLikeAndroid() {
         let (session,document) = configured()
         for key in ["k","2"," "] { session.press(key,in: document) }
