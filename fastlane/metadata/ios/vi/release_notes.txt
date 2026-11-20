@@ -1,6 +1,5 @@
-- Bố cục mới "Có hàng số": như Truyền thống, thêm hàng số 1 đến 0 trên cùng. Vuốt xuống hàng số ra ký hiệu ! @ # $ %, hàng Q đến P ra ngoặc và dấu. Chọn ngay trên màn hình chính của app.
-- Bố cục Truyền thống: phím cách dời sang trái, mỗi bên ba phím nhỏ.
-- Chữ tiếng Anh không còn bị bỏ dấu khi rõ ràng không phải tiếng Việt, ví dụ "developer", "class".
-- Sửa dấu từ vừa gõ: xoá dấu cách hoặc chạm vào cuối từ rồi gõ phím dấu.
-- Từ có dấu nhưng sai chính tả được trả lại đúng các phím đã gõ, ví dụ "user" thay vì "ủe".
-- Gõ tắt bung được ngay sau dấu mở ngoặc hay dấu nháy, ví dụ "(dc" thành "(được".
+- Thêm ba bố cục tổ ong, chọn ngay trên màn hình chính của app:
+  - Tổ ong có hàng số: lưới tổ ong thêm hàng số 1 đến 0 nhỏ trên cùng.
+  - Tổ ong 8 cột: thêm một cột, có phím ⇧ và ⌫ như Truyền thống cùng phím riêng cho ? ! '. Bàn phím vẫn cao như Tổ ong 7 cột.
+  - Tổ ong 8 cột có hàng số: Tổ ong 8 cột thêm hàng số 1 đến 0 trên cùng. Vuốt xuống hàng Q đến P ra ngoặc và ký hiệu.
+- Truyền thống và Có hàng số: lề hai bên hẹp lại, phím rộng và cao thêm khoảng 3%.

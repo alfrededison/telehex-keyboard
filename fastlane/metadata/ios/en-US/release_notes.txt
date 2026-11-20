@@ -1,6 +1,5 @@
-- New "Number row" layout: the Traditional layout with a 1 to 0 row on top. Swipe down on the number row for ! @ # $ %, and on the Q to P row for brackets and punctuation. Pick it on the app's home screen.
-- Traditional layout: the space bar moves left, with three small keys on each side.
-- English words no longer get Vietnamese tone marks once they cannot be Vietnamese, such as "developer" or "class".
-- Fix the marks of the word you just typed: delete the space or tap the end of the word, then type the tone key.
-- A marked word that is not valid Vietnamese goes back to the keys you typed, for example "user" instead of "ủe".
-- Shortcuts expand right after an opening bracket or quote, for example "(dc" becomes "(được".
+- Three new hexagonal layouts, pick them on the app's home screen:
+  - Hexagonal with number row: the hexagonal grid with a small 1 to 0 row on top.
+  - 8-column Hexagonal: one more column, with shift and backspace keys like Traditional plus keys for ? ! '. The keyboard stays as tall as the 7-column one.
+  - 8-column Hexagonal with number row: adds a 1 to 0 row on top. Swipe down on the Q to P row for brackets and symbols.
+- Traditional and Number row: narrower side margins, so keys are about 3% wider and taller.
