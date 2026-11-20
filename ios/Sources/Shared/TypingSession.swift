@@ -147,14 +147,15 @@ final class TypingSession {
             if document.beforeInput == nil { reset() }
         } else {
             let before = document.beforeInput ?? ""
-            if !composing.isEmpty {
-                let context = String(before.dropLast(composing.count))
-                // Gõ tắt chỉ bung khi âm tiết đứng đầu từ hoặc ngay sau dấu mở như Android: "(dc" bung, "x.dc" thì không
-                let standalone = Spacing.shared.shortcutCanFollow(textBeforeSyllable: context)
-                if key == " ", standalone, let snippet = configuration.snippets[engine.rawKeys().lowercased()] ?? configuration.snippets[composing.lowercased()] {
-                    let expanded = composing.first?.isUppercase == true ? snippet.prefix(1).uppercased() + snippet.dropFirst() : snippet
-                    replace(with: expanded, in: document)
-                } else if !englishMode, let restored = engine.restoredKeys() {
+            let context = String(before.dropLast(composing.count))
+            // Gõ tắt theo quy tắc chung với Android: khớp cả phần đã chốt trước âm tiết ("k2", "@@g"), tách sau dấu mở
+            // ("(dc" → "(được", "x.dc" thì không), chữ đang hiện trước rồi phím đã gõ, giữ chữ hoa đầu
+            let shortcut = key == " " ? Shortcuts.shared.match(snippets: configuration.snippets, textBefore: context, typed: composing,
+                                                                keys: englishMode || composing.isEmpty ? composing : engine.rawKeys()) : nil
+            if let shortcut {
+                change(old: shortcut.prefix + composing, new: shortcut.expansion, in: document)
+            } else if !composing.isEmpty {
+                if !englishMode, let restored = engine.restoredKeys() {
                     // Như UniKey: từ có dấu mà sai chính tả thì trả lại phím đã gõ ("ủe" → user), không học
                     replace(with: restored, in: document)
                 } else { learn(composing, before: context) }

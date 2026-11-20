@@ -38,7 +38,7 @@ final class TypingSessionTests: XCTestCase {
         let session = TypingSession(), document = Document()
         let prefs = KeyboardPreferences(defaults: UserDefaults(suiteName: UUID().uuidString)!)
         prefs.configuration.incognito = incognito
-        prefs.configuration.snippets = ["dc":"địa chỉ"]
+        prefs.configuration.snippets = ["dc":"địa chỉ","k2":"không hai","@@g":"a@gmail.com"]
         session.vocabulary = KeyboardVocabulary(englishText: "hello\nhelp",vietnameseText: "xin\nchào\nngười\nbạn",phrasesText: "")
         session.configure(prefs)
         return (session,document)
@@ -121,6 +121,17 @@ final class TypingSessionTests: XCTestCase {
             session.undo(in: document); XCTAssertEqual(document.text,"toi" + trailing)
             session.redo(in: document); XCTAssertEqual(document.text,"tôi" + separator + trailing)
         }
+    }
+    func testShortcutsMatchTheCommittedHeadLikeAndroid() {
+        let (session,document) = configured()
+        for key in ["k","2"," "] { session.press(key,in: document) }
+        XCTAssertEqual(document.text,"không hai ")
+        let (other,doc2) = configured()
+        for key in ["@","@","g"," "] { other.press(key,in: doc2) }
+        XCTAssertEqual(doc2.text,"a@gmail.com ")
+        let (third,doc3) = configured()
+        for key in ["x",".","d","c"," "] { third.press(key,in: doc3) }
+        XCTAssertEqual(doc3.text,"x.dc ")
     }
     func testSuggestionCaseAndContentFollowTheSharedRules() {
         // Khoá hoa: gợi ý hoàn thành viết hoa cả từ, như Android

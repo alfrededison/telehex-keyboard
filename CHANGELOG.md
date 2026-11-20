@@ -6,6 +6,7 @@
 - Chạm emoji gợi ý khi đang gõ một chữ thì emoji thay chữ đó ("tim" → 💕), như iOS.
 - Thanh gợi ý khi đang gõ một âm tiết đúng chính tả cũng có phương án sửa gõ sai ("ban" có thể là "bạn"), như iOS.
 - iOS: thanh gợi ý theo đúng thứ tự và hoa/thường của Android: hai gợi ý chữ, emoji, rồi biến thể dấu; khoá hoa hay gõ "KH" ra "KHÔNG"; tên riêng đã học viết hoa; sau khoảng trắng luôn có gợi ý từ kế tiếp (kể cả khi sau con trỏ còn chữ) kèm emoji cho từ vừa gõ; chọn gợi ý chèn đúng chữ đang hiện.
+- iOS: gõ tắt khớp như Android: cả phần đã gõ trước âm tiết ("k2", "@@g" bung được), chạm cách khi không đang soạn chữ vẫn bung, khớp chữ đang hiện trước phím đã gõ, gõ tắt có chữ hoa trong viết tắt khớp được.
 
 ## 0.8.5 — 2026-11-20
 

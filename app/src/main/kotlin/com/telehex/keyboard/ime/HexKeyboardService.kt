@@ -21,6 +21,7 @@ import com.telehex.keyboard.data.Prefs
 import com.telehex.layout.KeyCode
 import com.telehex.layout.Profile
 import com.telehex.keyboard.settings.SettingsActivity
+import com.telehex.typing.Shortcuts
 import com.telehex.typing.Spacing
 import com.telehex.typing.Suggestions
 import com.telehex.telex.Corrector
@@ -895,9 +896,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         if (extra == " " && prefs.shortcuts.isNotEmpty()) {
             // getTextBeforeCursor có cả phần đang soạn (composing) nên bỏ nó đi trước
             val before = (ic.getTextBeforeCursor(32 + typed.length, 0)?.toString() ?: "").removeSuffix(typed)
-            shortcutMatch(before.takeLastWhile { !it.isWhitespace() }, typed, keys)?.let { (head, expansion) ->
-                shortcutHead = head
-                text = "$expansion "
+            Shortcuts.match(prefs.shortcuts, before, typed, keys)?.let { m ->
+                shortcutHead = m.prefix.length
+                text = "${m.expansion} "
                 expanded = true
             }
         }
@@ -923,28 +924,6 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         else resumedWord = null
         if (extra.isNotEmpty() && extra.last() in ".!?\n") recent.clear()
         updateBar()
-    }
-
-    /**
-     * Gõ tắt khớp với token trước con trỏ (phần đã chốt [head] như "@@" + âm tiết đang soạn), hoặc với âm tiết
-     * vừa gõ ngay sau dấu mở: "(dc" khớp "dc" → "(được". Thử cả chữ đang hiện lẫn phím đã gõ.
-     * @return (số ký tự đã chốt trước âm tiết cần xoá, chữ thay thế)
-     */
-    private fun shortcutMatch(head: String, typed: String, keys: String): Pair<Int, String>? {
-        for (start in 0..head.length) {
-            // Chỉ tách sau dấu mở và khi vừa gõ chữ: "file.ko", link dán "https://x.co" không bị bung
-            if (start > 0 && (typed.isEmpty() || !Spacing.opensShortcut(head[start - 1]))) continue
-            val part = head.substring(start)
-            for (word in listOf(typed, keys).distinct()) {
-                val token = part + word
-                if (token.isEmpty()) continue
-                // "Ko" (tự viết hoa đầu câu) khớp "ko" thì giữ chữ hoa: "Không"
-                val expansion = prefs.shortcuts[token]
-                    ?: prefs.shortcuts[token.lowercase()]?.let { e -> if (token.first().isUpperCase()) e.replaceFirstChar { it.titlecase() } else e }
-                if (expansion != null) return part.length to expansion
-            }
-        }
-        return null
     }
 
     /**
