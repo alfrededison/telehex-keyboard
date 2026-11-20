@@ -1,7 +1,4 @@
-package com.telehex.keyboard.layout
-
-import org.json.JSONArray
-import org.json.JSONObject
+package com.telehex.layout
 
 /**
  * Mã phím trong lưới. Chữ thường `a`..`z`, số `0`..`9` (hàng số), dấu câu ([PUNCT]: `,` `.`, và `?` `!` `'` của tổ ong 8 cột),
@@ -85,16 +82,6 @@ class LayoutModel(val rows: List<List<String?>>) {
         return out
     }
 
-    fun toJson(): String {
-        val arr = JSONArray()
-        for (row in rows) {
-            val jr = JSONArray()
-            for (c in row) jr.put(c ?: JSONObject.NULL)
-            arr.put(jr)
-        }
-        return arr.toString()
-    }
-
     companion object {
         /**
          * Gần QWERTY nhất trên lưới 7 cột: hai hàng trên đọc zigzag `⚙ Q W E R T G Y H U I O P 123` (⚙ sát mép trái,
@@ -163,14 +150,5 @@ class LayoutModel(val rows: List<List<String?>>) {
             GridSpec.QWERTY -> QWERTY
             GridSpec.QWERTY_NUM -> QWERTY_NUM
         }
-
-        fun fromJson(json: String): LayoutModel? = runCatching {
-            val arr = JSONArray(json)
-            val rows = (0 until arr.length()).map { r ->
-                val jr = arr.getJSONArray(r)
-                (0 until jr.length()).map { c -> if (jr.isNull(c)) null else jr.getString(c) }
-            }
-            LayoutModel(rows)
-        }.getOrNull()
     }
 }

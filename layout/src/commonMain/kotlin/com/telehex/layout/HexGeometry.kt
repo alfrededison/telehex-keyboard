@@ -1,13 +1,19 @@
-package com.telehex.keyboard.layout
+package com.telehex.layout
 
-import android.graphics.Path
-import android.graphics.PointF
-import android.graphics.RectF
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sqrt
+
+/** Một điểm trên lưới phím (pixel trên Android, point trên iOS). */
+data class GridPoint(val x: Float, val y: Float)
+
+/** Hình vẽ một phím, đã chừa khe hở: đa giác (lục giác, phím cách tổ ong) hoặc chữ nhật bo góc. */
+sealed class KeyShape {
+    data class Polygon(val points: List<GridPoint>) : KeyShape()
+    data class RoundRect(val left: Float, val top: Float, val right: Float, val bottom: Float, val radius: Float) : KeyShape()
+}
 
 /**
  * Hình học một lưới phím theo [GridSpec]: vị trí, hình vẽ và hit-test của từng ô. Mọi đơn vị là pixel.
@@ -21,13 +27,13 @@ interface KeyGeometry {
     val pad: Float
     val gridHeight: Float
 
-    fun center(r: Int, c: Int): PointF
+    fun center(r: Int, c: Int): GridPoint
 
     /** Tâm của phím chiếm [n] ô từ ô (r, c) sang phải. */
-    fun keyCenter(r: Int, c: Int, n: Int): PointF
+    fun keyCenter(r: Int, c: Int, n: Int): GridPoint
 
     /** Hình vẽ của phím chiếm [n] ô từ ô (r, c) sang phải, đã chừa khe hở. */
-    fun keyPath(r: Int, c: Int, n: Int): Path
+    fun keyShape(r: Int, c: Int, n: Int): KeyShape
 
     /** Ô chứa điểm (x, y), hoặc null nếu ngoài lưới. */
     fun cellAt(x: Float, y: Float): Pair<Int, Int>? = nearestCells(x, y).firstOrNull()?.first
@@ -94,33 +100,34 @@ class HexGeometry(
 
     fun centerX(r: Int, c: Int): Float = pad + spec.centerX(r, c) * w
     fun centerY(r: Int): Float = rowTops[r] + cellH(r) / 2f
-    override fun center(r: Int, c: Int): PointF = PointF(centerX(r, c), centerY(r))
+    override fun center(r: Int, c: Int): GridPoint = GridPoint(centerX(r, c), centerY(r))
 
-    override fun keyCenter(r: Int, c: Int, n: Int): PointF =
-        PointF(pad + spec.left(r, c) * w + n * cellW(r) / 2f, centerY(r))
+    override fun keyCenter(r: Int, c: Int, n: Int): GridPoint =
+        GridPoint(pad + spec.left(r, c) * w + n * cellW(r) / 2f, centerY(r))
 
     /** Lục giác của ô (r, c), thu nhỏ để tạo khe hở, giữ nguyên tâm. */
-    fun hexPath(r: Int, c: Int): Path {
+    fun hexShape(r: Int, c: Int): KeyShape.Polygon {
         val cx = centerX(r, c); val cy = centerY(r)
         val iw = cellW(r) - gap
         val ih = iw * 2f / KeyGeometry.SQRT3 * spec.stretches[r]
-        return Path().apply {
-            moveTo(cx, cy - ih / 2)
-            lineTo(cx + iw / 2, cy - ih / 4)
-            lineTo(cx + iw / 2, cy + ih / 4)
-            lineTo(cx, cy + ih / 2)
-            lineTo(cx - iw / 2, cy + ih / 4)
-            lineTo(cx - iw / 2, cy - ih / 4)
-            close()
-        }
+        return KeyShape.Polygon(
+            listOf(
+                GridPoint(cx, cy - ih / 2),
+                GridPoint(cx + iw / 2, cy - ih / 4),
+                GridPoint(cx + iw / 2, cy + ih / 4),
+                GridPoint(cx, cy + ih / 2),
+                GridPoint(cx - iw / 2, cy + ih / 4),
+                GridPoint(cx - iw / 2, cy - ih / 4),
+            )
+        )
     }
 
     /**
      * Một ô là lục giác. Nhiều ô (phím cách): đa giác ghép, cạnh trên răng cưa, hai cạnh bên thẳng, hai góc dưới vát.
      * Đỉnh co vào [gap]/2.
      */
-    override fun keyPath(r: Int, c: Int, n: Int): Path {
-        if (n == 1) return hexPath(r, c)
+    override fun keyShape(r: Int, c: Int, n: Int): KeyShape {
+        if (n == 1) return hexShape(r, c)
         val ox = pad + spec.left(r, c) * w
         val oy = rowTops[r]
         val w = cellW(r)
@@ -136,10 +143,7 @@ class HexGeometry(
         pts += n * w - w / 2 to h - g
         pts += w / 2 to h - g
         pts += g to h * 3 / 4
-        return Path().apply {
-            pts.forEachIndexed { i, (x, y) -> if (i == 0) moveTo(ox + x, oy + y) else lineTo(ox + x, oy + y) }
-            close()
-        }
+        return KeyShape.Polygon(pts.map { (x, y) -> GridPoint(ox + x, oy + y) })
     }
 
     /**
@@ -194,14 +198,13 @@ class RectGeometry(
 
     fun centerX(r: Int, c: Int): Float = pad + spec.centerX(r, c) * w
     fun centerY(r: Int): Float = top + r * p + p / 2f
-    override fun center(r: Int, c: Int): PointF = PointF(centerX(r, c), centerY(r))
+    override fun center(r: Int, c: Int): GridPoint = GridPoint(centerX(r, c), centerY(r))
 
-    override fun keyCenter(r: Int, c: Int, n: Int): PointF = PointF(pad + (spec.left(r, c) + n / 2f) * w, centerY(r))
+    override fun keyCenter(r: Int, c: Int, n: Int): GridPoint = GridPoint(pad + (spec.left(r, c) + n / 2f) * w, centerY(r))
 
-    override fun keyPath(r: Int, c: Int, n: Int): Path {
+    override fun keyShape(r: Int, c: Int, n: Int): KeyShape {
         val left = pad + spec.left(r, c) * w + insetX
-        val rect = RectF(left, top + r * p + insetY, left + n * w - 2 * insetX, top + (r + 1) * p - insetY)
-        return Path().apply { addRoundRect(rect, radius, radius, Path.Direction.CW) }
+        return KeyShape.RoundRect(left, top + r * p + insetY, left + n * w - 2 * insetX, top + (r + 1) * p - insetY, radius)
     }
 
     /**

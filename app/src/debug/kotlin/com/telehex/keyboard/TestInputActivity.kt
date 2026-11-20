@@ -19,7 +19,7 @@ class TestInputActivity : Activity() {
         // --es profile "Truyền thống": chọn profile có sẵn theo tên để chụp/so sánh bố cục
         intent.getStringExtra("profile")?.let { name ->
             val prefs = com.telehex.keyboard.data.Prefs(this)
-            com.telehex.keyboard.layout.Profile.BUILT_IN.firstOrNull { it.name == name }
+            com.telehex.layout.Profile.BUILT_IN.firstOrNull { it.name == name }
                 ?.let { prefs.saveProfiles(prefs.userProfiles, it) }
         }
         if (intent.hasExtra("onehanded")) com.telehex.keyboard.data.Prefs(this).oneHanded = intent.getIntExtra("onehanded", 0)

@@ -7,8 +7,8 @@ import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import com.telehex.keyboard.layout.GridSpec
-import com.telehex.keyboard.layout.Profile
+import com.telehex.layout.GridSpec
+import com.telehex.layout.Profile
 
 /**
  * Danh sách profile thay lưới phím (mở từ nút Profile của bảng sửa văn bản): profile có sẵn rồi profile của bạn,

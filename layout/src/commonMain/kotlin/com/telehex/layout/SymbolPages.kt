@@ -1,4 +1,4 @@
-package com.telehex.keyboard.layout
+package com.telehex.layout
 
 /**
  * Lớp 123: hai trang [CellGrid] gắn theo ô, sắp xếp riêng ở màn Sắp xếp phím. Phím chức năng và ô phím cách lấy

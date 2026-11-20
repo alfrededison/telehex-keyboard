@@ -1,4 +1,4 @@
-package com.telehex.keyboard.layout
+package com.telehex.layout
 
 import kotlin.math.abs
 

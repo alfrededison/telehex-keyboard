@@ -1,4 +1,4 @@
-package com.telehex.keyboard.layout
+package com.telehex.layout
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

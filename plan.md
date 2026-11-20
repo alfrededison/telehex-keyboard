@@ -14,7 +14,8 @@ Mã Android hiện tại là nguồn tham chiếu cho hành vi và hình học.
 
 ## 2. Kiến trúc và hình học
 
-- `telex/`: Kotlin Multiplatform; thuật toán chung ở `commonMain`, Unicode/IO theo nền tảng ở `jvmMain` và `appleMain`; Android tiếp tục dùng JVM artifact, iOS dùng framework native.
+- `telex/`: Kotlin Multiplatform; thuật toán chung ở `commonMain`, Unicode/IO theo nền tảng ở `jvmMain` và `appleMain`; Android tiếp tục dùng JVM artifact, iOS dùng framework native. Chỉ chứa Telex, sửa chính tả và dự đoán.
+- `layout/`: Kotlin Multiplatform thuần `commonMain`: kiểu lưới, lớp chữ / vuốt xuống / 123, profile có sẵn, hình học và nhận phím chạm (điểm và hình phím trung lập, mỗi app tự vẽ). JSON lưu bố cục của Android ở `app/data/LayoutJson.kt`.
 - `ios/`: app + keyboard extension UIKit đang triển khai. Chuẩn phát hành là đủ tính năng Android 0.8.1 mà iOS hỗ trợ; tiến độ và khác biệt nền tảng ở [bảng đối chiếu iOS](ios/docs/feature-parity.md).
 - `app/ime/`: InputMethodService và custom Views vẽ Canvas; settings/editor dùng Android Views.
 - `app/data/`: SharedPreferences cho tuỳ chọn/profile; file riêng cho mô hình và clipboard.

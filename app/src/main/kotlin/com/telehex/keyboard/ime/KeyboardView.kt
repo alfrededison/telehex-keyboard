@@ -13,9 +13,9 @@ import android.util.TypedValue
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
-import com.telehex.keyboard.layout.GridSpec
-import com.telehex.keyboard.layout.KeyCode
-import com.telehex.keyboard.layout.KeyGeometry
+import com.telehex.layout.GridSpec
+import com.telehex.layout.KeyCode
+import com.telehex.layout.KeyGeometry
 import com.telehex.telex.predict.GlideDecoder.Point
 import kotlin.math.hypot
 
@@ -380,7 +380,7 @@ open class KeyboardView @JvmOverloads constructor(
             for (cell in key.cells) cellToKey[cell] = key
             // Phím nhiều ô (phím cách) chiếm các ô liền nhau trên một hàng
             val (r, c) = key.cells.minBy { it.second }
-            Drawn(key, g.keyPath(r, c, key.cells.size), g.keyCenter(r, c, key.cells.size))
+            Drawn(key, g.keyShape(r, c, key.cells.size).toPath(), g.keyCenter(r, c, key.cells.size).toPointF())
         }
     }
 

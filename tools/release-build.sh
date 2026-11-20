@@ -60,7 +60,7 @@ else
 fi
 
 # Play needs the bundle signed with the project key, so a debug-key build makes only the APK.
-TASKS=(:telex:test :app:assembleRelease)
+TASKS=(:telex:test :layout:test :app:assembleRelease)
 if [ "$PROJECT_SIGNING" = 1 ]; then TASKS+=(:app:bundleRelease); fi
 ./gradlew --no-daemon -q "${TASKS[@]}"
 

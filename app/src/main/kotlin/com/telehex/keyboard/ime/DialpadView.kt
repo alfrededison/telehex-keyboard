@@ -13,7 +13,7 @@ import android.util.TypedValue
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
-import com.telehex.keyboard.layout.KeyCode
+import com.telehex.layout.KeyCode
 
 /**
  * Dialpad: phím chữ nhật bo góc như các bàn phím số khác (không dùng lục giác).

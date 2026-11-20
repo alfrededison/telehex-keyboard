@@ -6,8 +6,8 @@ import android.content.Context
 import android.os.SystemClock
 import android.test.InstrumentationTestCase
 import android.view.MotionEvent
-import com.telehex.keyboard.layout.KeyCode
-import com.telehex.keyboard.layout.Profile
+import com.telehex.layout.KeyCode
+import com.telehex.layout.Profile
 import com.telehex.telex.TelexConfig
 import java.util.concurrent.FutureTask
 

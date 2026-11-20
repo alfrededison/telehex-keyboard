@@ -1,6 +1,6 @@
 package com.telehex.keyboard.ime
 
-import com.telehex.keyboard.layout.Profile
+import com.telehex.layout.Profile
 import com.telehex.telex.TelexConfig
 import org.junit.Assert.assertEquals
 import org.junit.Test

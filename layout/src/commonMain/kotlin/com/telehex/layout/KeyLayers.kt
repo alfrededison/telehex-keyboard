@@ -1,4 +1,4 @@
-package com.telehex.keyboard.layout
+package com.telehex.layout
 
 /**
  * Lưới giá trị theo ô, cùng hình với lớp chữ ([GridSpec]); "" = trống. Ký tự vuốt xuống và hai trang lớp 123 gắn

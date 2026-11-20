@@ -122,7 +122,8 @@ Tiêu đề commit một dòng, bắt đầu bằng tiền tố chữ thường 
 | Tiền tố | Dùng khi |
 |---|---|
 | `core:` | Bộ gõ dùng chung: module KMP `telex/` (engine Telex, sửa chính tả, dự đoán), kể cả khi kéo theo sửa app để dùng thay đổi đó |
-| `app:` | Cùng một thay đổi ở **cả hai app** (`app/` và `ios/`) mà không đụng `telex/`: bố cục phím, giao diện, hành vi gõ viết riêng ở mỗi nền tảng |
+| `layout:` | Module KMP `layout/`: bố cục, lớp vuốt xuống và 123, profile có sẵn, hình học và nhận phím chạm, dùng chung cho hai app |
+| `app:` | Cùng một thay đổi ở **cả hai app** (`app/` và `ios/`) mà không đụng `telex/` hay `layout/`: giao diện, hành vi gõ viết riêng ở mỗi nền tảng |
 | `android:` | Chỉ app Android (`app/`) |
 | `ios:` | Chỉ app iOS (`ios/`) |
 | `ci:` | Workflow GitHub (`.github/`) và script phát hành |

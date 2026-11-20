@@ -32,13 +32,13 @@ import com.telehex.keyboard.ime.KeyPage
 import com.telehex.keyboard.ime.KeyboardView
 import com.telehex.keyboard.ime.Mode
 import com.telehex.keyboard.ime.Theme
-import com.telehex.keyboard.layout.CellGrid
-import com.telehex.keyboard.layout.GridCell
-import com.telehex.keyboard.layout.KeyCode
-import com.telehex.keyboard.layout.KeyLayers
-import com.telehex.keyboard.layout.LayoutModel
-import com.telehex.keyboard.layout.Profile
-import com.telehex.keyboard.layout.SymbolPages
+import com.telehex.layout.CellGrid
+import com.telehex.layout.GridCell
+import com.telehex.layout.KeyCode
+import com.telehex.layout.KeyLayers
+import com.telehex.layout.LayoutModel
+import com.telehex.layout.Profile
+import com.telehex.layout.SymbolPages
 
 /** Lớp đang sắp xếp: mỗi lớp đổi chỗ độc lập, hai lớp còn lại đứng yên theo ô. */
 enum class EditLayer { LETTERS, SWIPE, SYMBOLS }

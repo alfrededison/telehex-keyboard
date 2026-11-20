@@ -15,7 +15,7 @@ import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import com.telehex.keyboard.R
-import com.telehex.keyboard.layout.KeyGeometry
+import com.telehex.layout.KeyGeometry
 import kotlin.math.min
 
 /**

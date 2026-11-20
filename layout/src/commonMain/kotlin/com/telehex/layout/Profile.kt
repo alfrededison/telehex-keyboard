@@ -1,4 +1,4 @@
-package com.telehex.keyboard.layout
+package com.telehex.layout
 
 /**
  * Bộ bố cục đủ ba lớp: chữ, vuốt xuống, 123. Bàn phím luôn dùng đúng một profile; profile có sẵn

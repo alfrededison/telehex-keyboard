@@ -23,7 +23,7 @@ import com.telehex.keyboard.ime.KeyPage
 import com.telehex.keyboard.ime.KeyboardView
 import com.telehex.keyboard.ime.Mode
 import com.telehex.keyboard.ime.Theme
-import com.telehex.keyboard.layout.Profile
+import com.telehex.layout.Profile
 import com.telehex.telex.TelexConfig
 
 /** Trạng thái TeleHex trong hệ thống: đã bật trong danh sách bàn phím, đang là bàn phím hiện tại. */

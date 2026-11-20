@@ -4,12 +4,12 @@ package com.telehex.keyboard.data
 
 import android.content.Context
 import android.test.InstrumentationTestCase
-import com.telehex.keyboard.layout.CellGrid
-import com.telehex.keyboard.layout.KeyCode
-import com.telehex.keyboard.layout.KeyLayers
-import com.telehex.keyboard.layout.LayoutModel
-import com.telehex.keyboard.layout.Profile
-import com.telehex.keyboard.layout.SymbolPages
+import com.telehex.layout.CellGrid
+import com.telehex.layout.KeyCode
+import com.telehex.layout.KeyLayers
+import com.telehex.layout.LayoutModel
+import com.telehex.layout.Profile
+import com.telehex.layout.SymbolPages
 import org.json.JSONArray
 import org.json.JSONObject
 

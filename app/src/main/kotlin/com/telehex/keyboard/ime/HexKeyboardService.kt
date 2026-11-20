@@ -18,8 +18,8 @@ import android.widget.LinearLayout
 import com.telehex.keyboard.data.ClipboardStore
 import com.telehex.keyboard.data.PredictionStore
 import com.telehex.keyboard.data.Prefs
-import com.telehex.keyboard.layout.KeyCode
-import com.telehex.keyboard.layout.Profile
+import com.telehex.layout.KeyCode
+import com.telehex.layout.Profile
 import com.telehex.keyboard.settings.SettingsActivity
 import com.telehex.telex.Corrector
 import com.telehex.telex.TelexDecomposer

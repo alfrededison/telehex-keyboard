@@ -1,10 +1,10 @@
 package com.telehex.keyboard.ime
 
 import com.telehex.keyboard.R
-import com.telehex.keyboard.layout.CellGrid
-import com.telehex.keyboard.layout.KeyCode
-import com.telehex.keyboard.layout.LayoutModel
-import com.telehex.keyboard.layout.SymbolPages
+import com.telehex.layout.CellGrid
+import com.telehex.layout.KeyCode
+import com.telehex.layout.LayoutModel
+import com.telehex.layout.SymbolPages
 import com.telehex.telex.TelexConfig
 
 /**

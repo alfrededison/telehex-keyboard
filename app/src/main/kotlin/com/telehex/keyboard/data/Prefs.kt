@@ -2,12 +2,12 @@ package com.telehex.keyboard.data
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.telehex.keyboard.layout.CellGrid
-import com.telehex.keyboard.layout.GridSpec
-import com.telehex.keyboard.layout.KeyLayers
-import com.telehex.keyboard.layout.LayoutModel
-import com.telehex.keyboard.layout.Profile
-import com.telehex.keyboard.layout.SymbolPages
+import com.telehex.layout.CellGrid
+import com.telehex.layout.GridSpec
+import com.telehex.layout.KeyLayers
+import com.telehex.layout.LayoutModel
+import com.telehex.layout.Profile
+import com.telehex.layout.SymbolPages
 import com.telehex.telex.TelexConfig
 import org.json.JSONArray
 import org.json.JSONObject

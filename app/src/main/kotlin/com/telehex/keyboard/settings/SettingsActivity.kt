@@ -36,7 +36,7 @@ import com.telehex.keyboard.R
 import com.telehex.keyboard.data.Prefs
 import com.telehex.keyboard.data.PredictionStore
 import com.telehex.keyboard.ime.Accent
-import com.telehex.keyboard.layout.Profile
+import com.telehex.layout.Profile
 
 /** Màn hình Cài đặt (View thuần, không thêm dependency). */
 class SettingsActivity : Activity() {
