@@ -50,14 +50,14 @@ object KeyLayers {
      * chức năng khác và phím cách lấy từ lớp chữ.
      */
     fun symbolUsable(code: String): Boolean =
-        isCharCell(code) || code == KeyCode.SETTINGS || code == KeyCode.SHIFT || code == "," || code == "."
+        isCharCell(code) || code == KeyCode.SETTINGS || code == KeyCode.SHIFT || KeyCode.isPunct(code)
 
     /** [reconcile] lớp 123: giá trị bị che dời sang ô chữ/số trước, chỉ khi hết ô đó mới chiếm ô ⚙ / `,` `.` trống. */
     fun reconcileSymbols(layout: LayoutModel, pages: List<CellGrid>): List<CellGrid> =
         reconcile(layout, pages, ::symbolUsable, ::isCharCell)
 
     /** Ô dùng được của lớp vuốt xuống: ô chữ, ô số và `,` `.`. */
-    fun swipeUsable(code: String): Boolean = isCharCell(code) || code == "," || code == "."
+    fun swipeUsable(code: String): Boolean = isCharCell(code) || KeyCode.isPunct(code)
 
     fun swap(pages: List<CellGrid>, a: GridCell, b: GridCell): List<CellGrid> {
         val va = pages[a.page][a.r, a.c]
@@ -148,9 +148,13 @@ object KeyLayers {
     /** Lớp vuốt xuống của bố cục truyền thống có hàng số ([QWERTY_NUM_SWIPE_BY_CODE]). */
     val QWERTY_NUM_SWIPE: CellGrid = CellGrid.fromCodes(LayoutModel.QWERTY_NUM) { QWERTY_NUM_SWIPE_BY_CODE[it] }
 
+    /** Lớp vuốt xuống của tổ ong 8 cột: chữ và `,` `.` như mặc định, `'` ra `"`; `?` `!` để trống. */
+    val HEX8_SWIPE: CellGrid = CellGrid.fromCodes(LayoutModel.HEX8) { (DEFAULT_SWIPE_BY_CODE + ("'" to "\""))[it] }
+
     fun defaultSwipe(spec: GridSpec): CellGrid = when (spec) {
         GridSpec.HEX7 -> DEFAULT_SWIPE
         GridSpec.HEX7_NUM -> HEX7_NUM_SWIPE
+        GridSpec.HEX8 -> HEX8_SWIPE
         GridSpec.QWERTY -> QWERTY_SWIPE
         GridSpec.QWERTY_NUM -> QWERTY_NUM_SWIPE
     }

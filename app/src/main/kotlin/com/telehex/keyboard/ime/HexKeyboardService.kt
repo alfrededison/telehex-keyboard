@@ -1356,7 +1356,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             code == KeyCode.SHIFT -> pressShift()
             // `,` `.` và hàng số: ở lớp chữ, vuốt xuống gõ ký tự vuốt xuống như phím chữ (rỗng thì không chèn gì, như
             // iOS); chạm, hay vuốt ở lớp 123, gõ đúng phím
-            code == "," || code == "." || (KeyCode.isDigit(code) && mode == Mode.ABC) ->
+            KeyCode.isPunct(code) || (KeyCode.isDigit(code) && mode == Mode.ABC) ->
                 if (gesture != Gesture.SWIPE_DOWN || mode != Mode.ABC) insertChar(code, autoSpace)
                 else if (key.hint.isNotEmpty()) insertChar(key.hint, autoSpace)
             mode == Mode.DIAL -> commitSyllable(if (gesture == Gesture.SWIPE_DOWN && key.hint.isNotEmpty()) key.hint else code)
@@ -1375,7 +1375,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
      * gõ ký tự, nên không đụng vuốt xuống ⚙ hay long-press của 123.
      */
     private fun canLift(key: Key): Boolean = when (mode) {
-        Mode.ABC -> key.isLetter || KeyCode.isDigit(key.code) || key.code == "," || key.code == "."
+        Mode.ABC -> key.isLetter || KeyCode.isDigit(key.code) || KeyCode.isPunct(key.code)
         Mode.SYMBOLS -> key.kind == KeyKind.SYMBOL && key.code.isNotEmpty()
         else -> false
     }

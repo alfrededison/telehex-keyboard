@@ -70,8 +70,8 @@ class HexGeometry(
     override val pad: Float = padding + (if (alignRight) viewWidth * (1 - scale) else 0f)
     val usable: Float = viewWidth * scale - 2 * padding
     override val w: Float = usable / spec.span
-    /** Chiều cao lục giác cỡ thường. */
-    val h: Float = w * 2f / KeyGeometry.SQRT3
+    /** Chiều cao lục giác cỡ thường (gồm độ giãn dọc [GridSpec.stretch]). */
+    val h: Float = w * 2f / KeyGeometry.SQRT3 * spec.stretch
     /** Bước hàng giữa hai hàng cùng cỡ thường. */
     val p: Float = 0.75f * h
 
@@ -79,7 +79,7 @@ class HexGeometry(
     fun cellW(r: Int): Float = w * spec.widths[r]
 
     /** Chiều cao lục giác của hàng [r]. */
-    fun cellH(r: Int): Float = cellW(r) * 2f / KeyGeometry.SQRT3
+    fun cellH(r: Int): Float = cellW(r) * 2f / KeyGeometry.SQRT3 * spec.stretch
 
     /** Mép trên (đỉnh lục giác) của từng hàng: hàng cùng cỡ gối 1/4 chiều cao, khác cỡ thì xếp chồng. */
     private val rowTops: FloatArray = FloatArray(spec.rows).also { t ->
@@ -103,7 +103,7 @@ class HexGeometry(
     fun hexPath(r: Int, c: Int): Path {
         val cx = centerX(r, c); val cy = centerY(r)
         val iw = cellW(r) - gap
-        val ih = iw * 2f / KeyGeometry.SQRT3
+        val ih = iw * 2f / KeyGeometry.SQRT3 * spec.stretch
         return Path().apply {
             moveTo(cx, cy - ih / 2)
             lineTo(cx + iw / 2, cy - ih / 4)
@@ -145,7 +145,7 @@ class HexGeometry(
     /**
      * Ô có tâm gần nhất, khoảng cách chia theo bề rộng ô của hàng (rồi nhân lại [w] để lưới cùng cỡ giữ số đo cũ):
      * lưới cùng cỡ thì Voronoi chính là các lục giác; giữa hàng số nhỏ và hàng chữ, ranh giới rơi đúng chỗ hai hàng
-     * xếp chồng.
+     * xếp chồng. Lục giác giãn dọc thì chia khoảng cách dọc cho độ giãn để Voronoi vẫn là các lục giác.
      */
     override fun nearestCells(x: Float, y: Float): List<Pair<Pair<Int, Int>, Float>> {
         if (y < top - h / 2 || y > top + gridHeight + h / 2) return emptyList()
@@ -158,7 +158,7 @@ class HexGeometry(
             // Hàng tổ ong lệch đều: đoán cột từ mép trái của ô đầu hàng
             val cGuess = ((x - pad) / cellW(r) - spec.left(r, 0) / spec.widths[r] - 0.5f).toInt().coerceIn(0, cols - 1)
             for (c in (cGuess - 1).coerceAtLeast(0)..(cGuess + 1).coerceAtMost(cols - 1)) {
-                val dx = (x - centerX(r, c)) * k; val dy = (y - centerY(r)) * k
+                val dx = (x - centerX(r, c)) * k; val dy = (y - centerY(r)) * k / spec.stretch
                 found.add((r to c) to dx * dx + dy * dy)
             }
         }

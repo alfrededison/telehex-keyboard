@@ -85,6 +85,7 @@ class ProfilePanel(
     private fun kindName(p: Profile) = when (p.spec) {
         GridSpec.HEX7 -> "Tổ ong 7 cột"
         GridSpec.HEX7_NUM -> "Tổ ong 7 cột, có hàng số"
+        GridSpec.HEX8 -> "Tổ ong 8 cột, có ⇧ ⌫"
         GridSpec.QWERTY -> "QWERTY 10 cột"
         GridSpec.QWERTY_NUM -> "QWERTY 10 cột, có hàng số"
     }

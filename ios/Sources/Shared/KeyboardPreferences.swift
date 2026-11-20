@@ -1,10 +1,10 @@
 import UIKit
 
 /// Kiểu lưới của một profile, nhận ra từ số ô như `GridSpec` của Android: tổ ong 7 cột (35 ô), tổ ong có hàng số (45 ô),
-/// truyền thống QWERTY 10 cột (38 ô) hoặc truyền thống có hàng số (48 ô). Ô đánh số theo thứ tự đọc, hàng trên trước. Phím cách nằm ở đâu
+/// tổ ong 8 cột (40 ô), truyền thống QWERTY 10 cột (38 ô) hoặc truyền thống có hàng số (48 ô). Ô đánh số theo thứ tự đọc, hàng trên trước. Phím cách nằm ở đâu
 /// trong hàng cuối là do profile, để profile riêng lưu từ trước khi bố cục có sẵn dời phím cách vẫn hợp lệ.
 enum GridSpec: Equatable, CaseIterable {
-    case hex7, hex7Num, qwerty, qwertyNum
+    case hex7, hex7Num, hex8, qwerty, qwertyNum
     static func of(count: Int) -> GridSpec? { allCases.first { $0.count == count } }
     /// Mép trái từng ô theo bề rộng ô, từng hàng.
     var lefts: [[CGFloat]] {
@@ -13,6 +13,7 @@ enum GridSpec: Equatable, CaseIterable {
         case .hex7: return [row(7, 0.5), row(7, 0), row(7, 0.5), row(7, 0), row(7, 0.5)]
         // Hàng số: 10 lục giác nhỏ rộng 0,75 ô, vừa đúng bề ngang 7,5 ô.
         case .hex7Num: return [row(10, 0, 0.75)] + GridSpec.hex7.lefts
+        case .hex8: return [row(8, 0.5), row(8, 0), row(8, 0.5), row(8, 0), row(8, 0.5)]
         // Hàng Z: ⇧ sát mép trái, Z…M căn giữa (Z ngay dưới S), ⌫ sát mép phải.
         case .qwerty: return [row(10, 0), row(9, 0.5), [0] + row(7, 1.5) + [9], row(10, 0)]
         case .qwertyNum: return [row(10, 0)] + GridSpec.qwerty.lefts
@@ -26,19 +27,21 @@ enum GridSpec: Equatable, CaseIterable {
     var hexRowTops: [CGFloat] {
         var tops: [CGFloat] = [0]
         for row in 1..<widths.count {
-            let previous = widths[row - 1] * 2 / HexShape.sqrt3
+            let previous = widths[row - 1] * 2 / HexShape.sqrt3 * stretch
             tops.append(tops[row - 1] + (widths[row] == widths[row - 1] ? 0.75 * previous : previous))
         }
         return tops
     }
     /// Tổ ong: chiều cao lưới theo bề rộng ô thường (lưới 7 cột: 8/√3).
-    var hexHeight: CGFloat { hexRowTops[hexRowTops.count - 1] + widths[widths.count - 1] * 2 / HexShape.sqrt3 }
+    var hexHeight: CGFloat { hexRowTops[hexRowTops.count - 1] + widths[widths.count - 1] * 2 / HexShape.sqrt3 * stretch }
+    /// Lục giác giãn dọc: tổ ong 8 cột có ô hẹp hơn nên giãn 8,5/7,5 để lưới và phím cao bằng tổ ong 7 cột, như Android.
+    var stretch: CGFloat { self == .hex8 ? 8.5 / 7.5 : 1 }
     var count: Int { rowSizes.reduce(0, +) }
     /// Bề rộng lưới theo ô.
-    var span: CGFloat { isHex ? 7.5 : 10 }
-    var isHex: Bool { self == .hex7 || self == .hex7Num }
+    var span: CGFloat { self == .hex8 ? 8.5 : isHex ? 7.5 : 10 }
+    var isHex: Bool { self == .hex7 || self == .hex7Num || self == .hex8 }
     /// Tên kiểu lưới ở danh sách profile.
-    var title: String { switch self { case .hex7: "Tổ ong"; case .hex7Num: "Tổ ong có số"; case .qwerty: "QWERTY"; case .qwertyNum: "QWERTY có số" } }
+    var title: String { switch self { case .hex7: "Tổ ong"; case .hex7Num: "Tổ ong có số"; case .hex8: "Tổ ong 8 cột"; case .qwerty: "QWERTY"; case .qwertyNum: "QWERTY có số" } }
     var spaceCells: Int { isHex ? 3 : 4 }
     /// Các ô của hàng cuối, nơi phím cách nằm (ô đầu giữ " ", các ô sau của phím cách để trống).
     var lastRow: Range<Int> { (count - rowSizes[rowSizes.count - 1])..<count }
@@ -64,6 +67,10 @@ struct KeyboardProfile: Codable, Equatable, Identifiable {
     static let defaultLetters = ["q","e","t","y","u","o","#symbols", "#settings","w","r","g","h","i","p", "a","s","d","f","j","k","l", "z","x","c","v","b","n","m", "#emoji",","," ","","",".","\n"]
     /// Tổ ong có hàng số: hàng 1…0 (10 lục giác nhỏ) trên `defaultLetters`.
     static let hexNumLetters: [String] = "1234567890".map(String.init) + defaultLetters
+    /// Tổ ong 8 cột: `defaultLetters` thêm cột phải. Hàng Z nhường ô đầu cho ⇧ (Z…M dịch phải một ô), ⌫ sau L, `'` `!` ở
+    /// cột thêm của hai hàng trên, `?` cạnh `.`. Như Android.
+    static let hex8Letters = ["q","e","t","y","u","o","'","#symbols", "#settings","w","r","g","h","i","p","!", "a","s","d","f","j","k","l","#backspace",
+                              "#shift","z","x","c","v","b","n","m", "#emoji",","," ","","",".","?","\n"]
     /// Truyền thống (0.8.0): đúng thứ tự QWERTY, ⇧ và ⌫ ở hàng Z. Hàng cuối (0.8.4): ba phím 123 ☺ ⚙ bên trái phím cách
     /// 4 ô, ba phím `,` `.` ↵ bên phải (đến 0.8.3: 123 ☺ ⚙ `,` bên trái).
     static let qwertyLetters: [String] = ["q","w","e","r","t","y","u","i","o","p", "a","s","d","f","g","h","j","k","l",
@@ -94,6 +101,13 @@ struct KeyboardProfile: Codable, Equatable, Identifiable {
         ["~","`","|","•","√","π","÷","×","§","∆", "£","₫","€","¥","¢","^","", "#page","°","©","®","™","✓","…",
          "«","»","±","≤","≥","≠","∞", "¡","¿","²","³","½","‰","¶", "","","","","","",""],
     ]
+    /// Tổ ong 8 cột: ô chữ hàng Q, W, A như `hexSymbols`, hàng Z dịch theo chữ; `;` `%` `=` về trang 1, như Android.
+    static let hex8Symbols: [[String]] = [
+        ["1","3","5","7","9","0",";","", "#page","2","4","6","8","(",")","%", "@","#","$","_","&","-","+","",
+         "=","*","\"","'",":","/","!","?", "","","","","","","…",""],
+        ["~","|","√","÷","§","\\","™","", "#page","`","•","π","×","{","}","∆", "£","₫","€","¥","^","°","¢","",
+         "¶","©","®","✓","[","]","«","»", "","<","","","",">","",""],
+    ]
     static let qwertySymbols: [[String]] = [
         ["1","2","3","4","5","6","7","8","9","0", "@","#","$","_","&","-","+","(",")",
          "#page","*","\"","'",":",";","!","?","", "","","/","","","","","","",""],
@@ -112,6 +126,7 @@ struct KeyboardProfile: Codable, Equatable, Identifiable {
         ("qwertyNum","Có hàng số",qwertyNumLetters,qwertyNumSymbols,qwertyNumSwipeByCode),
         // Hàng số tổ ong không có ký tự vuốt xuống: lục giác nhỏ không đủ chỗ, `! @ # …` có ở lớp 123. Như Android.
         ("hexNum","Tổ ong có hàng số",hexNumLetters,hexNumSymbols,qwertyNumSwipeByCode.filter { !KeyboardProfile.isDigit($0.key) }),
+        ("hex8","Tổ ong 8 cột",hex8Letters,hex8Symbols,swipeByCode.merging(["'":"\""]) { $1 }),
     ].map { preset in
         KeyboardProfile(id: "builtin." + preset.0, name: preset.1, letters: preset.2, swipe: preset.2.map { preset.4[$0] ?? "" }, symbols: preset.3)
     }
@@ -122,9 +137,11 @@ struct KeyboardProfile: Codable, Equatable, Identifiable {
     /// Ô chữ hay ô số (hàng số): lớp 123 luôn hiện giá trị của trang ở đây; đổi chỗ được như chữ.
     static func isCharCell(_ value: String) -> Bool { isLetter(value) || isDigit(value) }
     /// Ô giữ được ký tự vuốt xuống: chữ, số và `,` `.`.
-    static func swipeUsable(_ code: String) -> Bool { isCharCell(code) || code == "," || code == "." }
+    /// Dấu câu có phím riêng ở lớp chữ (`?` `!` `'` của tổ ong 8 cột): chạm gõ đúng dấu, có ký tự vuốt xuống và giá trị lớp 123.
+    static func isPunct(_ code: String) -> Bool { [",",".","?","!","'"].contains(code) }
+    static func swipeUsable(_ code: String) -> Bool { isCharCell(code) || isPunct(code) }
     /// Ô giữ được giá trị lớp 123: chữ, số, cùng ⚙ ⇧ `,` `.` (có giá trị thì thay phím của lớp chữ, trống thì giữ phím đó).
-    static func symbolUsable(_ code: String) -> Bool { isCharCell(code) || ["#settings","#shift",",","."].contains(code) }
+    static func symbolUsable(_ code: String) -> Bool { isCharCell(code) || isPunct(code) || ["#settings","#shift"].contains(code) }
     /// Ô không đổi chỗ được: phím cách và ↵.
     static func fixed(_ code: String) -> Bool { code == " " || code.isEmpty || code == "\n" }
     func valid() -> Bool {

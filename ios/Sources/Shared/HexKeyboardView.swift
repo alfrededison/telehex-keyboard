@@ -12,7 +12,8 @@ enum HexShape {
         let h = bounds.height
         if cells <= 1 {
             let cx = bounds.midX, cy = bounds.midY
-            let iw = bounds.width - gap, ih = iw * 2 / sqrt3
+            // Lục giác giãn dọc (tổ ong 8 cột) giữ tỉ lệ cao/rộng của khung phím.
+            let iw = bounds.width - gap, ih = iw * bounds.height / max(1, bounds.width)
             path.move(to: CGPoint(x: cx, y: cy - ih / 2))
             path.addLine(to: CGPoint(x: cx + iw / 2, y: cy - ih / 4))
             path.addLine(to: CGPoint(x: cx + iw / 2, y: cy + ih / 4))
@@ -899,7 +900,7 @@ final class HexKeyboardView: UIView {
             } else {
                 let row = spec.position(index).row, cell = width * spec.width(index)
                 button.frame = CGRect(x: left + spec.left(index) * width, y: top + (spec.isHex ? hexTops[row] * width : CGFloat(row) * height),
-                                      width: cell * CGFloat(code == " " ? spec.spaceCells : 1), height: spec.isHex ? cell * 2 / HexShape.sqrt3 : height)
+                                      width: cell * CGFloat(code == " " ? spec.spaceCells : 1), height: spec.isHex ? cell * 2 / HexShape.sqrt3 * spec.stretch : height)
             }
         }
         panel.frame = CGRect(x: pad,y: bar,width: bounds.width - 2 * pad,height: max(1,bounds.height - bar - safeAreaInsets.bottom - 4))

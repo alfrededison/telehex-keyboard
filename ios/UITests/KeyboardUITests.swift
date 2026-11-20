@@ -58,6 +58,19 @@ final class KeyboardUITests: XCTestCase {
         XCTAssertLessThan(app.buttons["key-q"].frame.minX, 6)
         Thread.sleep(forTimeInterval: 1.5)
     }
+    func testEightColumnHoneycombLayout() {
+        let app = preview()
+        openSettings("layout-option-builtin.hex8", in: app)
+        backHome(app)
+        app.textViews["typing-field"].recordedTap(in: app)
+        // ⇧ ⌫ và ? ! ' là phím riêng. Ô thử không tự viết hoa nên ⇧ làm chữ kế tiếp thành hoa.
+        for key in ["h","o","?","#backspace","!"," ","#shift","z","'"] { app.buttons["key-\(key)"].recordedTap(in: app) }
+        XCTAssertEqual(app.textViews["typing-field"].value as? String,"ho! Z'")
+        // Lục giác giãn dọc: cao hơn lục giác đều cùng bề rộng
+        let q = app.buttons["key-q"].frame
+        XCTAssertGreaterThan(q.height, q.width * 2 / CGFloat(3).squareRoot() + 2)
+        Thread.sleep(forTimeInterval: 1.5)
+    }
     func testLayoutEditorLayerTransitions() {
         let app = preview()
         openSettings("settings-keyboard", in: app)

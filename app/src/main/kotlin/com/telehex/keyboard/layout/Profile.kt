@@ -52,6 +52,9 @@ class Profile(val name: String, val letters: LayoutModel, val swipe: CellGrid, v
         /** Tổ ong thêm hàng số 1…0 (lưới [GridSpec.HEX7_NUM]: 10 lục giác nhỏ trên lưới mặc định). */
         val HEX7_NUM = Profile("Tổ ong có hàng số", LayoutModel.HEX7_NUM, KeyLayers.HEX7_NUM_SWIPE, SymbolPages.HEX7_NUM)
 
+        /** Tổ ong 8 cột (lưới [GridSpec.HEX8]): có phím ⇧ ⌫ và `?` `!` `'`, phím hẹp hơn nhưng giãn dọc. */
+        val HEX8 = Profile("Tổ ong 8 cột", LayoutModel.HEX8, KeyLayers.HEX8_SWIPE, SymbolPages.HEX8)
+
         /** Bàn phím truyền thống kiểu Gboard (lưới [GridSpec.QWERTY]) cho ai chưa quen lưới tổ ong. */
         val QWERTY = Profile("Truyền thống", LayoutModel.QWERTY, KeyLayers.QWERTY_SWIPE, SymbolPages.QWERTY)
 
@@ -62,7 +65,7 @@ class Profile(val name: String, val letters: LayoutModel, val swipe: CellGrid, v
          * Profile có sẵn, hiện trước profile người dùng tạo. "Cân bằng hai ngón" và "Công thái học" bỏ ở 0.7.1: ai đang
          * dùng thì [adopt] giữ nguyên bố cục thành profile "Của tôi".
          */
-        val BUILT_IN: List<Profile> = listOf(DEFAULT, QWERTY, QWERTY_NUM, HEX7_NUM)
+        val BUILT_IN: List<Profile> = listOf(DEFAULT, QWERTY, QWERTY_NUM, HEX7_NUM, HEX8)
 
         /** Profile có sẵn của kiểu lưới [spec]: điểm xuất phát khi tạo mới hay về mặc định. */
         fun builtInFor(spec: GridSpec): Profile = BUILT_IN.first { it.spec == spec }

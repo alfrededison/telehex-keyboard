@@ -61,7 +61,9 @@ object KeyPage {
                 code == KeyCode.ABC -> Key(code, cell, "ABC", kind = KeyKind.FUNCTION)
                 code == KeyCode.BACKSPACE -> Key(code, cell, "⌫", kind = KeyKind.FUNCTION)
                 code == KeyCode.SHIFT -> Key(code, cell, "⇧", kind = KeyKind.FUNCTION)
-                code == "," || code == "." ->
+                // Phím dấu câu của lớp chữ (ở lớp 123 chỉ khi ô trống, hiện lại dấu đó). Ký hiệu `' ! ?` của trang 123
+                // vẫn là phím ký hiệu: kéo đổi chỗ được, màu như ký hiệu khác.
+                KeyCode.isPunct(code) && (mode != Mode.SYMBOLS || layout[r, c] == code) ->
                     Key(code, cell, code, hint = if (mode == Mode.ABC) swipe[r, c] else "", kind = KeyKind.FUNCTION)
                 mode == Mode.SYMBOLS -> Key(code, cell, code, kind = KeyKind.SYMBOL)
                 KeyCode.isDigit(code) -> Key(code, cell, code, hint = swipe[r, c], kind = KeyKind.CONSONANT)

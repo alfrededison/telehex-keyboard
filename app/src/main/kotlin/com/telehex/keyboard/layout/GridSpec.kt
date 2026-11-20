@@ -18,6 +18,8 @@ enum class GridSpec(
     val shape: Shape,
     /** Bề rộng ô của từng hàng, theo bề rộng ô thường (hàng số tổ ong 0,75). Mặc định mọi hàng 1. */
     val widths: List<Float> = List(lefts.size) { 1f },
+    /** Lục giác giãn dọc: chiều cao = bề rộng · 2/√3 · [stretch]. 1 = lục giác đều. */
+    val stretch: Float = 1f,
 ) {
     /** Tổ ong 7 cột: 5 hàng lục giác đều lệch xen kẽ ½ ô; phím cách 3 ô giữa hàng cuối. */
     HEX7(HEX_ROWS, 7.5f, 4, 3, Shape.HEX),
@@ -27,6 +29,12 @@ enum class GridSpec(
      * nhỏ không lồng được vào hàng dưới nên hai hàng xếp chồng, không gối 1/4 như các hàng tổ ong.
      */
     HEX7_NUM(listOf(row(10, 0f, .75f)) + HEX_ROWS, 7.5f, 5, 3, Shape.HEX, listOf(.75f) + List(5) { 1f }),
+
+    /**
+     * Tổ ong 8 cột: 5 hàng 8 ô lệch xen kẽ ½ ô. Ô hẹp hơn [HEX7] (bề ngang 8,5 ô thay 7,5) nên lục giác giãn dọc 8,5/7,5
+     * để lưới cao bằng [HEX7] và phím cao bằng phím tổ ong 7 cột.
+     */
+    HEX8(List(5) { row(8, if (it % 2 == 0) .5f else 0f) }, 8.5f, 4, 3, Shape.HEX, stretch = 8.5f / 7.5f),
 
     /**
      * Truyền thống: 4 hàng phím chữ nhật. Q…P đủ 10 ô, A…L lệch ½ ô; hàng Z có ⇧ sát mép trái, Z…M căn giữa (Z ngay

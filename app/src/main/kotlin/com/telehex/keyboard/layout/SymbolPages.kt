@@ -64,6 +64,32 @@ object SymbolPages {
     )
 
     /**
+     * Hai trang của tổ ong 8 cột: ô chữ hàng Q, W, A cùng ký tự với [DEFAULT]; hàng Z dịch phải theo chữ. Thêm chỗ nên
+     * `;` `%` `=` về trang 1 (ô `'`, `!`, ⇧) và `…` ở ô `?` (trang 1 đã có `?` ở ô M, ô trống sẽ hiện `?` lần nữa); trang 2
+     * thêm ™ ∆ ¢ ¶ « ». Ô `,` `.` trang 1 và ô `?` trang 2 giữ dấu của lớp chữ.
+     */
+    val HEX8: List<CellGrid> = listOf(
+        CellGrid(
+            listOf(
+                listOf("1", "3", "5", "7", "9", "0", ";", ""),
+                listOf(P, "2", "4", "6", "8", "(", ")", "%"),
+                listOf("@", "#", "$", "_", "&", "-", "+", ""),
+                listOf("=", "*", "\"", "'", ":", "/", "!", "?"),
+                listOf("", "", "", "", "", "", "…", ""),
+            )
+        ),
+        CellGrid(
+            listOf(
+                listOf("~", "|", "√", "÷", "§", "\\", "™", ""),
+                listOf(P, "`", "•", "π", "×", "{", "}", "∆"),
+                listOf("£", "₫", "€", "¥", "^", "°", "¢", ""),
+                listOf("¶", "©", "®", "✓", "[", "]", "«", "»"),
+                listOf("", "<", "", "", "", ">", "", ""),
+            )
+        ),
+    )
+
+    /**
      * Hai trang của bố cục truyền thống: số 1…0 ở hàng trên, phím 1/2 ở ô ⇧ (☺ thành 1234 như mọi bố cục). Hàng giữa
      * có 9 ô nên `/` sang ô ⚙; dấu phẩy giữ chỗ cạnh phím cách. Trang 2 có `\` ở ô ⚙, `<` `>` ở ô `,` `.` (₫ thay ¢).
      */
@@ -115,6 +141,7 @@ object SymbolPages {
     fun defaultFor(spec: GridSpec): List<CellGrid> = when (spec) {
         GridSpec.HEX7 -> DEFAULT
         GridSpec.HEX7_NUM -> HEX7_NUM
+        GridSpec.HEX8 -> HEX8
         GridSpec.QWERTY -> QWERTY
         GridSpec.QWERTY_NUM -> QWERTY_NUM
     }
@@ -148,7 +175,7 @@ object SymbolPages {
                 when {
                     code == null -> null
                     code == KeyCode.EMOJI -> KeyCode.DIAL
-                    code == KeyCode.SETTINGS || code == KeyCode.SHIFT || code == "," || code == "." -> page[r, c].ifEmpty { code }
+                    code == KeyCode.SETTINGS || code == KeyCode.SHIFT || KeyCode.isPunct(code) -> page[r, c].ifEmpty { code }
                     KeyCode.isFunction(code) -> code
                     else -> page[r, c]
                 }

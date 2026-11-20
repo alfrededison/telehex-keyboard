@@ -3,7 +3,10 @@ package com.telehex.keyboard.layout
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Mã phím trong lưới. Chữ thường `a`..`z`, số `0`..`9` (hàng số), dấu `,` `.`, hoặc mã chức năng bắt đầu bằng `#`. */
+/**
+ * Mã phím trong lưới. Chữ thường `a`..`z`, số `0`..`9` (hàng số), dấu câu ([PUNCT]: `,` `.`, và `?` `!` `'` của tổ ong 8 cột),
+ * hoặc mã chức năng bắt đầu bằng `#`.
+ */
 object KeyCode {
     const val EMOJI = "#emoji"
     const val NUMBERS = "#123"
@@ -18,6 +21,11 @@ object KeyCode {
 
     fun isLetter(code: String): Boolean = code.length == 1 && code[0] in 'a'..'z'
     fun isDigit(code: String): Boolean = code.length == 1 && code[0] in '0'..'9'
+
+    /** Dấu câu có phím riêng ở lớp chữ: chạm gõ đúng dấu, vuốt xuống gõ ký tự vuốt xuống, giữ được giá trị lớp 123. */
+    val PUNCT: Set<String> = setOf(",", ".", "?", "!", "'")
+
+    fun isPunct(code: String): Boolean = code in PUNCT
     fun isFunction(code: String): Boolean = code.startsWith("#")
 }
 
@@ -129,10 +137,25 @@ class LayoutModel(val rows: List<List<String?>>) {
         /** Truyền thống có hàng số: hàng 1…0 trên [QWERTY]. */
         val QWERTY_NUM: LayoutModel = LayoutModel(listOf(DIGIT_ROW) + QWERTY_LETTER_ROWS + listOf(QWERTY_BOTTOM_ROW))
 
+        /**
+         * Tổ ong 8 cột: lưới [DEFAULT] thêm cột phải. Chữ hàng Q, W, A giữ đúng chỗ; hàng Z nhường ô đầu cho ⇧ nên Z…M
+         * dịch phải một ô (Z nằm giữa A và S như QWERTY). ⌫ sau L, `'` `!` ở cột thêm của hai hàng trên, `?` cạnh `.`.
+         */
+        val HEX8: LayoutModel = LayoutModel(
+            listOf(
+                listOf("q", "e", "t", "y", "u", "o", "'", KeyCode.NUMBERS),
+                listOf(KeyCode.SETTINGS, "w", "r", "g", "h", "i", "p", "!"),
+                listOf("a", "s", "d", "f", "j", "k", "l", KeyCode.BACKSPACE),
+                listOf(KeyCode.SHIFT, "z", "x", "c", "v", "b", "n", "m"),
+                listOf(KeyCode.EMOJI, ",", null, null, null, ".", "?", KeyCode.ENTER),
+            )
+        )
+
         /** Lớp chữ có sẵn của kiểu lưới [spec]. */
         fun defaultFor(spec: GridSpec): LayoutModel = when (spec) {
             GridSpec.HEX7 -> DEFAULT
             GridSpec.HEX7_NUM -> HEX7_NUM
+            GridSpec.HEX8 -> HEX8
             GridSpec.QWERTY -> QWERTY
             GridSpec.QWERTY_NUM -> QWERTY_NUM
         }

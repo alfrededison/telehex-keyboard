@@ -30,6 +30,10 @@ Với chiều rộng khả dụng `Wu` (trừ padding 8dp mỗi bên):
 - Tổ ong có hàng số (`GridSpec.HEX7_NUM`, 10 + 5 × 7 ô): hàng 1…0 là 10 lục giác đều rộng `0.75 · W` (vừa đúng
   `7.5 · W`), xếp chồng lên hàng chữ không gối 1/4 vì lục giác nhỏ không lồng được; chiều cao lưới `0.75 · H + 4P + H`.
   Hit-test lấy tâm gần nhất với khoảng cách chia bề rộng ô của hàng, nên ranh giới hai hàng rơi đúng chỗ xếp chồng.
+- Tổ ong 8 cột (`GridSpec.HEX8`, 5 × 8 ô): `W = Wu / 8.5`; lục giác giãn dọc `stretch = 8.5 / 7.5` nên
+  `H = W · 2/√3 · stretch` bằng H của 7 cột và lưới cao bằng nhau (máy 411dp: ô 46,5 × 60,8dp). Hit-test chia khoảng
+  cách dọc cho `stretch` để Voronoi vẫn là các lục giác giãn. `, . ? ! '` là phím dấu câu (`KeyCode.PUNCT`): gõ đúng
+  dấu, có ký tự vuốt xuống và giữ được giá trị lớp 123.
 
 Kiểu lưới (`GridSpec`) nhận ra từ số ô mỗi hàng của lớp chữ, nên JSON bố cục không thêm trường; nó giữ mép trái
 từng ô nên một hàng không cần lệch đều. Ba lớp của một profile luôn cùng kiểu lưới. Lưới truyền thống
