@@ -4,6 +4,7 @@
 
 - Thêm bố cục có sẵn "Tổ ong có hàng số": lưới tổ ong thêm hàng 1…0 gồm 10 lục giác nhỏ trên cùng. Hàng số không có ký tự vuốt xuống vì phím nhỏ; lớp 123 cùng bộ ký tự với "Có hàng số".
 - Thêm bố cục có sẵn "Tổ ong 8 cột": lưới Mặc định thêm một cột, có phím ⇧ và ⌫ như Truyền thống cùng phím riêng cho ? ! '. Chữ hàng Q, W, A giữ chỗ cũ, hàng Z nhường ô đầu cho ⇧. Phím hẹp hơn nhưng lục giác giãn dọc nên bàn phím và phím cao bằng Tổ ong 7 cột.
+- Thêm bố cục có sẵn "Tổ ong 8 cột có hàng số": Tổ ong 8 cột thêm hàng 1…0 gồm 10 lục giác đều trên cùng, cao bằng "Tổ ong có hàng số". Hàng số không có ký tự vuốt xuống; Q…P vuốt xuống ra ngoặc và ký hiệu như "Có hàng số" (+ = ~ | [ ] < > { }).
 - "Truyền thống" và "Có hàng số": lề hai bên còn 2dp (trước 8dp), phím rộng và cao thêm khoảng 3%, bằng cỡ bàn phím QWERTY 10 cột quen thuộc.
 
 ## 0.8.4 — 2026-11-18

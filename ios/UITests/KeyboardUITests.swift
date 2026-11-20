@@ -71,6 +71,20 @@ final class KeyboardUITests: XCTestCase {
         XCTAssertGreaterThan(q.height, q.width * 2 / CGFloat(3).squareRoot() + 2)
         Thread.sleep(forTimeInterval: 1.5)
     }
+    func testEightColumnNumberRowLayout() {
+        let app = preview()
+        openSettings("layout-option-builtin.hex8Num", in: app)
+        backHome(app)
+        app.textViews["typing-field"].recordedTap(in: app)
+        // Hàng số lục giác đều trên hàng chữ giãn dọc; ⌫ và ? là phím riêng.
+        for key in ["2","0","q","?","#backspace"] { app.buttons["key-\(key)"].recordedTap(in: app) }
+        XCTAssertEqual(app.textViews["typing-field"].value as? String,"20q")
+        let digit = app.buttons["key-1"].frame, q = app.buttons["key-q"].frame
+        XCTAssertEqual(digit.height, digit.width * 2 / CGFloat(3).squareRoot(), accuracy: 1)
+        XCTAssertGreaterThan(q.height, q.width * 2 / CGFloat(3).squareRoot() + 2)
+        XCTAssertLessThanOrEqual(digit.maxY, q.minY + 0.5)
+        Thread.sleep(forTimeInterval: 1.5)
+    }
     func testLayoutEditorLayerTransitions() {
         let app = preview()
         openSettings("settings-keyboard", in: app)

@@ -151,10 +151,22 @@ object KeyLayers {
     /** Lớp vuốt xuống của tổ ong 8 cột: chữ và `,` `.` như mặc định, `'` ra `"`; `?` `!` để trống. */
     val HEX8_SWIPE: CellGrid = CellGrid.fromCodes(LayoutModel.HEX8) { (DEFAULT_SWIPE_BY_CODE + ("'" to "\""))[it] }
 
+    /**
+     * Lớp vuốt xuống của tổ ong 8 cột có hàng số: hàng số để trống (như tổ ong có hàng số), Q…P ra ngoặc và ký hiệu như
+     * truyền thống có hàng số vì 1…0 đã có ở hàng số; Z…M, hàng giữa, `,` `.` `'` như [HEX8_SWIPE] (`@ # & ( )` không có
+     * ở hàng số).
+     */
+    val HEX8_NUM_SWIPE: CellGrid = CellGrid.fromCodes(LayoutModel.HEX8_NUM) { code ->
+        if (KeyCode.isDigit(code)) null
+        else if (code in "qwertyuiop".map { "$it" }) QWERTY_NUM_SWIPE_BY_CODE[code]
+        else (DEFAULT_SWIPE_BY_CODE + ("'" to "\""))[code]
+    }
+
     fun defaultSwipe(spec: GridSpec): CellGrid = when (spec) {
         GridSpec.HEX7 -> DEFAULT_SWIPE
         GridSpec.HEX7_NUM -> HEX7_NUM_SWIPE
         GridSpec.HEX8 -> HEX8_SWIPE
+        GridSpec.HEX8_NUM -> HEX8_NUM_SWIPE
         GridSpec.QWERTY -> QWERTY_SWIPE
         GridSpec.QWERTY_NUM -> QWERTY_NUM_SWIPE
     }

@@ -55,7 +55,7 @@ final class KeyboardFeaturesTests: XCTestCase {
         XCTAssertEqual(decoded.configuration.activeProfile,"builtin.default")
     }
     func testBuiltInLayoutsMatchAndroid080() {
-        XCTAssertEqual(KeyboardProfile.presets.map(\.name),["Mặc định","Truyền thống","Có hàng số","Tổ ong có hàng số","Tổ ong 8 cột"])
+        XCTAssertEqual(KeyboardProfile.presets.map(\.name),["Mặc định","Truyền thống","Có hàng số","Tổ ong có hàng số","Tổ ong 8 cột","Tổ ong 8 cột có hàng số"])
         XCTAssertTrue(KeyboardProfile.presets.allSatisfy { $0.valid() })
         let hex = KeyboardProfile.presets[0], qwerty = KeyboardProfile.presets[1]
         XCTAssertEqual(hex.spec,.hex7); XCTAssertEqual(qwerty.spec,.qwerty)
@@ -131,6 +131,26 @@ final class KeyboardFeaturesTests: XCTestCase {
         let values = hex8.symbols.flatMap { $0 }.filter { !$0.isEmpty && $0 != "#page" }
         XCTAssertEqual(values.count,Set(values).count)
         var reconciled = hex8; reconciled.reconcile(); XCTAssertEqual(reconciled,hex8)
+    }
+    func testEightColumnNumberRowLayout() {
+        let num = KeyboardProfile.presets[5], hex8 = KeyboardProfile.presets[4]
+        XCTAssertEqual(num.id,"builtin.hex8Num"); XCTAssertEqual(num.spec,.hex8Num); XCTAssertEqual(GridSpec.hex8Num.count,50)
+        XCTAssertTrue(num.valid())
+        XCTAssertEqual(Array(num.letters[0..<10]).joined(),"1234567890")
+        XCTAssertEqual(Array(num.letters[10...]),hex8.letters)
+        XCTAssertEqual(GridSpec.hex8Num.left(9) + GridSpec.hex8Num.width(9),8.5,accuracy: 1e-6)
+        // Hàng số lục giác đều, hàng chữ giãn: lưới cao bằng tổ ong 7 cột có hàng số ở cùng bề ngang
+        XCTAssertEqual(GridSpec.hex8Num.stretches[0],1)
+        XCTAssertEqual(GridSpec.hex8Num.hexHeight / GridSpec.hex8Num.span,GridSpec.hex7Num.hexHeight / GridSpec.hex7Num.span,accuracy: 1e-6)
+        XCTAssertEqual(Array(num.swipe[0..<10]),Array(repeating: "", count: 10))
+        XCTAssertEqual(num.swipe[num.letters.firstIndex(of: "q")!],"+"); XCTAssertEqual(num.swipe[num.letters.firstIndex(of: "p")!],"}")
+        XCTAssertEqual(num.swipe[num.letters.firstIndex(of: "z")!],"@")
+        XCTAssertEqual(num.symbols[0][num.letters.firstIndex(of: "#settings")!],"#page")
+        for page in num.symbols { for (i,code) in num.letters.enumerated() where KeyboardProfile.isCharCell(code) { XCTAssertFalse(page[i].isEmpty, "ô \(i)") } }
+        let values = num.symbols.flatMap { $0 }.filter { !$0.isEmpty && $0 != "#page" }
+        XCTAssertEqual(values.count,Set(values).count)
+        for code in ["'","!","?"] { XCTAssertFalse(num.symbols[0].contains(code)) } // ô dấu câu trống hiện dấu đó, không trùng
+        var reconciled = num; reconciled.reconcile(); XCTAssertEqual(reconciled,num)
     }
     func testHexNumberRowLayout() {
         let hexNum = KeyboardProfile.presets[3], hex = KeyboardProfile.presets[0], qwertyNum = KeyboardProfile.presets[2]

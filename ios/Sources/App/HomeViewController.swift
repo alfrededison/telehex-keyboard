@@ -62,6 +62,7 @@ final class HomeViewController: UIViewController {
             LayoutOptionButton(profileID: "builtin.default", name: "Tổ ong", detail: "Phím lục giác to hơn, vẫn thứ tự QWERTY"),
             LayoutOptionButton(profileID: "builtin.hexNum", name: "Tổ ong có hàng số", detail: "Như Tổ ong, thêm hàng số 1…0 nhỏ trên cùng"),
             LayoutOptionButton(profileID: "builtin.hex8", name: "Tổ ong 8 cột", detail: "Như Tổ ong, thêm phím ⇧ ⌫ và ? ! '"),
+            LayoutOptionButton(profileID: "builtin.hex8Num", name: "Tổ ong 8 cột có hàng số", detail: "Như Tổ ong 8 cột, thêm hàng số 1…0 trên cùng"),
             LayoutOptionButton(profileID: "builtin.qwerty", name: "Truyền thống", detail: "QWERTY 10 cột quen thuộc, có ⇧ và ⌫"),
             LayoutOptionButton(profileID: "builtin.qwertyNum", name: "Có hàng số", detail: "Như Truyền thống, thêm hàng số 1…0 trên cùng"),
         ]

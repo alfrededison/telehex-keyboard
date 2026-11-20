@@ -18,8 +18,8 @@ enum class GridSpec(
     val shape: Shape,
     /** Bề rộng ô của từng hàng, theo bề rộng ô thường (hàng số tổ ong 0,75). Mặc định mọi hàng 1. */
     val widths: List<Float> = List(lefts.size) { 1f },
-    /** Lục giác giãn dọc: chiều cao = bề rộng · 2/√3 · [stretch]. 1 = lục giác đều. */
-    val stretch: Float = 1f,
+    /** Độ giãn dọc của lục giác từng hàng: chiều cao = bề rộng · 2/√3 · độ giãn. 1 = lục giác đều. */
+    val stretches: List<Float> = List(lefts.size) { 1f },
 ) {
     /** Tổ ong 7 cột: 5 hàng lục giác đều lệch xen kẽ ½ ô; phím cách 3 ô giữa hàng cuối. */
     HEX7(HEX_ROWS, 7.5f, 4, 3, Shape.HEX),
@@ -34,7 +34,16 @@ enum class GridSpec(
      * Tổ ong 8 cột: 5 hàng 8 ô lệch xen kẽ ½ ô. Ô hẹp hơn [HEX7] (bề ngang 8,5 ô thay 7,5) nên lục giác giãn dọc 8,5/7,5
      * để lưới cao bằng [HEX7] và phím cao bằng phím tổ ong 7 cột.
      */
-    HEX8(List(5) { row(8, if (it % 2 == 0) .5f else 0f) }, 8.5f, 4, 3, Shape.HEX, stretch = 8.5f / 7.5f),
+    HEX8(HEX8_ROWS, 8.5f, 4, 3, Shape.HEX, stretches = List(5) { HEX8_STRETCH }),
+
+    /**
+     * Tổ ong 8 cột có hàng số: hàng 1…0 gồm 10 lục giác đều (rộng 0,85 ô, vừa bề ngang 8,5 ô) xếp chồng trên [HEX8].
+     * Hàng số không giãn, hàng chữ giãn như [HEX8], nên lưới cao bằng [HEX7_NUM].
+     */
+    HEX8_NUM(
+        listOf(row(10, 0f, .85f)) + HEX8_ROWS, 8.5f, 5, 3, Shape.HEX,
+        listOf(.85f) + List(5) { 1f }, listOf(1f) + List(5) { HEX8_STRETCH },
+    ),
 
     /**
      * Truyền thống: 4 hàng phím chữ nhật. Q…P đủ 10 ô, A…L lệch ½ ô; hàng Z có ⇧ sát mép trái, Z…M căn giữa (Z ngay
@@ -83,6 +92,12 @@ enum class GridSpec(
 
 /** [n] ô liền nhau rộng [width], ô đầu có mép trái ở [left]. */
 private fun row(n: Int, left: Float, width: Float = 1f): List<Float> = List(n) { left + it * width }
+
+/** 5 hàng tổ ong 8 cột lệch xen kẽ ½ ô, hàng đầu lệch phải. */
+private val HEX8_ROWS: List<List<Float>> = List(5) { row(8, if (it % 2 == 0) .5f else 0f) }
+
+/** Độ giãn dọc của hàng chữ tổ ong 8 cột: bề ngang 8,5 ô thay 7,5 nên giãn 8,5/7,5 để phím cao bằng tổ ong 7 cột. */
+private const val HEX8_STRETCH = 8.5f / 7.5f
 
 /** 5 hàng tổ ong 7 cột lệch xen kẽ ½ ô, hàng đầu lệch phải. */
 private val HEX_ROWS: List<List<Float>> = listOf(row(7, .5f), row(7, 0f), row(7, .5f), row(7, 0f), row(7, .5f))

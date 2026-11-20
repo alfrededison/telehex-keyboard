@@ -34,6 +34,9 @@ Với chiều rộng khả dụng `Wu` (trừ padding 8dp mỗi bên):
   `H = W · 2/√3 · stretch` bằng H của 7 cột và lưới cao bằng nhau (máy 411dp: ô 46,5 × 60,8dp). Hit-test chia khoảng
   cách dọc cho `stretch` để Voronoi vẫn là các lục giác giãn. `, . ? ! '` là phím dấu câu (`KeyCode.PUNCT`): gõ đúng
   dấu, có ký tự vuốt xuống và giữ được giá trị lớp 123.
+- Tổ ong 8 cột có hàng số (`GridSpec.HEX8_NUM`, 10 + 5 × 8 ô): độ giãn theo hàng (`GridSpec.stretches`); hàng 1…0 là
+  10 lục giác đều rộng `0.85 · W` (= `Wu / 10`), không giãn, xếp chồng trên hàng chữ giãn của HEX8, nên lưới cao bằng
+  HEX7_NUM (máy 411dp: 289dp). Ranh giới số/chữ không thẳng vì không phím số nào thẳng cột với phím chữ.
 
 Kiểu lưới (`GridSpec`) nhận ra từ số ô mỗi hàng của lớp chữ, nên JSON bố cục không thêm trường; nó giữ mép trái
 từng ô nên một hàng không cần lệch đều. Ba lớp của một profile luôn cùng kiểu lưới. Lưới truyền thống

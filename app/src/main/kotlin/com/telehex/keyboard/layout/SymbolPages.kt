@@ -90,6 +90,33 @@ object SymbolPages {
     )
 
     /**
+     * Hai trang của tổ ong 8 cột có hàng số: hàng số vẫn là số ở trang 1. Bộ ký tự như [QWERTY_NUM] nhưng ô `'` `!` `?`
+     * để trống (hiện dấu của lớp chữ), nên `~ ^ | …` từ trang 2 lên trang 1 và trang 2 thêm `≈ ← → ↑ ↓` cho đủ ô.
+     */
+    val HEX8_NUM: List<CellGrid> = listOf(
+        CellGrid(
+            listOf(
+                "1 2 3 4 5 6 7 8 9 0".split(' '),
+                "@ # \$ _ & -".split(' ') + listOf("", ""),
+                listOf(P) + "+ ( ) / = %".split(' ') + listOf(""),
+                "* \" : ; \\ ~ ^".split(' ') + listOf(""),
+                "| < > [ ] { } …".split(' '),
+                List(8) { "" },
+            )
+        ),
+        CellGrid(
+            listOf(
+                "` • √ π ÷ × § ∆ £ ₫".split(' '),
+                "€ ¥ ¢ ° © ®".split(' ') + listOf("", ""),
+                listOf(P) + "™ ✓ « » ± ≤".split(' ') + listOf(""),
+                "≥ ≠ ∞ ¡ ¿ ² ³".split(' ') + listOf(""),
+                "½ ‰ ¶ ≈ ← → ↑ ↓".split(' '),
+                List(8) { "" },
+            )
+        ),
+    )
+
+    /**
      * Hai trang của bố cục truyền thống: số 1…0 ở hàng trên, phím 1/2 ở ô ⇧ (☺ thành 1234 như mọi bố cục). Hàng giữa
      * có 9 ô nên `/` sang ô ⚙; dấu phẩy giữ chỗ cạnh phím cách. Trang 2 có `\` ở ô ⚙, `<` `>` ở ô `,` `.` (₫ thay ¢).
      */
@@ -142,6 +169,7 @@ object SymbolPages {
         GridSpec.HEX7 -> DEFAULT
         GridSpec.HEX7_NUM -> HEX7_NUM
         GridSpec.HEX8 -> HEX8
+        GridSpec.HEX8_NUM -> HEX8_NUM
         GridSpec.QWERTY -> QWERTY
         GridSpec.QWERTY_NUM -> QWERTY_NUM
     }

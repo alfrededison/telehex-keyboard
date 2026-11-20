@@ -151,11 +151,15 @@ class LayoutModel(val rows: List<List<String?>>) {
             )
         )
 
+        /** Tổ ong 8 cột có hàng số: hàng 1…0 trên [HEX8]. */
+        val HEX8_NUM: LayoutModel = LayoutModel(listOf(DIGIT_ROW) + HEX8.rows)
+
         /** Lớp chữ có sẵn của kiểu lưới [spec]. */
         fun defaultFor(spec: GridSpec): LayoutModel = when (spec) {
             GridSpec.HEX7 -> DEFAULT
             GridSpec.HEX7_NUM -> HEX7_NUM
             GridSpec.HEX8 -> HEX8
+            GridSpec.HEX8_NUM -> HEX8_NUM
             GridSpec.QWERTY -> QWERTY
             GridSpec.QWERTY_NUM -> QWERTY_NUM
         }

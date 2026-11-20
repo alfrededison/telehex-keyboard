@@ -86,6 +86,7 @@ class ProfilePanel(
         GridSpec.HEX7 -> "Tổ ong 7 cột"
         GridSpec.HEX7_NUM -> "Tổ ong 7 cột, có hàng số"
         GridSpec.HEX8 -> "Tổ ong 8 cột, có ⇧ ⌫"
+        GridSpec.HEX8_NUM -> "Tổ ong 8 cột, có ⇧ ⌫ và hàng số"
         GridSpec.QWERTY -> "QWERTY 10 cột"
         GridSpec.QWERTY_NUM -> "QWERTY 10 cột, có hàng số"
     }

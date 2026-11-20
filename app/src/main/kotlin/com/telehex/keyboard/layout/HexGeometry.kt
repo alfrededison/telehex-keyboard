@@ -70,8 +70,8 @@ class HexGeometry(
     override val pad: Float = padding + (if (alignRight) viewWidth * (1 - scale) else 0f)
     val usable: Float = viewWidth * scale - 2 * padding
     override val w: Float = usable / spec.span
-    /** Chiều cao lục giác cỡ thường (gồm độ giãn dọc [GridSpec.stretch]). */
-    val h: Float = w * 2f / KeyGeometry.SQRT3 * spec.stretch
+    /** Chiều cao lục giác cỡ thường, theo độ giãn lớn nhất của lưới ([GridSpec.stretches]). */
+    val h: Float = w * 2f / KeyGeometry.SQRT3 * spec.stretches.max()
     /** Bước hàng giữa hai hàng cùng cỡ thường. */
     val p: Float = 0.75f * h
 
@@ -79,7 +79,7 @@ class HexGeometry(
     fun cellW(r: Int): Float = w * spec.widths[r]
 
     /** Chiều cao lục giác của hàng [r]. */
-    fun cellH(r: Int): Float = cellW(r) * 2f / KeyGeometry.SQRT3 * spec.stretch
+    fun cellH(r: Int): Float = cellW(r) * 2f / KeyGeometry.SQRT3 * spec.stretches[r]
 
     /** Mép trên (đỉnh lục giác) của từng hàng: hàng cùng cỡ gối 1/4 chiều cao, khác cỡ thì xếp chồng. */
     private val rowTops: FloatArray = FloatArray(spec.rows).also { t ->
@@ -103,7 +103,7 @@ class HexGeometry(
     fun hexPath(r: Int, c: Int): Path {
         val cx = centerX(r, c); val cy = centerY(r)
         val iw = cellW(r) - gap
-        val ih = iw * 2f / KeyGeometry.SQRT3 * spec.stretch
+        val ih = iw * 2f / KeyGeometry.SQRT3 * spec.stretches[r]
         return Path().apply {
             moveTo(cx, cy - ih / 2)
             lineTo(cx + iw / 2, cy - ih / 4)
@@ -158,7 +158,7 @@ class HexGeometry(
             // Hàng tổ ong lệch đều: đoán cột từ mép trái của ô đầu hàng
             val cGuess = ((x - pad) / cellW(r) - spec.left(r, 0) / spec.widths[r] - 0.5f).toInt().coerceIn(0, cols - 1)
             for (c in (cGuess - 1).coerceAtLeast(0)..(cGuess + 1).coerceAtMost(cols - 1)) {
-                val dx = (x - centerX(r, c)) * k; val dy = (y - centerY(r)) * k / spec.stretch
+                val dx = (x - centerX(r, c)) * k; val dy = (y - centerY(r)) * k / spec.stretches[r]
                 found.add((r to c) to dx * dx + dy * dy)
             }
         }

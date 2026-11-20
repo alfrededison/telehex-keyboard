@@ -137,6 +137,8 @@ class WelcomeActivity : Activity() {
             "Như Tổ ong, thêm hàng số 1…0 nhỏ trên cùng để gõ số không cần chuyển lớp.", theme)
         addCard(Profile.HEX8, "Tổ ong 8 cột",
             "Như Tổ ong, thêm một cột: phím ⇧ ⌫ và ? ! ' riêng. Phím hẹp hơn nhưng cao bằng Tổ ong.", theme)
+        addCard(Profile.HEX8_NUM, "Tổ ong 8 cột có hàng số",
+            "Như Tổ ong 8 cột, thêm hàng số 1…0 trên cùng để gõ số không cần chuyển lớp.", theme)
         addCard(Profile.QWERTY, "Truyền thống",
             "Giống bàn phím quen thuộc: QWERTY đủ 10 cột, có phím ⇧ và ⌫.", theme)
         addCard(Profile.QWERTY_NUM, "Truyền thống có hàng số",

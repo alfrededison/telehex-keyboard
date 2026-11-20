@@ -900,7 +900,7 @@ final class HexKeyboardView: UIView {
             } else {
                 let row = spec.position(index).row, cell = width * spec.width(index)
                 button.frame = CGRect(x: left + spec.left(index) * width, y: top + (spec.isHex ? hexTops[row] * width : CGFloat(row) * height),
-                                      width: cell * CGFloat(code == " " ? spec.spaceCells : 1), height: spec.isHex ? cell * 2 / HexShape.sqrt3 * spec.stretch : height)
+                                      width: cell * CGFloat(code == " " ? spec.spaceCells : 1), height: spec.isHex ? cell * 2 / HexShape.sqrt3 * spec.stretches[row] : height)
             }
         }
         panel.frame = CGRect(x: pad,y: bar,width: bounds.width - 2 * pad,height: max(1,bounds.height - bar - safeAreaInsets.bottom - 4))
