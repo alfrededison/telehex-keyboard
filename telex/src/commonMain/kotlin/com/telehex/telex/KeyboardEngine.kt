@@ -25,6 +25,8 @@ class KeyboardEngine {
     fun restoredKeys(): String? = engine.restoredKeys()
     fun rawCaps(): List<Boolean> = engine.rawCaps()
     fun candidates(): List<String> = engine.candidates().map { it.text }
+    /** Âm tiết có nguyên âm mà chưa hợp lệ: thanh gợi ý chỉ hiện phương án sửa. */
+    fun invalidSyllable(): Boolean = !engine.isEmpty && engine.hasVowel() && !engine.isValid()
     fun reset() = engine.reset()
     /** Nạp lại từ ngay trước con trỏ để gõ tiếp dấu ("hiêu" + s → "hiếu"); false thì engine rỗng. */
     fun resume(word: String): Boolean = engine.resume(word)
@@ -82,6 +84,8 @@ class KeyboardVocabulary(englishText: String, vietnameseText: String, phrasesTex
         vietnamese.personal.learn(PredictionContext.before(before), word)
         vietnamese.personal.decayIfLargerThan(5000)
     }
+    /** Từ đã học thường viết hoa (tên riêng): gợi ý viết hoa chữ đầu. */
+    fun usuallyCapitalized(word: String): Boolean = vietnamese.personal.usuallyCapitalized(word)
     fun personalData(): String = vietnamese.personal.serialize()
     fun restorePersonal(text: String): Boolean = runCatching {
         require(text.length <= 2_000_000 && (text.isEmpty() || text.lineSequence().first() == "TELEHEX-PERSONAL-1"))

@@ -122,6 +122,22 @@ final class TypingSessionTests: XCTestCase {
             session.redo(in: document); XCTAssertEqual(document.text,"tôi" + separator + trailing)
         }
     }
+    func testSuggestionCaseAndContentFollowTheSharedRules() {
+        // Khoá hoa: gợi ý hoàn thành viết hoa cả từ, như Android
+        let (session,document) = configured()
+        session.capsLock = true
+        for key in ["N","G"] { session.press(key,in: document) }
+        XCTAssertTrue(session.candidates.contains("NGƯỜI"), "\(session.candidates)")
+        // Âm tiết sai ("bna"): chỉ còn phương án sửa, không biến thể dấu
+        let (invalid,doc2) = configured()
+        for key in ["b","n","a"] { invalid.press(key,in: doc2) }
+        XCTAssertFalse(invalid.candidates.contains("bná"))
+        // Sau khoảng trắng có gợi ý từ kế tiếp dù ngay sau con trỏ còn chữ
+        let (next,doc3) = configured()
+        doc3.text = "xin  bạn"; doc3.cursor = 4
+        next.refreshCandidates(in: doc3)
+        XCTAssertFalse(next.candidates.isEmpty)
+    }
     func testExistingSpaceIsNotOwnedByTheKeyboardWhenTypingPunctuation() {
         let (session,document) = configured()
         document.text = "toi bạn"; document.cursor = 1

@@ -62,9 +62,9 @@ final class KeyboardDriver {
         }
         view.onCandidate = { [weak self] word in
             guard let self else { return }
+            // Gợi ý đã viết hoa/thường sẵn theo quy tắc chung (module typing): chèn đúng chữ đang hiện, như Android
             let value = self.view.emoji?.variant(word,gender: self.preferences.configuration.emojiGender,tone: self.preferences.configuration.emojiTone) ?? word
-            let replacement = self.capsLock ? value.uppercased() : self.upperNext ? value.prefix(1).uppercased() + value.dropFirst() : value
-            self.session.choose(word,replacement: replacement,in: self.document())
+            self.session.choose(word,replacement: value,in: self.document())
             self.shiftOnce = false
             self.update()
         }
@@ -182,6 +182,7 @@ final class KeyboardDriver {
         view.clipboardEnabled = clipboardEnabled
         view.validNextLetter = preferences.configuration.dynamicHitZones && !session.englishMode
             ? { [weak self] letter in self?.session.keepsSyllableValid(letter) ?? true } : nil
+        session.capsLock = capsLock; session.capitalizeNext = upperNext
         session.refreshCandidates(in: document)
         view.update(candidates: session.candidates,english: session.englishMode,uppercase: upperNext)
     }

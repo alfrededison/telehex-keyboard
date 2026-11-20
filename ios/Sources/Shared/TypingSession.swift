@@ -39,6 +39,10 @@ final class TypingSession {
     var suggestionsEnabled = true
     var learningAllowed = true
     var suppressCapitalizationLearning = false
+    /// Hoa/thường của gợi ý (bàn phím đặt trước mỗi lần làm mới): khoá hoa, chữ sắp gõ đang hoa (đầu câu, ⇧).
+    var capsLock = false, capitalizeNext = false
+    /// Emoji gợi ý cho từ vừa gõ (khi chưa soạn gì): chọn thì chèn không kèm khoảng trắng, như Android.
+    private var nextEmoji: Set<String> = []
     /// Ô nhập có tự viết hoa chữ đứng sau đoạn văn bản này không; dùng khi nạp lại từ đã gõ.
     var capitalizesWord: ((String) -> Bool)?
     /// Từ đã có trong ô nhập vừa được nạp lại để sửa: chốt y nguyên thì không học lại lần nữa.
@@ -79,27 +83,43 @@ final class TypingSession {
             target = .composition
             let boundary = before.dropLast(composing.count).last
             let ownsToken = before.hasSuffix(composing) && boundary?.isLetter != true && boundary?.isNumber != true && after.first?.isLetter != true && after.first?.isNumber != true
-            let words = ownsToken ? vocabulary?.suggestions(prefix: composing, before: before, englishMode: englishMode) ?? [] : []
+            // Nội dung, thứ tự và hoa/thường theo quy tắc chung với Android (module typing)
+            let words = (ownsToken ? vocabulary?.suggestions(prefix: composing, before: before, englishMode: englishMode) ?? [] : []).map(casedCompletion)
             let corrections = !englishMode && ownsToken ? vocabulary?.corrections(raw: engine.rawKeys(), before: String(before.dropLast(composing.count))) ?? [] : []
-            let emojis = !englishMode ? emoji?.suggestions(composing) ?? [] : []
-            let tones = englishMode ? [] : engine.candidates()
-            latestSuggestions = unique(tones + emojis + words + corrections)
+            if englishMode { latestSuggestions = unique(words) }
+            else if engine.invalidSyllable() { latestSuggestions = Suggestions.shared.forInvalidSyllable(corrections: corrections) }
+            else {
+                latestSuggestions = Suggestions.shared.forSyllable(tones: engine.candidates(), completions: words, corrections: corrections,
+                                                                    emoji: emoji?.suggestions(composing) ?? [])
+            }
         } else {
             let head = String(before.reversed().prefix { $0.isLetter || (englishMode && "'’".contains($0)) }.reversed())
             let tail = String(after.prefix { $0.isLetter || (englishMode && "'’".contains($0)) })
             if !head.isEmpty && head.count + tail.count <= 32 {
                 target = .cursor(head, tail)
                 latestSuggestions = englishMode ? [] : vocabulary?.wordCorrections(word: head + tail, before: String(before.dropLast(head.count))) ?? []
-            } else if (before.isEmpty || before.last?.isWhitespace == true) && (after.isEmpty || after.first?.isWhitespace == true || ".,!?;:)]}".contains(after.first!)) {
+            } else if Suggestions.shared.offersNextWords(textBeforeCursor: before) {
+                // Như Android: sau khoảng trắng là gợi ý từ kế tiếp (dù sau con trỏ có chữ), kèm emoji cho từ vừa gõ
                 target = .next
-                latestSuggestions = vocabulary?.nextWords(before: before, englishMode: englishMode) ?? []
+                let next = (vocabulary?.nextWords(before: before, englishMode: englishMode) ?? []).map(casedPrediction)
+                let previous = String(before.trimmingCharacters(in: .whitespacesAndNewlines).reversed().prefix { $0.isLetter }.reversed())
+                let emojis = englishMode || previous.isEmpty ? [] : emoji?.suggestions(previous) ?? []
+                nextEmoji = Set(emojis)
+                latestSuggestions = unique(next + emojis)
             } else { latestSuggestions = [] }
         }
     }
     private func unique(_ words: [String]) -> [String] { var seen = Set<String>(); return words.filter { seen.insert($0).inserted } }
+    private func usuallyCapitalized(_ word: String) -> Bool { !englishMode && vocabulary?.usuallyCapitalized(word: word) == true }
+    private func casedCompletion(_ word: String) -> String {
+        Suggestions.shared.casedCompletion(word: word, typed: composing, capsLock: capsLock, usuallyCapitalized: usuallyCapitalized(word))
+    }
+    private func casedPrediction(_ word: String) -> String {
+        Suggestions.shared.casedPrediction(word: word, capsLock: capsLock, capitalizeNext: capitalizeNext, usuallyCapitalized: usuallyCapitalized(word))
+    }
     func reset() {
         engine.reset(); composing = ""; expectedContext = nil; documentID = nil
-        automaticSpace = nil; candidateAnchor = nil; latestSuggestions = []; target = .composition; resumedWord = nil
+        automaticSpace = nil; candidateAnchor = nil; latestSuggestions = []; target = .composition; resumedWord = nil; nextEmoji = []
     }
     func synchronize(with document: TextDocument) {
         if !composing.isEmpty && (document.documentID != documentID || document.beforeInput != expectedContext || document.selection?.isEmpty == false) { reset() }
@@ -176,6 +196,8 @@ final class TypingSession {
             let context = String(before.dropLast(composing.count))
             change(old: composing, new: insertion(before: document.afterInput), in: document)
             learn(value, before: context)
+        case .next where nextEmoji.contains(candidate):
+            change(old: "", new: value, in: document)
         case .next:
             change(old: "", new: insertion(before: document.afterInput), in: document); learn(value, before: before)
         case let .cursor(head, tail):
@@ -196,8 +218,8 @@ final class TypingSession {
         // VI thay âm tiết đang soạn; EN chèn sau chữ đang có nên lấy cả đoạn trước con trỏ làm ngữ cảnh.
         let context = englishMode ? before : String(before.dropLast(composing.count))
         latestSuggestions = vocabulary.glide(path: path, centers: centers, before: context, englishMode: englishMode).map { word in
-            // "I", "I'm", "I'll" luôn viết hoa như Android; chữ hoa đầu câu/⇧ áp khi chọn.
-            englishMode && (word == "i" || word.hasPrefix("i'")) ? "I" + word.dropFirst() : word
+            Suggestions.shared.casedGlide(word: word, english: englishMode, typed: englishMode ? "" : composing, capsLock: capsLock,
+                                          capitalizeNext: capitalizeNext, usuallyCapitalized: usuallyCapitalized(word))
         }
         return true
     }

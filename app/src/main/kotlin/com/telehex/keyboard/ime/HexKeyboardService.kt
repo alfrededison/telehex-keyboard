@@ -22,6 +22,7 @@ import com.telehex.layout.KeyCode
 import com.telehex.layout.Profile
 import com.telehex.keyboard.settings.SettingsActivity
 import com.telehex.typing.Spacing
+import com.telehex.typing.Suggestions
 import com.telehex.telex.Corrector
 import com.telehex.telex.TelexDecomposer
 import com.telehex.telex.TelexEngine
@@ -304,19 +305,11 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
      * Gợi ý hoàn thành âm tiết đang gõ theo hoa/thường của phần đã gõ, như biến thể dấu:
      * "Yêu" → "Yếu", "KH" → "KHÔNG". Gõ thường thì chỉ viết hoa tên riêng đã học.
      */
-    private fun casedCompletion(s: String, typed: String): String = when {
-        capsLockActive() -> s.uppercase()
-        typed.length > 1 && typed.none { it.isLowerCase() } -> s.uppercase()
-        typed.first().isUpperCase() || predictions.predictor.personal.usuallyCapitalized(s) -> s.replaceFirstChar { it.titlecase() }
-        else -> s
-    }
+    private fun casedCompletion(s: String, typed: String): String =
+        Suggestions.casedCompletion(s, typed, capsLockActive(), predictions.predictor.personal.usuallyCapitalized(s))
 
-    private fun casedPrediction(s: String): String = when {
-        capsLockActive() -> s.uppercase()
-        capsSentenceStart() || oneShotUpper() || predictions.predictor.personal.usuallyCapitalized(s) ->
-            s.replaceFirstChar { it.titlecase() }
-        else -> s
-    }
+    private fun casedPrediction(s: String): String = Suggestions.casedPrediction(
+        s, capsLockActive(), capsSentenceStart() || oneShotUpper(), predictions.predictor.personal.usuallyCapitalized(s))
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key == Prefs.KEY_RECENT_EMOJI || key == Prefs.KEY_PROFILES ||
@@ -710,22 +703,23 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         } else if (!engine.isEmpty && engine.hasVowel() && !engine.isValid()) {
             // Âm tiết chưa hợp lệ: giữ đúng chữ đang gõ ở ô đầu, kèm gợi ý sửa (biến thể dấu lúc này vô nghĩa).
             val typed = engine.text()
-            val fixes = corrector?.suggest(engine.rawText(), engine.rawCaps(), 24,
-                predictions.predictor.correctionScorer(contextBeforeComposing(typed))) ?: emptyList()
+            val fixes = Suggestions.forInvalidSyllable(syllableCorrections(typed))
             candidateBar.showSuggestions(typed, fixes.take(5)) { replaceComposing(it) }
             offerMore(fixes.map { word -> SuggestionPanel.Choice(word) { replaceComposing(word) } }, 5)
         } else if (!engine.isEmpty) {
             val typed = engine.text()
             val variants = engine.candidates()
-            // Gợi ý hoàn thành trùng một biến thể dấu thì chỉ hiện một lần (ở biến thể dấu)
+            // Như iOS: hoàn thành rồi phương án sửa gõ sai ("ban" có thể là "bạn"), chữ trùng biến thể dấu chỉ hiện một lần
             val completions = if (prefs.predictions) predictions.predictor.next(recent.toList(), typed, 24)
-                .map { casedCompletion(it, typed) }.filter { c -> variants.none { it.text == c } } else emptyList()
+                .map { casedCompletion(it, typed) } else emptyList()
+            val words = Suggestions.wordsBesideTones(variants.map { it.text }, completions, syllableCorrections(typed))
             val emoji = emojiFor(typed)
-            candidateBar.show(variants, completions.take(2), emoji, onPickText = { replaceComposing(it) }, onPickEmoji = { replaceComposingWithEmoji(it) })
-            offerMore(completions.map { word -> SuggestionPanel.Choice(word) { replaceComposing(word) } } +
+            candidateBar.show(variants, words.take(Suggestions.LEADING_WORDS), emoji, onPickText = { replaceComposing(it) }, onPickEmoji = { replaceComposingWithEmoji(it) })
+            offerMore(words.map { word -> SuggestionPanel.Choice(word) { replaceComposing(word) } } +
                 variants.map { candidate -> SuggestionPanel.Choice(candidate.text) { engine.setTone(candidate.tone); replaceComposing(engine.text()) } } +
                 emoji.map { e -> SuggestionPanel.Choice(e) { replaceComposingWithEmoji(e) } }, 2 + variants.size + emoji.size)
-        } else if (prefs.predictions && mode == Mode.ABC && telexEnabled && afterSpace()) {
+        } else if (prefs.predictions && mode == Mode.ABC && telexEnabled &&
+            Suggestions.offersNextWords(currentInputConnection?.getTextBeforeCursor(1, 0)?.toString())) {
             val next = predictions.predictor.next(recent.toList(), "", 24).map { casedPrediction(it) }
             val emoji = recent.lastOrNull()?.let { emojiFor(it) } ?: emptyList()
             if (next.isEmpty() && emoji.isEmpty()) showWordAtCursorSuggestions()
@@ -795,10 +789,9 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         return if (word.length >= 3) data.exactKeyword(word, 2).map(::preferredEmoji).distinct() else emptyList()
     }
 
-    private fun afterSpace(): Boolean {
-        val before = currentInputConnection?.getTextBeforeCursor(1, 0)?.toString() ?: return false
-        return before.isEmpty() || before.last().isWhitespace()
-    }
+    /** Phương án sửa gõ sai cho âm tiết đang soạn [typed], theo ngữ cảnh trước nó. */
+    private fun syllableCorrections(typed: String): List<String> = corrector?.suggest(engine.rawText(), engine.rawCaps(), 24,
+        predictions.predictor.correctionScorer(contextBeforeComposing(typed))) ?: emptyList()
 
     /** Giữ một gợi ý học được để xoá khỏi từ điển cá nhân. */
     private fun forget(text: String) {
@@ -1334,11 +1327,7 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
             val before = currentInputConnection?.getTextBeforeCursor(160, 0)?.toString().orEmpty()
             val words = predictions.englishPredictor.glideWords(EnglishPredictor.contextBefore(before))
             glideDecoder.suggest(points, centers, words, max = 24, english = true).map {
-                when {
-                    capsLockActive() -> it.uppercase()
-                    capsSentenceStart() || oneShotUpper() || it == "i" || it.startsWith("i'") -> it.replaceFirstChar { c -> c.titlecase() }
-                    else -> it
-                }
+                Suggestions.casedGlide(it, english = true, typed = "", capsLockActive(), capsSentenceStart() || oneShotUpper(), false)
             }
         } else {
             val words = predictions.predictor.glideWords(recent.toList())

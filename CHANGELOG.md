@@ -4,6 +4,8 @@
 
 - Chọn gợi ý chỉ thêm khoảng trắng khi sau con trỏ chưa có khoảng trắng hay dấu câu đứng sát ("khong|," chọn "không" ra "không,"), như iOS; gợi ý từ tiếng Anh cũng vậy.
 - Chạm emoji gợi ý khi đang gõ một chữ thì emoji thay chữ đó ("tim" → 💕), như iOS.
+- Thanh gợi ý khi đang gõ một âm tiết đúng chính tả cũng có phương án sửa gõ sai ("ban" có thể là "bạn"), như iOS.
+- iOS: thanh gợi ý theo đúng thứ tự và hoa/thường của Android: hai gợi ý chữ, emoji, rồi biến thể dấu; khoá hoa hay gõ "KH" ra "KHÔNG"; tên riêng đã học viết hoa; sau khoảng trắng luôn có gợi ý từ kế tiếp (kể cả khi sau con trỏ còn chữ) kèm emoji cho từ vừa gõ; chọn gợi ý chèn đúng chữ đang hiện.
 
 ## 0.8.5 — 2026-11-20
 

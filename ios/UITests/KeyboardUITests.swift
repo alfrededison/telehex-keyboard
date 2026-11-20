@@ -85,6 +85,18 @@ final class KeyboardUITests: XCTestCase {
         XCTAssertLessThanOrEqual(digit.maxY, q.minY + 0.5)
         Thread.sleep(forTimeInterval: 1.5)
     }
+    func testSuggestionBarFollowsTheSharedOrder() {
+        let app = preview()
+        // Như Android: hai gợi ý chữ trước emoji và biến thể dấu; chọn chữ chèn đúng chữ đang hiện
+        for key in ["b","a","n"] { app.buttons["key-\(key)"].recordedTap(in: app) }
+        let first = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "candidate-")).firstMatch
+        XCTAssertTrue(first.waitForExistence(timeout: 5))
+        let word = String(first.identifier.dropFirst("candidate-".count))
+        XCTAssertFalse(["bán","bàn","bản","bãn","bạn"].contains(word), "ô đầu là biến thể dấu: \(word)")
+        first.recordedTap(in: app)
+        XCTAssertEqual(app.textViews["typing-field"].value as? String, word + " ")
+        Thread.sleep(forTimeInterval: 1.5)
+    }
     func testLayoutEditorLayerTransitions() {
         let app = preview()
         openSettings("settings-keyboard", in: app)
