@@ -115,6 +115,21 @@ tools/release-build.sh       # APK release đã minify ở out/TeleHex.apk + .sh
 
 Yêu cầu JDK 17+, Android SDK 36.
 
+## Commit
+
+Tiêu đề commit một dòng, bắt đầu bằng tiền tố chữ thường cho biết phần bị ảnh hưởng, rồi đến câu mệnh lệnh tiếng Anh viết thường, không dấu chấm cuối: `android: add a space after picking a fix for the word at the cursor`.
+
+| Tiền tố | Dùng khi |
+|---|---|
+| `core:` | Bộ gõ dùng chung: module KMP `telex/` (engine Telex, sửa chính tả, dự đoán), kể cả khi kéo theo sửa app để dùng thay đổi đó |
+| `app:` | Cùng một thay đổi ở **cả hai app** (`app/` và `ios/`) mà không đụng `telex/`: bố cục phím, giao diện, hành vi gõ viết riêng ở mỗi nền tảng |
+| `android:` | Chỉ app Android (`app/`) |
+| `ios:` | Chỉ app iOS (`ios/`) |
+| `ci:` | Workflow GitHub (`.github/`) và script phát hành |
+| `docs:` | Chỉ tài liệu (`*.md`, `docs/`) |
+
+Lớp gõ trên mỗi nền tảng (`HexKeyboardService.kt`, `TypingSession.swift`) là code của app, không thuộc core: sửa một bên thì dùng `android:` hoặc `ios:`, sửa cả hai thì dùng `app:`. Commit `Release X.Y.Z` và `Start X.Y.Z development` do `tools/release.sh` tạo thì không có tiền tố.
+
 ## Phát hành
 
 - **Phiên bản chỉ viết ở một nơi**: dòng `appVersion` trong `app/build.gradle.kts`. `tools/version.sh` tính versionCode cố định từ X.Y.Z: bản release là `X·10^7 + Y·10^5 + Z·10^3 + 999`, bản dev `X.Y.Z-dev.N` là `… + N` với N đếm commit từ lần đổi `appVersion`. Build từ tag ở đâu cũng ra cùng số (cần cho F-Droid).
