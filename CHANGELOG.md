@@ -12,6 +12,7 @@
 - iOS: kéo phím cách sang trái như Android: mỗi dấu xuống dòng là một bước ("abc⏎  " một bước xoá cả khoảng trắng lẫn dấu xuống dòng), kéo tới mép trái lưới phím thì xoá tới đầu dòng; giữ ⌫ (trên lưới và thanh gợi ý) 0,45 giây thì xoá liên tục, mỗi 50 ms.
 - iOS: như Android, chỉ coi là gõ vuốt khi đường vuốt qua ít nhất 3 chữ khác nhau và dài ít nhất 1,5 bề rộng phím; vuốt ngắn qua ba phím sát nhau vẫn là chạm.
 - iOS: học từ như Android: sửa một từ đã gõ tại con trỏ không học từ đó; dán từ lịch sử clipboard khi đang gõ dở thì chốt âm tiết trước như chạm cách ("ủe" thành "user" rồi mới dán).
+- iOS: chế độ EN gợi ý như Android theo cả từ quanh con trỏ, kể cả khi con trỏ nằm trong một từ đã gõ ("hello" ⌫ cách rồi gõ "s" vẫn có gợi ý); chọn gợi ý thay cả từ.
 
 ## 0.8.5 — 2026-11-20
 

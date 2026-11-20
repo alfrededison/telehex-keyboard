@@ -136,6 +136,15 @@ final class TypingSessionTests: XCTestCase {
         document.text = "dòng một\nxin chào"; document.cursor = document.text.count
         XCTAssertEqual(session.wordsToDelete(1,toLineStart: true,in: document),"xin chào")
     }
+    func testEnglishSuggestsForTheWordAroundTheCursorLikeAndroid() {
+        let (session,document) = configured()
+        session.englishMode = true
+        document.text = "hel world"; document.cursor = 2
+        session.refreshCandidates(in: document)
+        XCTAssertTrue(session.candidates.contains("hello"), "\(session.candidates)")
+        session.choose("hello",in: document)
+        XCTAssertEqual(document.text,"hello world")
+    }
     func testPasteFinishesTheSyllableLikeAndroid() {
         let (session,document) = configured()
         for key in "user" { session.press(String(key),in: document) }
@@ -353,7 +362,7 @@ final class TypingSessionTests: XCTestCase {
         XCTAssertTrue(session.composing.isEmpty)
     }
 
-    func testCompletionDoesNotOfferReplacementForPartOfAnExistingWord() {
+    func testCompletionInsideAnExistingWordReplacesTheWholeWordLikeAndroid() {
         let session = TypingSession(), document = Document()
         session.englishMode = true
         session.vocabulary = KeyboardVocabulary(englishText: "help\nhello", vietnameseText: "", phrasesText: "")
@@ -362,8 +371,11 @@ final class TypingSessionTests: XCTestCase {
         session.reset()
         document.text = "hello"; document.cursor = 2
         session.press("l", in: document)
-        XCTAssertTrue(session.candidates.isEmpty)
         XCTAssertEqual(document.text, "helllo")
+        // Gợi ý cho "hell|lo" thay cả từ, không chèn vào giữa
+        XCTAssertTrue(session.candidates.contains("hello"), "\(session.candidates)")
+        session.choose("hello", in: document)
+        XCTAssertEqual(document.text, "hello ")
     }
 
     func testGoldenCorpusThroughSwiftBridge() throws {

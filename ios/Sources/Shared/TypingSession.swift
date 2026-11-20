@@ -83,6 +83,17 @@ final class TypingSession {
         candidateAnchor = DocumentAnchor(document)
         guard suggestionsEnabled, document.documentID != nil, document.selection?.isEmpty != false else { latestSuggestions = []; return }
         let before = document.beforeInput ?? "", after = document.afterInput ?? ""
+        if englishMode {
+            // EN như Android: gợi ý theo từ quanh con trỏ (cả khi con trỏ nằm trong từ đã gõ: "hello" ⌫ cách rồi gõ "s" vẫn có
+            // gợi ý cho "hellos"); chọn thì thay cả từ. Chưa có chữ nào thì gợi ý từ kế tiếp.
+            guard let query = vocabulary?.englishAtCursor(before: before, after: after, capsLock: capsLock, capitalize: capitalizeNext) else {
+                latestSuggestions = []; return
+            }
+            if query.head.isEmpty { target = .next } else if query.head == composing && query.tail.isEmpty { target = .composition }
+            else { target = .cursor(query.head, query.tail) }
+            latestSuggestions = query.words
+            return
+        }
         if !composing.isEmpty {
             target = .composition
             let boundary = before.dropLast(composing.count).last

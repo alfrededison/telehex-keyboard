@@ -118,6 +118,18 @@ class KeyboardVocabulary(englishText: String, vietnameseText: String, phrasesTex
         return GlideDecoder().suggest(trace, keys, vietnamese.glideWords(PredictionContext.before(before)), config, 24)
     }
 
+    /**
+     * EN như Android: gợi ý cho từ quanh con trỏ (phần trước [head] và phần sau [tail]), kể cả khi con trỏ nằm trong một
+     * từ đã gõ; chưa có chữ nào thì gợi ý từ kế tiếp. Null khi con trỏ không ở chỗ gợi ý được.
+     */
+    fun englishAtCursor(before: String, after: String, capsLock: Boolean, capitalize: Boolean): EnglishCursorSuggestions? {
+        val query = EnglishPredictor.queryAtCursor(before, after) ?: return null
+        val head = query.token.head
+        val words = if (head.isEmpty()) english.next(query.context, capsLock = capsLock, capitalize = capitalize)
+        else english.complete(head, capsLock = capsLock, context = query.context)
+        return EnglishCursorSuggestions(head, query.token.tail, words)
+    }
+
     fun suggestions(prefix: String, before: String, englishMode: Boolean): List<String> {
         if (englishMode) {
             val query = EnglishPredictor.queryAtCursor(before, "") ?: return emptyList()
@@ -130,6 +142,9 @@ class KeyboardVocabulary(englishText: String, vietnameseText: String, phrasesTex
         }
     }
 }
+
+/** Gợi ý EN cho từ quanh con trỏ: chọn thì thay [head] + [tail]. */
+class EnglishCursorSuggestions(val head: String, val tail: String, val words: List<String>)
 
 /** A validated pack; malformed user files return an error instead of escaping into Swift. */
 class KeyboardLanguagePack private constructor(internal val model: BinaryNgramModel?, val error: String) {
