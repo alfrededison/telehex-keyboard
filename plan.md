@@ -37,7 +37,8 @@ từng ô nên một hàng không cần lệch đều. Ba lớp của một prof
 - Ô kề: hai ô cùng hàng và các ô hàng trên/dưới có tâm lệch không quá 1 ô (lưới lệch ½ ô cho 2, hàng thẳng cột
   cho 3).
 - Phím chữ nhật bo góc, bước hàng `min(1.44 · W, 60dp)` (Gboard đo trên máy 411dp: 40,8 × 58,7dp); khe ngang
-  ~5,5dp, dọc ~11dp.
+  ~5,5dp, dọc ~11dp. Lề hai bên 2dp (tổ ong 8dp) để phím bằng cỡ Gboard: đo trên emulator 1080px, phím Q
+  92 × 121px ở Gboard, 92 × 124px ở TeleHex (lề 8dp trước 0.8.5: 90 × 119px).
 - Hàng cuối `123 ☺ ⚙ , [cách 4 ô] . ↵`. Lớp 123: phím 1/2 ở ô ⇧, `/` (trang 2 là `\`) ở ô ⚙.
 - Hit-test lấy ô gần nhất theo khoảng cách Chebyshev chia nửa ô (ô chứa điểm luôn thắng; chạm khoảng trống cạnh
   ⇧ / ⌫ ra phím gần nhất), cùng học độ lệch chạm và vùng chạm động.

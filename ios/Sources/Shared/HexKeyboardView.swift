@@ -281,6 +281,9 @@ final class HexKeyboardView: UIView {
 
     /// Kích thước chung với Android: lề 8, khe 3, thanh gợi ý 52, lề trên/dưới lưới 6.
     static let barHeight: CGFloat = 52, pad: CGFloat = 8, gridTop: CGFloat = 6, gridBottom: CGFloat = 6
+    /// Lề hai bên lưới phím chữ nhật: phím đã có khe riêng nên chỉ 2pt (8pt làm phím hẹp và thấp hơn ~3%), như Android.
+    /// Lục giác ở mép lệch ½ ô cần lề `pad`.
+    static func gridPad(_ spec: GridSpec) -> CGFloat { spec.isHex ? pad : 2 }
     /// Hàng ô nhập của trình soạn (gõ tắt, tên profile, tìm emoji) nằm dưới thanh trên; bàn phím cao thêm đúng chừng đó
     /// để lưới phím giữ nguyên cỡ.
     static let editorRowHeight: CGFloat = 50
@@ -372,7 +375,7 @@ final class HexKeyboardView: UIView {
     /// lục giác to nửa màn hình mà chữ vẫn nhỏ. Bố cục chữ nhật vẫn trải hết bề ngang như bàn phím iPad.
     static let hexMaxKey: CGFloat = 60
     static func height(for width: CGFloat, screenHeight: CGFloat, spec: GridSpec = .hex7) -> CGFloat {
-        let fullWidth: CGFloat = max(0,width - 2 * pad) / spec.span
+        let fullWidth: CGFloat = max(0,width - 2 * gridPad(spec)) / spec.span
         let keyWidth: CGFloat = spec.isHex ? min(fullWidth, hexMaxKey) : fullWidth
         let grid: CGFloat = spec.isHex ? keyWidth * 8 / HexShape.sqrt3 : CGFloat(spec.rowSizes.count) * min(keyWidth * rectRowRatio, rectMaxRow)
         return min(barHeight + gridTop + grid + gridBottom,max(200,screenHeight * 0.5))
@@ -880,7 +883,8 @@ final class HexKeyboardView: UIView {
         let bottom = Self.gridBottom + safeAreaInsets.bottom
         let spec = preferences.profile.spec, available = max(1,bounds.height - top - bottom)
         // Tổ ong: lục giác đều, bước hàng 0,75 chiều cao. Truyền thống: bước hàng 1,44 bề rộng ô, không vượt chiều cao còn lại.
-        let width = spec.isHex ? max(1,min((span - 2 * pad) / spec.span, available * HexShape.sqrt3 / 8, Self.hexMaxKey)) : max(1,(span - 2 * pad) / spec.span)
+        let gridPad = Self.gridPad(spec)
+        let width = spec.isHex ? max(1,min((span - 2 * gridPad) / spec.span, available * HexShape.sqrt3 / 8, Self.hexMaxKey)) : max(1,(span - 2 * gridPad) / spec.span)
         let height = spec.isHex ? width * 2 / HexShape.sqrt3 : min(width * Self.rectRowRatio, Self.rectMaxRow, available / CGFloat(spec.rowSizes.count))
         let pitch = spec.isHex ? height * 0.75 : height
         let left = (span - width * spec.span) / 2 + (preferences.configuration.oneHand == 2 ? bounds.width - span : 0)

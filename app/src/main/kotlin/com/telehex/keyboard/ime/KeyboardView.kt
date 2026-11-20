@@ -107,7 +107,13 @@ open class KeyboardView @JvmOverloads constructor(
         set(value) { field = value; if (width > 0) { geometry = makeGeometry(width.toFloat()); rebuild(); invalidate() } }
 
     private fun makeGeometry(w: Float, spec: GridSpec = this.spec) =
-        KeyGeometry.of(spec, w, padPx, topPx, gapPx, dp(MAX_ROW_DP), if (oneHanded == 0) 1f else 0.8f, oneHanded == 2)
+        KeyGeometry.of(spec, w, padFor(spec), topPx, gapPx, dp(MAX_ROW_DP), if (oneHanded == 0) 1f else 0.8f, oneHanded == 2)
+
+    /**
+     * Lề hai bên lưới. Phím chữ nhật đã có khe riêng nên lề chỉ 2dp như Gboard (8dp làm phím hẹp và thấp hơn ~3%);
+     * lục giác ở mép lệch ½ ô cần lề rộng hơn.
+     */
+    private fun padFor(spec: GridSpec): Float = if (spec.shape == GridSpec.Shape.RECT) rectPadPx else padPx
 
     var hapticEnabled: Boolean = true
     var soundEnabled: Boolean = false
@@ -121,6 +127,7 @@ open class KeyboardView @JvmOverloads constructor(
     private val pressed = HashMap<Int, Key>()
 
     private val padPx = dp(8f)
+    private val rectPadPx = dp(2f)
     private val topPx = dp(6f)
     private val bottomPx = dp(6f)
     private val gapPx = dp(3f)

@@ -16,6 +16,12 @@ class TestInputActivity : Activity() {
                 val i = kv.indexOf('='); if (i <= 0) null else kv.substring(0, i) to kv.substring(i + 1)
             }.toMap()
         }
+        // --es profile "Truyền thống": chọn profile có sẵn theo tên để chụp/so sánh bố cục
+        intent.getStringExtra("profile")?.let { name ->
+            val prefs = com.telehex.keyboard.data.Prefs(this)
+            com.telehex.keyboard.layout.Profile.BUILT_IN.firstOrNull { it.name == name }
+                ?.let { prefs.saveProfiles(prefs.userProfiles, it) }
+        }
         if (intent.hasExtra("onehanded")) com.telehex.keyboard.data.Prefs(this).oneHanded = intent.getIntExtra("onehanded", 0)
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 64, 32, 32) }
         val text = EditText(this).apply {

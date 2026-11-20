@@ -2,6 +2,8 @@
 
 ## 0.8.5 — unreleased
 
+- "Truyền thống" và "Có hàng số": lề hai bên còn 2dp (trước 8dp), phím rộng và cao thêm khoảng 3%, bằng cỡ bàn phím QWERTY 10 cột quen thuộc.
+
 ## 0.8.4 — 2026-11-18
 
 - Bố cục "Truyền thống": phím cách dời sang trái, mỗi bên ba phím nhỏ (123 ☺ ⚙ · cách · , . ↵). Profile riêng tạo từ trước giữ nguyên chỗ phím cách.
