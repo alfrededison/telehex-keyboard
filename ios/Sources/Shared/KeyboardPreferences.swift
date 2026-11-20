@@ -1,64 +1,51 @@
 import UIKit
 
-/// Kiểu lưới của một profile, nhận ra từ số ô như `GridSpec` của Android: tổ ong 7 cột (35 ô), tổ ong có hàng số (45 ô),
-/// tổ ong 8 cột (40 ô), tổ ong 8 cột có hàng số (50 ô), truyền thống QWERTY 10 cột (38 ô) hoặc truyền thống có hàng số (48 ô). Ô đánh số theo thứ tự đọc, hàng trên trước. Phím cách nằm ở đâu
-/// trong hàng cuối là do profile, để profile riêng lưu từ trước khi bố cục có sẵn dời phím cách vẫn hợp lệ.
-enum GridSpec: Equatable, CaseIterable {
-    case hex7, hex7Num, hex8, hex8Num, qwerty, qwertyNum
-    static func of(count: Int) -> GridSpec? { allCases.first { $0.count == count } }
+import TeleHexCore
+
+/// Kiểu lưới của một profile, lấy từ module `layout` dùng chung với Android (qua `LayoutBridge`) và nhận ra từ số ô của
+/// lớp chữ. Ô đánh số theo thứ tự đọc, hàng trên trước. Phím cách nằm ở đâu trong hàng cuối là do profile, để profile
+/// riêng lưu từ trước khi bố cục có sẵn dời phím cách vẫn hợp lệ.
+struct GridSpec: Equatable {
+    /// Tên kiểu lưới bên Kotlin (`HEX7`, `QWERTY_NUM`…).
+    let name: String
+    /// Tên kiểu lưới hiện dưới tên profile, như Android.
+    let title: String
     /// Mép trái từng ô theo bề rộng ô, từng hàng.
-    var lefts: [[CGFloat]] {
-        func row(_ n: Int, _ left: CGFloat, _ width: CGFloat = 1) -> [CGFloat] { (0..<n).map { left + CGFloat($0) * width } }
-        switch self {
-        case .hex7: return [row(7, 0.5), row(7, 0), row(7, 0.5), row(7, 0), row(7, 0.5)]
-        // Hàng số: 10 lục giác nhỏ rộng 0,75 ô, vừa đúng bề ngang 7,5 ô.
-        case .hex7Num: return [row(10, 0, 0.75)] + GridSpec.hex7.lefts
-        case .hex8: return [row(8, 0.5), row(8, 0), row(8, 0.5), row(8, 0), row(8, 0.5)]
-        // Hàng số: 10 lục giác đều rộng 0,85 ô, vừa bề ngang 8,5 ô.
-        case .hex8Num: return [row(10, 0, 0.85)] + GridSpec.hex8.lefts
-        // Hàng Z: ⇧ sát mép trái, Z…M căn giữa (Z ngay dưới S), ⌫ sát mép phải.
-        case .qwerty: return [row(10, 0), row(9, 0.5), [0] + row(7, 1.5) + [9], row(10, 0)]
-        case .qwertyNum: return [row(10, 0)] + GridSpec.qwerty.lefts
-        }
-    }
-    var rowSizes: [Int] { lefts.map(\.count) }
-    /// Bề rộng ô từng hàng theo bề rộng ô thường (hàng số tổ ong 0,75).
-    var widths: [CGFloat] {
-        switch self {
-        case .hex7Num: return [0.75] + Array(repeating: 1, count: 5)
-        case .hex8Num: return [0.85] + Array(repeating: 1, count: 5)
-        default: return Array(repeating: 1, count: rowSizes.count)
-        }
-    }
-    /// Tổ ong: mép trên từng hàng theo bề rộng ô thường. Hàng cùng cỡ gối 1/4 chiều cao lục giác, hàng số nhỏ xếp chồng
-    /// lên hàng chữ không gối, như `HexGeometry` của Android.
-    var hexRowTops: [CGFloat] {
-        var tops: [CGFloat] = [0]
-        for row in 1..<widths.count {
-            let previous = widths[row - 1] * 2 / HexShape.sqrt3 * stretches[row - 1]
-            tops.append(tops[row - 1] + (widths[row] == widths[row - 1] ? 0.75 * previous : previous))
-        }
-        return tops
-    }
-    /// Tổ ong: chiều cao lưới theo bề rộng ô thường (lưới 7 cột: 8/√3).
-    var hexHeight: CGFloat { hexRowTops[hexRowTops.count - 1] + widths[widths.count - 1] * 2 / HexShape.sqrt3 * stretches[widths.count - 1] }
-    /// Độ giãn dọc lục giác từng hàng: hàng chữ tổ ong 8 cột có ô hẹp hơn nên giãn 8,5/7,5 để phím cao bằng tổ ong 7 cột;
-    /// hàng số không giãn. Như Android.
-    var stretches: [CGFloat] {
-        let letters: CGFloat = 8.5 / 7.5
-        switch self {
-        case .hex8: return Array(repeating: letters, count: 5)
-        case .hex8Num: return [1] + Array(repeating: letters, count: 5)
-        default: return Array(repeating: 1, count: rowSizes.count)
-        }
-    }
-    var count: Int { rowSizes.reduce(0, +) }
+    let lefts: [[CGFloat]]
+    /// Bề rộng ô từng hàng theo bề rộng ô thường (hàng số tổ ong nhỏ hơn 1).
+    let widths: [CGFloat]
+    /// Độ giãn dọc lục giác từng hàng (1 = lục giác đều).
+    let stretches: [CGFloat]
+    /// Tổ ong: mép trên từng hàng và chiều cao lưới, theo bề rộng ô thường.
+    let hexRowTops: [CGFloat]
+    let hexHeight: CGFloat
     /// Bề rộng lưới theo ô.
-    var span: CGFloat { self == .hex8 || self == .hex8Num ? 8.5 : isHex ? 7.5 : 10 }
-    var isHex: Bool { [.hex7, .hex7Num, .hex8, .hex8Num].contains(self) }
-    /// Tên kiểu lưới ở danh sách profile.
-    var title: String { switch self { case .hex7: "Tổ ong"; case .hex7Num: "Tổ ong có số"; case .hex8: "Tổ ong 8 cột"; case .hex8Num: "Tổ ong 8 cột có số"; case .qwerty: "QWERTY"; case .qwertyNum: "QWERTY có số" } }
-    var spaceCells: Int { isHex ? 3 : 4 }
+    let span: CGFloat
+    let isHex: Bool
+    let spaceCells: Int
+
+    private init(_ grid: IosGrid) {
+        func numbers(_ values: [KotlinDouble]) -> [CGFloat] { values.map { CGFloat($0.doubleValue) } }
+        name = grid.name
+        title = grid.title
+        lefts = grid.lefts.map(numbers)
+        widths = numbers(grid.widths)
+        stretches = numbers(grid.stretches)
+        hexRowTops = numbers(grid.hexRowTops)
+        hexHeight = CGFloat(grid.hexHeight)
+        span = CGFloat(grid.span)
+        isHex = grid.isHex
+        spaceCells = Int(grid.spaceCells)
+    }
+
+    static let all: [GridSpec] = LayoutBridge.shared.grids().map(GridSpec.init)
+    static func of(count: Int) -> GridSpec? { all.first { $0.count == count } }
+    private static func named(_ name: String) -> GridSpec { all.first { $0.name == name }! }
+    static let hex7 = named("HEX7"), hex7Num = named("HEX7_NUM"), hex8 = named("HEX8"), hex8Num = named("HEX8_NUM")
+    static let qwerty = named("QWERTY"), qwertyNum = named("QWERTY_NUM")
+
+    var rowSizes: [Int] { lefts.map(\.count) }
+    var count: Int { rowSizes.reduce(0, +) }
     /// Các ô của hàng cuối, nơi phím cách nằm (ô đầu giữ " ", các ô sau của phím cách để trống).
     var lastRow: Range<Int> { (count - rowSizes[rowSizes.count - 1])..<count }
     func position(_ index: Int) -> (row: Int, column: Int) {
@@ -79,85 +66,9 @@ struct KeyboardProfile: Codable, Equatable, Identifiable {
     var builtIn: Bool { id.hasPrefix("builtin.") }
     var spec: GridSpec { GridSpec.of(count: letters.count) ?? .hex7 }
 
-    /// Mặc định từ 0.7.1: hai hàng trên đọc zigzag ⚙ Q W E R T G Y H U I O P 123, hàng giữa A S D F … J K L.
-    static let defaultLetters = ["q","e","t","y","u","o","#symbols", "#settings","w","r","g","h","i","p", "a","s","d","f","j","k","l", "z","x","c","v","b","n","m", "#emoji",","," ","","",".","\n"]
-    /// Tổ ong có hàng số: hàng 1…0 (10 lục giác nhỏ) trên `defaultLetters`.
-    static let hexNumLetters: [String] = "1234567890".map(String.init) + defaultLetters
-    /// Tổ ong 8 cột: `defaultLetters` thêm cột phải. Hàng Z nhường ô đầu cho ⇧ (Z…M dịch phải một ô), ⌫ sau L, `'` `!` ở
-    /// cột thêm của hai hàng trên, `?` cạnh `.`. Như Android.
-    static let hex8Letters = ["q","e","t","y","u","o","'","#symbols", "#settings","w","r","g","h","i","p","!", "a","s","d","f","j","k","l","#backspace",
-                              "#shift","z","x","c","v","b","n","m", "#emoji",","," ","","",".","?","\n"]
-    /// Tổ ong 8 cột có hàng số: hàng 1…0 trên `hex8Letters`.
-    static let hex8NumLetters: [String] = "1234567890".map(String.init) + hex8Letters
-    /// Truyền thống (0.8.0): đúng thứ tự QWERTY, ⇧ và ⌫ ở hàng Z. Hàng cuối (0.8.4): ba phím 123 ☺ ⚙ bên trái phím cách
-    /// 4 ô, ba phím `,` `.` ↵ bên phải (đến 0.8.3: 123 ☺ ⚙ `,` bên trái).
-    static let qwertyLetters: [String] = ["q","w","e","r","t","y","u","i","o","p", "a","s","d","f","g","h","j","k","l",
-        "#shift","z","x","c","v","b","n","m","#backspace", "#symbols","#emoji","#settings"," ","","","",",",".","\n"]
-    /// Truyền thống có hàng số: hàng 1…0 trên `qwertyLetters`.
-    static let qwertyNumLetters: [String] = "1234567890".map(String.init) + qwertyLetters
-    /// Ký tự vuốt xuống theo phím: số 1…0 dưới Q…P, emoji dưới hàng giữa, ký hiệu dưới hàng Z.
-    static let swipeByCode = ["q":"1","w":"2","e":"3","r":"4","t":"5","y":"6","u":"7","i":"8","o":"9","p":"0",
-                              "a":"😄","s":"😂","d":"😍","f":"👍","g":"🙏","h":"❤️","j":"😭","k":"🔥","l":"🎉",
-                              "z":"@","x":"#","c":"&","v":"-","b":"/","n":"(","m":")", ",":"?",".":"!"]
-    /// Bố cục có hàng số, như Android: hàng 1…0 cho ký tự Shift+số, Q…P cho ngoặc và ký hiệu, Z…M cho dấu câu (các ký
-    /// tự cũ của Q…P và Z…M đã có ở hàng số).
-    static let qwertyNumSwipeByCode = swipeByCode.merging([
-        "1":"!","2":"@","3":"#","4":"$","5":"%","6":"^","7":"&","8":"*","9":"(","0":")",
-        "q":"+","w":"=","e":"~","r":"|","t":"[","y":"]","u":"<","i":">","o":"{","p":"}",
-        "z":"-","x":"_","c":"/","v":":","b":";","n":"'","m":"\"",
-    ]) { $1 }
-    /// Hai trang 123 gắn theo ô, như `SymbolPages` của Android: phím 1/2 ở ô ⚙ (tổ ong) hoặc ⇧ (truyền thống); trang 2
-    /// có `<` `>` ở ô `,` `.`.
-    static let hexSymbols: [[String]] = [
-        ["1","3","5","7","9","0","", "#page","2","4","6","8","(",")", "@","#","$","_","&","-","+", "*","\"","'",":","/","!","?", "","","","","","",""],
-        ["~","|","√","÷","§","\\","", "#page","`","•","π","×","{","}", "£","₫","€","¥","^","°","=", "%","©","®",";","✓","[","]", "","<","","","",">",""],
-    ]
-    /// Tổ ong có hàng số: cùng bộ ký tự với `qwertyNumSymbols`, 26 ô chữ và ô ⚙ (phím 1/2) theo thứ tự đọc, như Android.
-    static let hexNumSymbols: [[String]] = [
-        ["1","2","3","4","5","6","7","8","9","0", "@","#","$","_","&","-","", "#page","+","(",")","/","=","%",
-         "*","\"","'",":",";","!","?", "\\","<",">","[","]","{","}", "","","","","","",""],
-        ["~","`","|","•","√","π","÷","×","§","∆", "£","₫","€","¥","¢","^","", "#page","°","©","®","™","✓","…",
-         "«","»","±","≤","≥","≠","∞", "¡","¿","²","³","½","‰","¶", "","","","","","",""],
-    ]
-    /// Tổ ong 8 cột: ô chữ hàng Q, W, A như `hexSymbols`, hàng Z dịch theo chữ; `;` `%` `=` về trang 1, như Android.
-    static let hex8Symbols: [[String]] = [
-        ["1","3","5","7","9","0",";","", "#page","2","4","6","8","(",")","%", "@","#","$","_","&","-","+","",
-         "=","*","\"","'",":","/","!","?", "","","","","","","…",""],
-        ["~","|","√","÷","§","\\","™","", "#page","`","•","π","×","{","}","∆", "£","₫","€","¥","^","°","¢","",
-         "¶","©","®","✓","[","]","«","»", "","<","","","",">","",""],
-    ]
-    /// Tổ ong 8 cột có hàng số: bộ ký tự như `qwertyNumSymbols`, ô `'` `!` `?` để trống nên `~ ^ | …` lên trang 1, trang 2
-    /// thêm `≈ ← → ↑ ↓`. Như Android.
-    static let hex8NumSymbols: [[String]] = [
-        ["1","2","3","4","5","6","7","8","9","0", "@","#","$","_","&","-","","", "#page","+","(",")","/","=","%","",
-         "*","\"",":",";","\\","~","^","", "|","<",">","[","]","{","}","…", "","","","","","","",""],
-        ["`","•","√","π","÷","×","§","∆","£","₫", "€","¥","¢","°","©","®","","", "#page","™","✓","«","»","±","≤","",
-         "≥","≠","∞","¡","¿","²","³","", "½","‰","¶","≈","←","→","↑","↓", "","","","","","","",""],
-    ]
-    static let qwertySymbols: [[String]] = [
-        ["1","2","3","4","5","6","7","8","9","0", "@","#","$","_","&","-","+","(",")",
-         "#page","*","\"","'",":",";","!","?","", "","","/","","","","","","",""],
-        ["~","`","|","•","√","π","÷","×","§","∆", "£","₫","€","¥","^","°","=","{","}",
-         "#page","%","©","®","™","✓","[","]","", "","","\\","","","","","<",">",""],
-    ]
-    /// Có hàng số: đủ chỗ cho `/` `=` `%` và ngoặc ở trang 1 nên ⚙ giữ nguyên, như Android.
-    static let qwertyNumSymbols: [[String]] = [
-        ["1","2","3","4","5","6","7","8","9","0", "@","#","$","_","&","-","+","(",")","/", "*","\"","'",":",";","!","?","=","%",
-         "#page","\\","<",">","[","]","{","}","", "","","","","","","","","",""],
-        ["~","`","|","•","√","π","÷","×","§","∆", "£","₫","€","¥","¢","^","°","©","®","™", "✓","…","«","»","±","≤","≥","≠","∞",
-         "#page","¡","¿","²","³","½","‰","¶","", "","","","","","","","","",""],
-    ]
-    static let presets: [KeyboardProfile] = [
-        ("default","Mặc định",defaultLetters,hexSymbols,swipeByCode), ("qwerty","Truyền thống",qwertyLetters,qwertySymbols,swipeByCode),
-        ("qwertyNum","Có hàng số",qwertyNumLetters,qwertyNumSymbols,qwertyNumSwipeByCode),
-        // Hàng số tổ ong không có ký tự vuốt xuống: lục giác nhỏ không đủ chỗ, `! @ # …` có ở lớp 123. Như Android.
-        ("hexNum","Tổ ong có hàng số",hexNumLetters,hexNumSymbols,qwertyNumSwipeByCode.filter { !KeyboardProfile.isDigit($0.key) }),
-        ("hex8","Tổ ong 8 cột",hex8Letters,hex8Symbols,swipeByCode.merging(["'":"\""]) { $1 }),
-        // Hàng số không vuốt xuống; Q…P ra ngoặc như "Có hàng số" vì 1…0 đã có ở hàng số. Như Android.
-        ("hex8Num","Tổ ong 8 cột có hàng số",hex8NumLetters,hex8NumSymbols,
-         swipeByCode.merging(["'":"\""]) { $1 }.merging(qwertyNumSwipeByCode.filter { "qwertyuiop".contains($0.key) }) { $1 }),
-    ].map { preset in
-        KeyboardProfile(id: "builtin." + preset.0, name: preset.1, letters: preset.2, swipe: preset.2.map { preset.4[$0] ?? "" }, symbols: preset.3)
+    /// Profile có sẵn, lấy từ module `layout` dùng chung với Android: cùng lớp chữ, vuốt xuống và 123 từng ô.
+    static let presets: [KeyboardProfile] = LayoutBridge.shared.presets().map {
+        KeyboardProfile(id: $0.id, name: $0.name, letters: $0.letters, swipe: $0.swipe, symbols: $0.symbols)
     }
     /// Profile có sẵn cùng kiểu lưới: điểm xuất phát khi đặt lại một lớp.
     static func builtIn(for spec: GridSpec) -> KeyboardProfile { presets.first { $0.spec == spec } ?? presets[0] }
@@ -165,39 +76,27 @@ struct KeyboardProfile: Codable, Equatable, Identifiable {
     static func isDigit(_ value: String) -> Bool { value.utf8.count == 1 && value.first.map { ("0"..."9").contains(String($0)) } == true }
     /// Ô chữ hay ô số (hàng số): lớp 123 luôn hiện giá trị của trang ở đây; đổi chỗ được như chữ.
     static func isCharCell(_ value: String) -> Bool { isLetter(value) || isDigit(value) }
-    /// Ô giữ được ký tự vuốt xuống: chữ, số và `,` `.`.
-    /// Dấu câu có phím riêng ở lớp chữ (`?` `!` `'` của tổ ong 8 cột): chạm gõ đúng dấu, có ký tự vuốt xuống và giá trị lớp 123.
-    static func isPunct(_ code: String) -> Bool { [",",".","?","!","'"].contains(code) }
-    static func swipeUsable(_ code: String) -> Bool { isCharCell(code) || isPunct(code) }
-    /// Ô giữ được giá trị lớp 123: chữ, số, cùng ⚙ ⇧ `,` `.` (có giá trị thì thay phím của lớp chữ, trống thì giữ phím đó).
-    static func symbolUsable(_ code: String) -> Bool { isCharCell(code) || isPunct(code) || ["#settings","#shift"].contains(code) }
+    /// Dấu câu có phím riêng ở lớp chữ (`,` `.`, `?` `!` `'` của tổ ong 8 cột): chạm gõ đúng dấu, có ký tự vuốt xuống và giá
+    /// trị lớp 123. Quy tắc ô của ba hàm này lấy từ module `layout` như Android.
+    static func isPunct(_ code: String) -> Bool { LayoutBridge.shared.isPunct(code: code) }
+    /// Ô giữ được ký tự vuốt xuống: chữ, số và dấu câu.
+    static func swipeUsable(_ code: String) -> Bool { LayoutBridge.shared.swipeUsable(code: code) }
+    /// Ô giữ được giá trị lớp 123: chữ, số, dấu câu, cùng ⚙ ⇧ (có giá trị thì thay phím của lớp chữ, trống thì giữ phím đó).
+    static func symbolUsable(_ code: String) -> Bool { LayoutBridge.shared.symbolUsable(code: code) }
     /// Ô không đổi chỗ được: phím cách và ↵.
     static func fixed(_ code: String) -> Bool { code == " " || code.isEmpty || code == "\n" }
     func valid() -> Bool {
         guard let spec = GridSpec.of(count: letters.count), swipe.count == letters.count, symbols.count == 2, symbols.allSatisfy({ $0.count == letters.count }),
               !id.isEmpty, id.count <= 80, name.count <= 80, !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              let space = letters.firstIndex(of: " "), spec.lastRow.contains(space), spec.lastRow.contains(space + spec.spaceCells - 1),
-              (1..<spec.spaceCells).allSatisfy({ letters[space + $0].isEmpty }), letters.last == "\n",
-              Set(letters) == Set(Self.builtIn(for: spec).letters), letters.filter({ Self.isLetter($0) }).count == 26,
-              letters.filter({ $0.isEmpty }).count == spec.spaceCells - 1 else { return false }
+              letters.filter({ $0 == " " }).count == 1, letters.filter({ $0.isEmpty }).count == spec.spaceCells - 1,
+              LayoutBridge.shared.validLetters(letters: letters) else { return false }
         return swipe.allSatisfy { $0.utf16.count <= 8 } && symbols.flatMap { $0 }.allSatisfy { $0.utf16.count <= 8 }
     }
-    /// Giá trị vuốt xuống / 123 nằm dưới ô không dùng được (sau khi kéo phím chức năng) dời sang ô trống, như
-    /// `KeyLayers.reconcile` của Android: lớp 123 ưu tiên ô chữ rồi mới tới ⚙ ⇧ `,` `.`.
+    /// Giá trị vuốt xuống / 123 nằm dưới ô không dùng được (sau khi kéo phím chức năng) dời sang ô trống, như Android
+    /// (`Profile.reconciled` của module `layout`): lớp 123 ưu tiên ô chữ rồi mới tới ⚙ ⇧ và dấu câu.
     mutating func reconcile() {
-        func place(_ layers: inout [[String]], usable: (String) -> Bool, preferred: (String) -> Bool) {
-            var hidden: [(Int, String)] = []
-            for page in layers.indices { for i in layers[page].indices where !usable(letters[i]) && !layers[page][i].isEmpty { hidden.append((page, layers[page][i])); layers[page][i] = "" } }
-            for (origin, value) in hidden {
-                let pages = [origin] + layers.indices.filter { $0 != origin }
-                search: for pass in 0..<2 {
-                    for page in pages { for i in layers[page].indices where (pass == 0 ? preferred(letters[i]) : usable(letters[i])) && layers[page][i].isEmpty { layers[page][i] = value; break search } }
-                }
-            }
-        }
-        var swipeLayers = [swipe]
-        place(&swipeLayers, usable: Self.swipeUsable, preferred: Self.swipeUsable); swipe = swipeLayers[0]
-        place(&symbols, usable: Self.symbolUsable, preferred: Self.isCharCell)
+        guard let layers = LayoutBridge.shared.reconcile(letters: letters, swipe: swipe, symbols: symbols) else { return }
+        swipe = layers.swipe; symbols = layers.symbols
     }
 }
 

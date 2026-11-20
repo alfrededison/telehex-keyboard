@@ -51,17 +51,15 @@ class KeyboardVocabulary(englishText: String, vietnameseText: String, phrasesTex
         phrases = Phrases.parse(phrasesText),
     )
 
-    fun configure(newToneStyle: Boolean, lAsGrave: Boolean, layout: String) {
+    /**
+     * [neighbors]: chữ → các chữ kề nhau trên bố cục đang dùng (sửa gõ sai), do app tính từ hình học lưới thật
+     * (iOS: `LayoutBridge.neighbors`, Android: `LayoutModel.letterNeighbors`).
+     */
+    fun configure(newToneStyle: Boolean, lAsGrave: Boolean, neighbors: Map<String, String>) {
         config = TelexConfig(newToneStyle = newToneStyle, lAsGrave = lAsGrave)
-        val rows = layout.lines().map { it.split('\t') }
-        val result = HashMap<Char, List<Char>>()
-        for (r in rows.indices) for (c in rows[r].indices) {
-            val letter = rows[r][c].singleOrNull()?.takeIf { it in 'a'..'z' } ?: continue
-            val diagonal = if (r % 2 == 0) listOf(c, c + 1) else listOf(c - 1, c)
-            val cells = listOf(r to c - 1, r to c + 1) + diagonal.flatMap { listOf(r - 1 to it, r + 1 to it) }
-            result[letter] = cells.mapNotNull { (y, x) -> rows.getOrNull(y)?.getOrNull(x)?.singleOrNull()?.takeIf { it in 'a'..'z' } }
-        }
-        neighbors = result
+        this.neighbors = neighbors.entries
+            .mapNotNull { (k, v) -> k.singleOrNull()?.let { it to v.filter { c -> c in 'a'..'z' }.toList() } }
+            .toMap()
     }
 
     fun corrections(raw: String, before: String): List<String> = Corrector(config, neighbors).suggest(

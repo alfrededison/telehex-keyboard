@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins { alias(libs.plugins.kotlin.multiplatform) }
 
@@ -21,15 +20,9 @@ kotlin {
     jvm { compilerOptions.jvmTarget.set(JvmTarget.JVM_17) }
     if (System.getProperty("os.name") == "Mac OS X") {
         macosArm64()
-        val xcframework = XCFramework("TeleHexCore")
-        listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
-            target.binaries.framework {
-                baseName = "TeleHexCore"
-                isStatic = true
-                binaryOption("bundleId", "com.telehex.keyboard.core")
-                xcframework.add(this)
-            }
-        }
+        // Framework iOS do `:bridge` gói cùng `:layout`
+        iosArm64()
+        iosSimulatorArm64()
     }
     sourceSets {
         commonTest {

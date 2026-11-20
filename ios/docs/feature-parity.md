@@ -27,7 +27,7 @@ Quyết định: phát hành khi đủ tính năng Android 0.8.1 mà iOS hỗ tr
 - 80 JVM tests, 7 macOS Native tests, 34 Android app tests đều đạt; corpus golden và Unicode NFC/NFD.
 - 62 XCTest đạt: bridge Swift → Native, safe replacement khi đổi field/selection/context, Unicode cursor, keyboard-owned undo/redo, snippets/ẩn danh/EN không học, cấu hình/profile và bố cục 0.8.0, thanh gợi ý/điều hướng bảng, pending write/clear, backup/restore và emoji ghép.
 - UI Simulator có video riêng từng kịch bản trong `test-recordings/`: gõ VI/EN, profile/symbols/emoji, snippets/privacy, bố cục truyền thống, editor lớp phím, glide/space, appearance/dialpad và extension thật. Chỉ giữ video khi test đạt.
-- Android phải tiếp tục qua `:telex:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug`.
+- Android phải tiếp tục qua `:telex:test :layout:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug`.
 - Build Simulator và Release ARM64 không ký đều đạt tại máy phát triển. Workflow iOS (build + XCTest) và Android đều đạt trên `main` tới commit gói ngôn ngữ 32 MiB.
 
 Danh sách hành vi đã có code không thay thế kiểm thử thực tế trên thiết bị và các ứng dụng chủ.

@@ -22,7 +22,7 @@ ios/scripts/build.sh
 open ios/TeleHex.xcodeproj
 ```
 
-Chọn scheme `TeleHex`, chọn iPhone Simulator rồi Run. Xcode tự gọi Gradle `:telex:embedAndSignAppleFrameworkForXcode` trước khi compile, nên sửa engine Kotlin rồi Run sẽ dùng đúng engine mới. Debug/Release lấy framework theo configuration của Xcode; không ghim framework debug vào bản release. Project Xcode được sinh từ `project.json`.
+Chọn scheme `TeleHex`, chọn iPhone Simulator rồi Run. Xcode tự gọi Gradle `:bridge:embedAndSignAppleFrameworkForXcode` trước khi compile, nên sửa Kotlin (`telex/`, `layout/`) rồi Run sẽ dùng đúng bản mới. Framework `TeleHexCore` do module `bridge/` gói từ `telex/` và `layout/`; Swift chỉ thấy API của `telex` và lớp chuyển đổi `LayoutBridge` (profile có sẵn, số đo lưới, kiểm tra và dời giá trị lớp phím, ô kề cho sửa gõ sai). Debug/Release lấy framework theo configuration của Xcode; không ghim framework debug vào bản release. Project Xcode được sinh từ `project.json`.
 
 Để build ARM64 cho iPhone mà chưa ký:
 
@@ -76,7 +76,7 @@ Gói `.ngram` dựng bằng pipeline sẵn có của repo, nạp trong app, tố
 ## Kiểm thử
 
 ```sh
-./gradlew :telex:test :app:testDebugUnitTest :app:lintDebug
+./gradlew :telex:test :layout:test :bridge:test :app:testDebugUnitTest :app:lintDebug
 ./gradlew :telex:macosArm64Test
 xcodebuild -project ios/TeleHex.xcodeproj -scheme TeleHex \
   -destination 'platform=iOS Simulator,id=SIMULATOR_UUID' \

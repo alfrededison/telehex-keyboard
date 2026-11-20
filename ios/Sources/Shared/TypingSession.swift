@@ -60,9 +60,9 @@ final class TypingSession {
         suggestionsEnabled = preferences.suggestions
     }
     func configureVocabulary(_ preferences: KeyboardPreferences) {
-        let profile = preferences.profile
-        let layout = (0..<5).map { Array(profile.letters[($0 * 7)..<($0 * 7 + 7)]).joined(separator: "\t") }.joined(separator: "\n")
-        vocabulary?.configure(newToneStyle: preferences.newToneStyle, lAsGrave: preferences.lAsGrave, layout: layout)
+        // Ô kề theo lưới thật của profile (cả lưới truyền thống, có hàng số, 8 cột), như Android
+        let neighbors = LayoutBridge.shared.neighbors(letters: preferences.profile.letters)
+        vocabulary?.configure(newToneStyle: preferences.newToneStyle, lAsGrave: preferences.lAsGrave, neighbors: neighbors)
     }
     private func learn(_ word: String, before: String) {
         guard learningAllowed, !englishMode, !configuration.incognito, let vocabulary, !word.isEmpty, word != resumedWord else { return }

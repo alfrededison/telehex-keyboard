@@ -15,7 +15,7 @@
       "CODE_SIGN_STYLE": "Automatic",
       "FRAMEWORK_SEARCH_PATHS": [
         "$(inherited)",
-        "$(SRCROOT)/../telex/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
+        "$(SRCROOT)/../bridge/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
       ],
       "OTHER_LDFLAGS": [
         "$(inherited)",

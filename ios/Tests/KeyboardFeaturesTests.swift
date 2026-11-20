@@ -108,6 +108,13 @@ final class KeyboardFeaturesTests: XCTestCase {
         XCTAssertEqual(values.count,Set(values).count)
         var reconciled = num; reconciled.reconcile(); XCTAssertEqual(reconciled,num)
     }
+    func testLayoutsComeFromTheSharedModule() {
+        // Sửa gõ sai dùng ô kề của lưới thật: Q của Truyền thống kề W và A (trước đây iOS cắt mọi bố cục thành 5×7)
+        let qwerty = KeyboardProfile.presets[1]
+        XCTAssertEqual(Set(LayoutBridge.shared.neighbors(letters: qwerty.letters)["q"] ?? ""), Set("wa"))
+        XCTAssertEqual(GridSpec.all.count, KeyboardProfile.presets.count)
+        XCTAssertTrue(KeyboardProfile.presets.allSatisfy { $0.valid() })
+    }
     func testEightColumnHoneycombLayout() {
         let hex8 = KeyboardProfile.presets[4], hex = KeyboardProfile.presets[0]
         XCTAssertEqual(hex8.id,"builtin.hex8"); XCTAssertEqual(hex8.spec,.hex8); XCTAssertEqual(GridSpec.hex8.count,40)

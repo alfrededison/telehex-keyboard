@@ -7,4 +7,4 @@ if [[ ! -x "${JAVA_HOME:-}/bin/java" ]]; then
     export JAVA_HOME="$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home"
   fi
 fi
-./gradlew -PskipAndroid=true :telex:embedAndSignAppleFrameworkForXcode
+./gradlew -PskipAndroid=true :bridge:embedAndSignAppleFrameworkForXcode
