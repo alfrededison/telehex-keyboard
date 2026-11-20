@@ -377,7 +377,7 @@ final class HexKeyboardView: UIView {
     static func height(for width: CGFloat, screenHeight: CGFloat, spec: GridSpec = .hex7) -> CGFloat {
         let fullWidth: CGFloat = max(0,width - 2 * gridPad(spec)) / spec.span
         let keyWidth: CGFloat = spec.isHex ? min(fullWidth, hexMaxKey) : fullWidth
-        let grid: CGFloat = spec.isHex ? keyWidth * 8 / HexShape.sqrt3 : CGFloat(spec.rowSizes.count) * min(keyWidth * rectRowRatio, rectMaxRow)
+        let grid: CGFloat = spec.isHex ? keyWidth * spec.hexHeight : CGFloat(spec.rowSizes.count) * min(keyWidth * rectRowRatio, rectMaxRow)
         return min(barHeight + gridTop + grid + gridBottom,max(200,screenHeight * 0.5))
     }
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -882,11 +882,11 @@ final class HexKeyboardView: UIView {
         let span = bounds.width * scale
         let bottom = Self.gridBottom + safeAreaInsets.bottom
         let spec = preferences.profile.spec, available = max(1,bounds.height - top - bottom)
-        // Tổ ong: lục giác đều, bước hàng 0,75 chiều cao. Truyền thống: bước hàng 1,44 bề rộng ô, không vượt chiều cao còn lại.
-        let gridPad = Self.gridPad(spec)
-        let width = spec.isHex ? max(1,min((span - 2 * gridPad) / spec.span, available * HexShape.sqrt3 / 8, Self.hexMaxKey)) : max(1,(span - 2 * gridPad) / spec.span)
+        // Tổ ong: lục giác đều, mép trên từng hàng theo `hexRowTops`. Truyền thống: bước hàng 1,44 bề rộng ô, không vượt chiều
+        // cao còn lại.
+        let gridPad = Self.gridPad(spec), hexTops = spec.isHex ? spec.hexRowTops : []
+        let width = spec.isHex ? max(1,min((span - 2 * gridPad) / spec.span, available / spec.hexHeight, Self.hexMaxKey)) : max(1,(span - 2 * gridPad) / spec.span)
         let height = spec.isHex ? width * 2 / HexShape.sqrt3 : min(width * Self.rectRowRatio, Self.rectMaxRow, available / CGFloat(spec.rowSizes.count))
-        let pitch = spec.isHex ? height * 0.75 : height
         let left = (span - width * spec.span) / 2 + (preferences.configuration.oneHand == 2 ? bounds.width - span : 0)
         for (button,index,code) in keys {
             if dialpad {
@@ -897,9 +897,9 @@ final class HexKeyboardView: UIView {
                 let x = pad + widths.prefix(column).reduce(0, +) + CGFloat(column) * gap
                 button.frame = CGRect(x: x,y: top + CGFloat(row) * (rowHeight + gap),width: widths[column],height: rowHeight)
             } else {
-                let row = spec.position(index).row
-                button.frame = CGRect(x: left + spec.left(index) * width, y: top + CGFloat(row) * pitch,
-                                      width: width * CGFloat(code == " " ? spec.spaceCells : 1), height: height)
+                let row = spec.position(index).row, cell = width * spec.width(index)
+                button.frame = CGRect(x: left + spec.left(index) * width, y: top + (spec.isHex ? hexTops[row] * width : CGFloat(row) * height),
+                                      width: cell * CGFloat(code == " " ? spec.spaceCells : 1), height: spec.isHex ? cell * 2 / HexShape.sqrt3 : height)
             }
         }
         panel.frame = CGRect(x: pad,y: bar,width: bounds.width - 2 * pad,height: max(1,bounds.height - bar - safeAreaInsets.bottom - 4))

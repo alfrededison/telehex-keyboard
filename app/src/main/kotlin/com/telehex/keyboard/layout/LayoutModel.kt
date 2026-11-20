@@ -103,6 +103,12 @@ class LayoutModel(val rows: List<List<String?>>) {
             )
         )
 
+        /** Hàng số 1…0, dùng chung cho các bố cục có hàng số. */
+        private val DIGIT_ROW: List<String?> = "1234567890".map { "$it" }
+
+        /** Tổ ong có hàng số: hàng 1…0 (10 lục giác nhỏ) trên [DEFAULT]. */
+        val HEX7_NUM: LayoutModel = LayoutModel(listOf(DIGIT_ROW) + DEFAULT.rows)
+
         /** Ba hàng chữ QWERTY của bố cục truyền thống: hàng Z có ⇧ sát mép trái, Z…M căn giữa, ⌫ sát mép phải. */
         private val QWERTY_LETTER_ROWS: List<List<String?>> = listOf(
             "qwertyuiop".map { "$it" },
@@ -121,11 +127,12 @@ class LayoutModel(val rows: List<List<String?>>) {
         val QWERTY: LayoutModel = LayoutModel(QWERTY_LETTER_ROWS + listOf(QWERTY_BOTTOM_ROW))
 
         /** Truyền thống có hàng số: hàng 1…0 trên [QWERTY]. */
-        val QWERTY_NUM: LayoutModel = LayoutModel(listOf("1234567890".map { "$it" }) + QWERTY_LETTER_ROWS + listOf(QWERTY_BOTTOM_ROW))
+        val QWERTY_NUM: LayoutModel = LayoutModel(listOf(DIGIT_ROW) + QWERTY_LETTER_ROWS + listOf(QWERTY_BOTTOM_ROW))
 
         /** Lớp chữ có sẵn của kiểu lưới [spec]. */
         fun defaultFor(spec: GridSpec): LayoutModel = when (spec) {
             GridSpec.HEX7 -> DEFAULT
+            GridSpec.HEX7_NUM -> HEX7_NUM
             GridSpec.QWERTY -> QWERTY
             GridSpec.QWERTY_NUM -> QWERTY_NUM
         }

@@ -138,11 +138,19 @@ object KeyLayers {
         "z" to "-", "x" to "_", "c" to "/", "v" to ":", "b" to ";", "n" to "'", "m" to "\"",
     )
 
+    /**
+     * Lớp vuốt xuống của bố cục tổ ong có hàng số: chữ như truyền thống có hàng số ([QWERTY_NUM_SWIPE_BY_CODE]), hàng số
+     * để trống vì lục giác nhỏ không đủ chỗ cho ký tự phụ (`! @ # …` có ở lớp 123).
+     */
+    val HEX7_NUM_SWIPE: CellGrid =
+        CellGrid.fromCodes(LayoutModel.HEX7_NUM) { if (KeyCode.isDigit(it)) null else QWERTY_NUM_SWIPE_BY_CODE[it] }
+
     /** Lớp vuốt xuống của bố cục truyền thống có hàng số ([QWERTY_NUM_SWIPE_BY_CODE]). */
     val QWERTY_NUM_SWIPE: CellGrid = CellGrid.fromCodes(LayoutModel.QWERTY_NUM) { QWERTY_NUM_SWIPE_BY_CODE[it] }
 
     fun defaultSwipe(spec: GridSpec): CellGrid = when (spec) {
         GridSpec.HEX7 -> DEFAULT_SWIPE
+        GridSpec.HEX7_NUM -> HEX7_NUM_SWIPE
         GridSpec.QWERTY -> QWERTY_SWIPE
         GridSpec.QWERTY_NUM -> QWERTY_NUM_SWIPE
     }

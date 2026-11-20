@@ -60,6 +60,7 @@ final class HomeViewController: UIViewController {
         let steps = card(title: "Bật TeleHex", lines: [], body: [add, choose])
         layoutOptions = [
             LayoutOptionButton(profileID: "builtin.default", name: "Tổ ong", detail: "Phím lục giác to hơn, vẫn thứ tự QWERTY"),
+            LayoutOptionButton(profileID: "builtin.hexNum", name: "Tổ ong có hàng số", detail: "Như Tổ ong, thêm hàng số 1…0 nhỏ trên cùng"),
             LayoutOptionButton(profileID: "builtin.qwerty", name: "Truyền thống", detail: "QWERTY 10 cột quen thuộc, có ⇧ và ⌫"),
             LayoutOptionButton(profileID: "builtin.qwertyNum", name: "Có hàng số", detail: "Như Truyền thống, thêm hàng số 1…0 trên cùng"),
         ]

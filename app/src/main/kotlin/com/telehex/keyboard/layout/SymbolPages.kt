@@ -37,6 +37,33 @@ object SymbolPages {
     )
 
     /**
+     * Hai trang của bố cục tổ ong có hàng số: cùng bộ ký tự với [QWERTY_NUM] (hàng số vẫn là số ở trang 1), 26 ô chữ và
+     * ô ⚙ (phím 1/2) xếp theo thứ tự đọc.
+     */
+    val HEX7_NUM: List<CellGrid> = listOf(
+        CellGrid(
+            listOf(
+                "1 2 3 4 5 6 7 8 9 0".split(' '),
+                "@ # \$ _ & -".split(' ') + listOf(""),
+                listOf(P) + "+ ( ) / = %".split(' '),
+                "* \" ' : ; ! ?".split(' '),
+                "\\ < > [ ] { }".split(' '),
+                List(7) { "" },
+            )
+        ),
+        CellGrid(
+            listOf(
+                "~ ` | • √ π ÷ × § ∆".split(' '),
+                "£ ₫ € ¥ ¢ ^".split(' ') + listOf(""),
+                listOf(P) + "° © ® ™ ✓ …".split(' '),
+                "« » ± ≤ ≥ ≠ ∞".split(' '),
+                "¡ ¿ ² ³ ½ ‰ ¶".split(' '),
+                List(7) { "" },
+            )
+        ),
+    )
+
+    /**
      * Hai trang của bố cục truyền thống: số 1…0 ở hàng trên, phím 1/2 ở ô ⇧ (☺ thành 1234 như mọi bố cục). Hàng giữa
      * có 9 ô nên `/` sang ô ⚙; dấu phẩy giữ chỗ cạnh phím cách. Trang 2 có `\` ở ô ⚙, `<` `>` ở ô `,` `.` (₫ thay ¢).
      */
@@ -87,6 +114,7 @@ object SymbolPages {
     /** Hai trang có sẵn của kiểu lưới [spec]. */
     fun defaultFor(spec: GridSpec): List<CellGrid> = when (spec) {
         GridSpec.HEX7 -> DEFAULT
+        GridSpec.HEX7_NUM -> HEX7_NUM
         GridSpec.QWERTY -> QWERTY
         GridSpec.QWERTY_NUM -> QWERTY_NUM
     }

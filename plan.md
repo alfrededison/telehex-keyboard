@@ -27,6 +27,9 @@ Với chiều rộng khả dụng `Wu` (trừ padding 8dp mỗi bên):
 - Phím cách ghép 3 ô giữa hàng cuối; thu hình vẽ 1.5dp mỗi cạnh để có khe.
 - Hit-test chọn tâm gần nhất, có tuỳ chọn học độ lệch chạm và vùng chạm động.
 - Một tay thu lưới về 80%, dồn trái/phải; lục giác luôn đều.
+- Tổ ong có hàng số (`GridSpec.HEX7_NUM`, 10 + 5 × 7 ô): hàng 1…0 là 10 lục giác đều rộng `0.75 · W` (vừa đúng
+  `7.5 · W`), xếp chồng lên hàng chữ không gối 1/4 vì lục giác nhỏ không lồng được; chiều cao lưới `0.75 · H + 4P + H`.
+  Hit-test lấy tâm gần nhất với khoảng cách chia bề rộng ô của hàng, nên ranh giới hai hàng rơi đúng chỗ xếp chồng.
 
 Kiểu lưới (`GridSpec`) nhận ra từ số ô mỗi hàng của lớp chữ, nên JSON bố cục không thêm trường; nó giữ mép trái
 từng ô nên một hàng không cần lệch đều. Ba lớp của một profile luôn cùng kiểu lưới. Lưới truyền thống

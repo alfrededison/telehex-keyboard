@@ -3,7 +3,7 @@ package com.telehex.keyboard.layout
 import kotlin.math.abs
 
 /**
- * Kiểu lưới của một profile: vị trí từng ô (mép trái, theo bề rộng ô), hàng và số ô của phím cách, hình phím. Nhận ra
+ * Kiểu lưới của một profile: vị trí từng ô (mép trái và bề rộng, theo bề rộng ô), hàng và số ô của phím cách, hình phím. Nhận ra
  * từ số ô mỗi hàng ([of]), nên JSON bố cục lưu từ trước (5 hàng × 7 ô) không cần thêm trường. Phím cách nằm ở đâu
  * trong hàng cuối là do lớp chữ (các ô `null`), để profile riêng lưu từ trước khi bố cục có sẵn dời phím cách vẫn dùng
  * được.
@@ -16,9 +16,17 @@ enum class GridSpec(
     val spaceRow: Int,
     val spaceCells: Int,
     val shape: Shape,
+    /** Bề rộng ô của từng hàng, theo bề rộng ô thường (hàng số tổ ong 0,75). Mặc định mọi hàng 1. */
+    val widths: List<Float> = List(lefts.size) { 1f },
 ) {
     /** Tổ ong 7 cột: 5 hàng lục giác đều lệch xen kẽ ½ ô; phím cách 3 ô giữa hàng cuối. */
-    HEX7(listOf(row(7, .5f), row(7, 0f), row(7, .5f), row(7, 0f), row(7, .5f)), 7.5f, 4, 3, Shape.HEX),
+    HEX7(HEX_ROWS, 7.5f, 4, 3, Shape.HEX),
+
+    /**
+     * Tổ ong có hàng số: hàng 1…0 gồm 10 lục giác đều nhỏ (rộng 0,75 ô, vừa đúng bề ngang 7,5 ô) trên [HEX7]. Lục giác
+     * nhỏ không lồng được vào hàng dưới nên hai hàng xếp chồng, không gối 1/4 như các hàng tổ ong.
+     */
+    HEX7_NUM(listOf(row(10, 0f, .75f)) + HEX_ROWS, 7.5f, 5, 3, Shape.HEX, listOf(.75f) + List(5) { 1f }),
 
     /**
      * Truyền thống: 4 hàng phím chữ nhật. Q…P đủ 10 ô, A…L lệch ½ ô; hàng Z có ⇧ sát mép trái, Z…M căn giữa (Z ngay
@@ -38,13 +46,13 @@ enum class GridSpec(
     fun left(r: Int, c: Int): Float = lefts[r][c]
 
     /** Tâm ngang của ô (r, c), theo bề rộng ô. */
-    fun centerX(r: Int, c: Int): Float = lefts[r][c] + 0.5f
+    fun centerX(r: Int, c: Int): Float = lefts[r][c] + widths[r] / 2
 
     fun contains(r: Int, c: Int): Boolean = r in lefts.indices && c in lefts[r].indices
 
     /**
-     * Các ô kề của ô (r, c): hai ô cùng hàng, và các ô hàng trên/dưới có tâm lệch ngang không quá 1 ô. Lưới lệch ½ ô
-     * (tổ ong) cho đúng 2 ô mỗi hàng; hàng thẳng cột (Z…M dưới A…L) cho 3 ô.
+     * Các ô kề của ô (r, c): hai ô cùng hàng, và các ô hàng trên/dưới có tâm lệch ngang không quá nửa tổng bề rộng hai ô
+     * (1 ô khi hai hàng cùng cỡ). Lưới lệch ½ ô (tổ ong) cho đúng 2 ô mỗi hàng; hàng thẳng cột (Z…M dưới A…L) cho 3 ô.
      */
     fun neighborCells(r: Int, c: Int): List<Pair<Int, Int>> {
         val out = ArrayList<Pair<Int, Int>>(8)
@@ -53,7 +61,8 @@ enum class GridSpec(
         val x = centerX(r, c)
         for (rr in listOf(r - 1, r + 1)) {
             if (rr !in lefts.indices) continue
-            for (cc in lefts[rr].indices) if (abs(centerX(rr, cc) - x) <= 1.01f) out += rr to cc
+            val reach = (widths[r] + widths[rr]) / 2 + 0.01f
+            for (cc in lefts[rr].indices) if (abs(centerX(rr, cc) - x) <= reach) out += rr to cc
         }
         return out.filter { (rr, cc) -> contains(rr, cc) }
     }
@@ -64,8 +73,11 @@ enum class GridSpec(
     }
 }
 
-/** [n] ô liền nhau, ô đầu có mép trái ở [left]. */
-private fun row(n: Int, left: Float): List<Float> = List(n) { left + it }
+/** [n] ô liền nhau rộng [width], ô đầu có mép trái ở [left]. */
+private fun row(n: Int, left: Float, width: Float = 1f): List<Float> = List(n) { left + it * width }
+
+/** 5 hàng tổ ong 7 cột lệch xen kẽ ½ ô, hàng đầu lệch phải. */
+private val HEX_ROWS: List<List<Float>> = listOf(row(7, .5f), row(7, 0f), row(7, .5f), row(7, 0f), row(7, .5f))
 
 /** Hàng Z của lưới truyền thống: ⇧ sát mép trái, Z…M căn giữa (Z ngay dưới S) chừa ½ ô hai bên, ⌫ sát mép phải. */
 private val ZROW: List<Float> = listOf(0f) + row(7, 1.5f) + listOf(9f)

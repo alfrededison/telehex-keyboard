@@ -54,7 +54,8 @@ interface KeyGeometry {
 
 /**
  * Hình học lưới lục giác đều (pointy-top). Với lưới 7 cột: `W = Wu / 7.5`, `H = W·2/√3`, `P = 0.75·H`,
- * lệch hàng `[0.5, 0, 0.5, 0, 0.5]·W`.
+ * lệch hàng `[0.5, 0, 0.5, 0, 0.5]·W`. Hàng có ô nhỏ hơn ([GridSpec.widths], hàng số) vẫn là lục giác đều, cỡ theo
+ * bề rộng ô của hàng; hai hàng khác cỡ xếp chồng không gối nhau.
  */
 class HexGeometry(
     val viewWidth: Float,
@@ -69,20 +70,39 @@ class HexGeometry(
     override val pad: Float = padding + (if (alignRight) viewWidth * (1 - scale) else 0f)
     val usable: Float = viewWidth * scale - 2 * padding
     override val w: Float = usable / spec.span
+    /** Chiều cao lục giác cỡ thường. */
     val h: Float = w * 2f / KeyGeometry.SQRT3
+    /** Bước hàng giữa hai hàng cùng cỡ thường. */
     val p: Float = 0.75f * h
-    override val gridHeight: Float = (spec.rows - 1) * p + h
+
+    /** Bề rộng ô của hàng [r]. */
+    fun cellW(r: Int): Float = w * spec.widths[r]
+
+    /** Chiều cao lục giác của hàng [r]. */
+    fun cellH(r: Int): Float = cellW(r) * 2f / KeyGeometry.SQRT3
+
+    /** Mép trên (đỉnh lục giác) của từng hàng: hàng cùng cỡ gối 1/4 chiều cao, khác cỡ thì xếp chồng. */
+    private val rowTops: FloatArray = FloatArray(spec.rows).also { t ->
+        t[0] = top
+        for (r in 1 until spec.rows) {
+            val prev = cellH(r - 1)
+            t[r] = t[r - 1] + if (spec.widths[r] == spec.widths[r - 1]) 0.75f * prev else prev
+        }
+    }
+
+    override val gridHeight: Float = rowTops.last() + cellH(spec.rows - 1) - top
 
     fun centerX(r: Int, c: Int): Float = pad + spec.centerX(r, c) * w
-    fun centerY(r: Int): Float = top + r * p + h / 2f
+    fun centerY(r: Int): Float = rowTops[r] + cellH(r) / 2f
     override fun center(r: Int, c: Int): PointF = PointF(centerX(r, c), centerY(r))
 
-    override fun keyCenter(r: Int, c: Int, n: Int): PointF = PointF(pad + (spec.left(r, c) + n / 2f) * w, centerY(r))
+    override fun keyCenter(r: Int, c: Int, n: Int): PointF =
+        PointF(pad + spec.left(r, c) * w + n * cellW(r) / 2f, centerY(r))
 
     /** Lục giác của ô (r, c), thu nhỏ để tạo khe hở, giữ nguyên tâm. */
     fun hexPath(r: Int, c: Int): Path {
         val cx = centerX(r, c); val cy = centerY(r)
-        val iw = w - gap
+        val iw = cellW(r) - gap
         val ih = iw * 2f / KeyGeometry.SQRT3
         return Path().apply {
             moveTo(cx, cy - ih / 2)
@@ -102,7 +122,9 @@ class HexGeometry(
     override fun keyPath(r: Int, c: Int, n: Int): Path {
         if (n == 1) return hexPath(r, c)
         val ox = pad + spec.left(r, c) * w
-        val oy = top + r * p
+        val oy = rowTops[r]
+        val w = cellW(r)
+        val h = cellH(r)
         val g = gap / 2f
         val pts = ArrayList<Pair<Float, Float>>(2 * n + 5)
         pts += g to h / 4 + g
@@ -120,19 +142,23 @@ class HexGeometry(
         }
     }
 
-    /** Ô có tâm gần nhất: Voronoi của lưới lục giác chính là các lục giác. */
+    /**
+     * Ô có tâm gần nhất, khoảng cách chia theo bề rộng ô của hàng (rồi nhân lại [w] để lưới cùng cỡ giữ số đo cũ):
+     * lưới cùng cỡ thì Voronoi chính là các lục giác; giữa hàng số nhỏ và hàng chữ, ranh giới rơi đúng chỗ hai hàng
+     * xếp chồng.
+     */
     override fun nearestCells(x: Float, y: Float): List<Pair<Pair<Int, Int>, Float>> {
-        val last = spec.rows - 1
         if (y < top - h / 2 || y > top + gridHeight + h / 2) return emptyList()
         if (x < pad - w / 2 || x > pad + spec.span * w + w / 2) return emptyList() // ngoài lưới (chế độ một tay)
         val found = ArrayList<Pair<Pair<Int, Int>, Float>>(9)
-        val rGuess = ((y - top - h / 2) / p).toInt().coerceIn(0, last)
-        for (r in (rGuess - 1).coerceAtLeast(0)..(rGuess + 1).coerceAtMost(last)) {
+        for (r in 0 until spec.rows) {
+            if (abs(y - centerY(r)) > 1.5f * h) continue
             val cols = spec.rowSizes[r]
+            val k = w / cellW(r)
             // Hàng tổ ong lệch đều: đoán cột từ mép trái của ô đầu hàng
-            val cGuess = ((x - pad) / w - spec.left(r, 0) - 0.5f).toInt().coerceIn(0, cols - 1)
+            val cGuess = ((x - pad) / cellW(r) - spec.left(r, 0) / spec.widths[r] - 0.5f).toInt().coerceIn(0, cols - 1)
             for (c in (cGuess - 1).coerceAtLeast(0)..(cGuess + 1).coerceAtMost(cols - 1)) {
-                val dx = x - centerX(r, c); val dy = y - centerY(r)
+                val dx = (x - centerX(r, c)) * k; val dy = (y - centerY(r)) * k
                 found.add((r to c) to dx * dx + dy * dy)
             }
         }

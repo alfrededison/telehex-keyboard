@@ -35,6 +35,29 @@ final class KeyboardUITests: XCTestCase {
         for _ in 0..<4 where !app.navigationBars["TeleHex"].exists { back(app) }
         for _ in 0..<6 where !app.textViews["typing-field"].isHittable { app.recordedSwipe(from: CGVector(dx: 0.5, dy: 0.3), to: CGVector(dx: 0.5, dy: 0.8)) }
     }
+    func testHexNumberRowLayout() {
+        let app = preview()
+        openSettings("layout-option-builtin.hexNum", in: app)
+        backHome(app)
+        app.textViews["typing-field"].recordedTap(in: app)
+        // Hàng số: 10 lục giác nhỏ trên lưới tổ ong; chữ ngay dưới vẫn gõ đúng.
+        for key in ["1","2","0","q"] { app.buttons["key-\(key)"].recordedTap(in: app) }
+        XCTAssertEqual(app.textViews["typing-field"].value as? String,"120q")
+        XCTAssertLessThan(app.buttons["key-1"].frame.width, app.buttons["key-q"].frame.width)
+        XCTAssertLessThanOrEqual(app.buttons["key-1"].frame.maxY, app.buttons["key-q"].frame.minY + 0.5)
+        // Lớp 123: hàng số vẫn là số, phím 1/2 ở ô ⚙.
+        app.buttons["key-#symbols"].recordedTap(in: app)
+        app.buttons["key-q"].recordedTap(in: app); app.buttons["key-w"].recordedTap(in: app)
+        XCTAssertEqual(app.textViews["typing-field"].value as? String,"120q@+")
+        app.buttons["key-#symbols"].recordedTap(in: app)
+        // Truyền thống: lề 2pt, phím Q sát mép trái như bàn phím hệ thống.
+        openSettings("layout-option-builtin.qwerty", in: app)
+        backHome(app)
+        app.textViews["typing-field"].recordedTap(in: app)
+        XCTAssertTrue(app.buttons["key-q"].waitForExistence(timeout: 5))
+        XCTAssertLessThan(app.buttons["key-q"].frame.minX, 6)
+        Thread.sleep(forTimeInterval: 1.5)
+    }
     func testLayoutEditorLayerTransitions() {
         let app = preview()
         openSettings("settings-keyboard", in: app)

@@ -2,6 +2,7 @@
 
 ## 0.8.5 — unreleased
 
+- Thêm bố cục có sẵn "Tổ ong có hàng số": lưới tổ ong thêm hàng 1…0 gồm 10 lục giác nhỏ trên cùng. Hàng số không có ký tự vuốt xuống vì phím nhỏ; lớp 123 cùng bộ ký tự với "Có hàng số".
 - "Truyền thống" và "Có hàng số": lề hai bên còn 2dp (trước 8dp), phím rộng và cao thêm khoảng 3%, bằng cỡ bàn phím QWERTY 10 cột quen thuộc.
 
 ## 0.8.4 — 2026-11-18

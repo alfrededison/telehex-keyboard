@@ -133,6 +133,8 @@ class WelcomeActivity : Activity() {
         val active = prefs.activeProfile.name
         addCard(Profile.DEFAULT, "Tổ ong (Mặc định)",
             "Phím rộng hơn bàn phím 10 cột. Thứ tự chữ gần QWERTY; xoá và chữ hoa bằng cử chỉ vuốt.", theme)
+        addCard(Profile.HEX7_NUM, "Tổ ong có hàng số",
+            "Như Tổ ong, thêm hàng số 1…0 nhỏ trên cùng để gõ số không cần chuyển lớp.", theme)
         addCard(Profile.QWERTY, "Truyền thống",
             "Giống bàn phím quen thuộc: QWERTY đủ 10 cột, có phím ⇧ và ⌫.", theme)
         addCard(Profile.QWERTY_NUM, "Truyền thống có hàng số",
