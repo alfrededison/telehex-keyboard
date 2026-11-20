@@ -45,7 +45,7 @@ object KeyPage {
             else -> layout.rows
         }
         // Nhóm phím (màu) theo quy tắc chung với iOS ([KeyKinds])
-        val tones = ("abcdefghijklmnopqrstuvwxyz").filter { telex.toneOf(it) != 0 }
+        val tones = telex.toneLetters()
         fun kindOf(code: String) = KeyKinds.ofLetterLayer(code, tones)
         val keys = ArrayList<Key>(32)
         val spaceCells = ArrayList<Pair<Int, Int>>(4)

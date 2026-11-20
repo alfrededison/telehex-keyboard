@@ -205,4 +205,13 @@ final class KeyboardRegressionTests: XCTestCase {
         view.setNumeric(true)
         XCTAssertEqual(view.label("\n", index: 15), "Tìm") // dialpad cũng vậy
     }
+    func testToneKeysComeFromTheTelexConfiguration() {
+        XCTAssertEqual(TelexKeys.shared.toneLetters(lAsGrave: false), "fjrsxz")
+        XCTAssertEqual(TelexKeys.shared.toneLetters(lAsGrave: true), "fjlrsxz")
+        let prefs = preferences(); prefs.configuration.lAsGrave = true
+        let view = HexKeyboardView(preferences: prefs)
+        XCTAssertEqual(view.kind(for: "l", index: 0), .tone)
+        XCTAssertEqual(view.kind(for: "s", index: 0), .tone)
+        XCTAssertEqual(view.kind(for: "k", index: 0), .consonant)
+    }
 }

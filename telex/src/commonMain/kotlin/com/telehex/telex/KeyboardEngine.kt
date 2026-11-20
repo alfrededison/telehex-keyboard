@@ -10,6 +10,11 @@ import com.telehex.telex.predict.PredictionContext
 import com.telehex.telex.predict.Predictor
 import com.telehex.telex.predict.VietnameseVocabulary
 
+/** Các chữ là phím dấu với cấu hình Telex đã cho, cho Swift tô màu phím như Android (không ghi cứng danh sách ở app). */
+object TelexKeys {
+    fun toneLetters(lAsGrave: Boolean): String = TelexConfig(lAsGrave = lAsGrave).toneLetters()
+}
+
 /** String-based Swift boundary: invalid input never throws across Objective-C interop. */
 class KeyboardEngine {
     private val engine = TelexEngine()

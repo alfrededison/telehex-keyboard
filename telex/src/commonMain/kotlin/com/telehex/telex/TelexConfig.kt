@@ -21,6 +21,9 @@ data class TelexConfig(
 
     fun toneOf(key: Char): Int = effectiveToneKeys[key] ?: 0
 
+    /** Các chữ đang là phím dấu, theo thứ tự bảng chữ cái (để tô màu phím). */
+    fun toneLetters(): String = effectiveToneKeys.keys.sorted().joinToString("")
+
     companion object {
         val DEFAULT_TONE_KEYS: Map<Char, Int> = mapOf(
             's' to Tone.ACUTE,

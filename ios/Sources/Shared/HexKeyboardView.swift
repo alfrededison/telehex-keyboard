@@ -534,7 +534,8 @@ final class HexKeyboardView: UIView {
         return nil
     }
     /// Phím dấu Telex: s f r x j z, thêm l khi "L cũng là dấu huyền".
-    var toneKeys: String { "sfrxjz" + (preferences.configuration.lAsGrave ? "l" : "") }
+    /// Các chữ là phím dấu, lấy từ cấu hình Telex dùng chung (không ghi cứng ở đây).
+    var toneKeys: String { TelexKeys.shared.toneLetters(lAsGrave: preferences.configuration.lAsGrave) }
     /// Nhóm (màu) của một phím. Xếp phím vào nhóm theo quy tắc chung với Android (`KeyKinds` của module layout); riêng ⇧
     /// đang bật thì sáng lên như phím chữ, kiểu iOS.
     func kind(for code: String, index: Int) -> KeyKind {
