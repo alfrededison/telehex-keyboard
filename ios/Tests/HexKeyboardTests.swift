@@ -62,8 +62,18 @@ final class HexKeyboardTests: XCTestCase {
         let keyboard = HexKeyboardView(preferences: prefs)
         keyboard.frame = CGRect(x: 0,y: 0,width: 402,height: 300); keyboard.layoutIfNeeded()
         let key = try XCTUnwrap(keyboard.keys.first { $0.2 == "w" })
+        // Dữ liệu kiểu cũ (theo tỷ lệ bề rộng phím, khoá không có "pt:") bị bỏ khi học lần đầu
+        prefs.configuration.offsets["builtin.default:q"] = [0.2, 0.1]
         keyboard.adaptTouch(CGPoint(x: key.0.center.x + 3,y: key.0.center.y),index: key.1)
-        XCTAssertGreaterThan(try XCTUnwrap(prefs.configuration.offsets["builtin.default:w"]?.first),0)
+        // Như Android: mỗi lần học 8% độ lệch của lần chạm, đơn vị điểm
+        XCTAssertEqual(try XCTUnwrap(prefs.configuration.offsets["pt:builtin.default:w"]?.first), 0.24, accuracy: 0.001)
+        XCTAssertNil(prefs.configuration.offsets["builtin.default:q"])
+        // Chạm vào khe giữa hai phím (ngoài hình vẽ) vẫn ra phím có tâm gần nhất, như Android
+        let e = try XCTUnwrap(keyboard.keys.first { $0.2 == "e" }), q = try XCTUnwrap(keyboard.keys.first { $0.2 == "q" })
+        let boundary = (q.0.frame.maxX + e.0.frame.minX) / 2
+        XCTAssertEqual(keyboard.displayedCell(at: CGPoint(x: boundary + 0.4, y: e.0.center.y)), e.1)
+        XCTAssertEqual(keyboard.displayedCell(at: CGPoint(x: boundary - 0.4, y: q.0.center.y)), q.1)
+        XCTAssertNil(keyboard.displayedCell(at: CGPoint(x: boundary, y: -200)))
         var host = ""
         keyboard.onKey = { host += $0 }
         var saved: [String] = []

@@ -108,7 +108,8 @@ struct KeyboardConfiguration: Codable, Equatable {
     var theme = 0, accent = 0, oneHand = 0, emojiGender = 0, emojiTone = 0
     var swipeThreshold = 24.0, holdDelay = 0.8, cursorDelay = 0.3
     /// Giữ kéo để đổi chỗ phím ngay trên bàn phím: mặc định bật, chỉ chạy khi có Truy cập đầy đủ (để profile tạo ra về được app).
-    var touchAdaptation = false, autoCapitalization = true, rearrange = true
+    /// Học độ lệch chạm bật sẵn như Android.
+    var touchAdaptation = true, autoCapitalization = true, rearrange = true
     var haptics = false, sound = false
     var heightScale = 1.0
     var offsets: [String: [Double]] = [:]

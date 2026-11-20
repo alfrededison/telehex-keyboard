@@ -15,7 +15,11 @@ import android.view.MotionEvent
 import android.view.View
 import com.telehex.layout.GridSpec
 import com.telehex.layout.KeyCode
+import com.telehex.layout.GridPoint
 import com.telehex.layout.KeyGeometry
+import com.telehex.layout.TouchGrid
+import com.telehex.layout.TouchHit
+import com.telehex.layout.TouchModel
 import com.telehex.telex.predict.GlideDecoder.Point
 import kotlin.math.hypot
 
@@ -395,49 +399,39 @@ open class KeyboardView @JvmOverloads constructor(
     private fun keyAtPosition(x: Float, y: Float): Key? =
         geometry?.cellAt(x, y)?.let { cellToKey[it] }
 
+    /** Lưới để nhận chạm theo [TouchModel] (dùng chung với iOS): mỗi ô một id, đo khoảng cách bằng hình học lưới. */
+    private val touchGrid = object : TouchGrid {
+        override fun nearest(x: Float, y: Float): List<TouchHit> =
+            geometry?.nearestCells(x, y)?.map { (cell, d) -> TouchHit(cellId(cell), d) } ?: emptyList()
+        override fun letterOf(id: Int): String? = cellToKey[cellOf(id)]?.takeIf { it.isLetter }?.code
+        override fun centerOf(id: Int): GridPoint? = cellToKey[cellOf(id)]?.let(::centerOf)?.let { GridPoint(it.x, it.y) }
+    }
+
+    private fun cellId(cell: Pair<Int, Int>) = cell.first * 64 + cell.second
+    private fun cellOf(id: Int) = id / 64 to id % 64
+
+    /**
+     * Phím được chạm, theo [TouchModel.keyAt] (quy tắc chung với iOS): phím chức năng theo hình vẽ, chạm rõ giữa phím chữ gõ
+     * đúng phím, phần ngoài bù độ lệch đã học rồi áp vùng chạm động.
+     */
     fun keyAt(x: Float, y: Float): Key? {
         val g = geometry ?: return null
-        val physical = keyAtPosition(x, y) ?: return null
-        // Phím chức năng/dấu câu/cách luôn theo hình vẽ. Không để dữ liệu học từ chữ
-        // kích hoạt ⚙/123 ở ô chữ, nhất là sau khi đổi chỗ gần các nút này.
-        if (!physical.isLetter) return physical
-        val center = centerOf(physical) ?: return physical
-        // Chạm rõ giữa phím phải gõ đúng nhãn; chỉ bù/nới vùng ở phần ngoài.
-        if (hypot(x - center.x, y - center.y) <= g.w * 0.25f) return physical
-        var px = x; var py = y
-        val offsets = touchOffsets
-        if (offsets != null && offsets.isNotEmpty()) {
-            // Bù độ lệch chung trước, rồi tinh chỉnh theo phím gần nhất
-            var sx = 0f; var sy = 0f
-            for (o in offsets.values) { sx += o[0]; sy += o[1] }
-            px -= sx / offsets.size; py -= sy / offsets.size
-            val first = g.cellAt(px, py)?.let { cellToKey[it] }
-            offsets[first?.code]?.let { o -> px = x - o[0]; py = y - o[1] }
-        }
-        val near = g.nearestCells(px, py)
-        if (near.isEmpty()) return physical
-        val best = cellToKey[near[0].first]?.takeIf { it.isLetter } ?: return physical
+        val offsets = touchOffsets?.mapValues { (_, o) -> GridPoint(o[0], o[1]) } ?: emptyMap()
         val check = validNextLetter
-        if (check != null && near.size == 2 && near[1].second < near[0].second * 1.8f) {
-            val second = cellToKey[near[1].first]
-            if (second != null && second.isLetter && best.isLetter &&
-                !check(best.code[0]) && check(second.code[0])) return second
-        }
-        return best
+        val id = TouchModel.keyAt(touchGrid, x, y, g.w, offsets, check?.let { c -> { letter: String -> c(letter[0]) } })
+        return id?.let { cellToKey[cellOf(it)] }
     }
 
     private fun learnOffset(key: Key, x: Float, y: Float) {
         val offsets = touchOffsets ?: return
         if (!key.isLetter) return
         val c = centerOf(key) ?: return
-        val o = offsets.getOrPut(key.code) { floatArrayOf(0f, 0f) }
-        val alpha = 0.08f
-        val dx = (x - c.x).coerceIn(-w40(), w40()); val dy = (y - c.y).coerceIn(-w40(), w40())
-        o[0] += alpha * (dx - o[0]); o[1] += alpha * (dy - o[1])
+        val old = offsets[key.code]?.let { GridPoint(it[0], it[1]) }
+        val o = TouchModel.learn(old, x, y, GridPoint(c.x, c.y), geometry?.w ?: dp(50f))
+        offsets[key.code] = floatArrayOf(o.x, o.y)
         onTouchOffsetsChanged?.invoke()
     }
 
-    private fun w40(): Float = (geometry?.w ?: dp(50f)) * 0.4f
 
     /** Các phím được tô "đang nhấn" thêm từ ngoài (editor). */
     var highlighted: Set<Key> = emptySet()

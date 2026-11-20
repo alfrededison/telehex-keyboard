@@ -16,6 +16,7 @@
 - iOS: dialpad như Android: ô chỉ nhận số nguyên không có phím `-` và `.`, ô số thập phân không có `-`.
 - iOS: phím cách của dialpad có cử chỉ như phím cách thường (giữ để di con trỏ, kéo trái để xoá theo từ), như Android.
 - iOS: phím ↵ (trên lưới chữ và dialpad) ghi theo nút Return của ô nhập như Android: "Tìm", "Gửi", "Đi", "Tiếp", "Xong".
+- iOS: nhận phím chạm như Android: chạm vào khe giữa các phím ra phím có tâm gần nhất (trước đây chạm ngoài hình vẽ phím tổ ong không ra gì); "Học độ lệch chạm" bật sẵn và học theo cách của Android (từ điểm chạm xuống, bù độ lệch chung rồi độ lệch từng chữ, tối đa 0,4 bề rộng phím). Độ lệch đã học ở bản trước dùng công thức khác nên được học lại từ đầu.
 
 ## 0.8.5 — 2026-11-20
 

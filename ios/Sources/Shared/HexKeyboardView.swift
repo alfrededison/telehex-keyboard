@@ -1,6 +1,11 @@
 import UIKit
 import TeleHexCore
 
+// Kiểu của module `layout` sang Swift mang tiền tố module (layout không xuất nguyên cả module để khỏi trùng `GridSpec`).
+typealias TouchCells = LayoutTouchCells
+typealias TouchCell = LayoutTouchCell
+typealias GridPoint = LayoutGridPoint
+
 enum HexShape {
     static let sqrt3 = CGFloat(3).squareRoot()
     /// Khe hở giữa hai phím (pt), như Android.
@@ -491,6 +496,7 @@ final class HexKeyboardView: UIView {
         if value { dialpad = true; page = -1 } else { dialpad = false }; reloadKeys()
     }
     func reloadKeys() {
+        invalidateTouchCells()
         // Không để chạm đang dở của lớp/bố cục cũ chạy trên phím mới (như Android).
         cancelTouches()
         keys.forEach { $0.0.removeFromSuperview() }; keys.removeAll()
@@ -668,55 +674,72 @@ final class HexKeyboardView: UIView {
     func wordCount(_ dx: CGFloat) -> Int {
         -dx < wordThreshold ? 0 : Int((-dx - wordThreshold) / CGFloat(preferences.configuration.stepSize)) + 1
     }
-    /// Ô đang hiển thị dưới điểm chạm, không bù độ lệch học được (dùng khi kéo đổi chỗ và khi nhấc tay).
-    func displayedCell(at point: CGPoint) -> Int? {
-        keys.first(where: { !$0.0.isHidden && $0.0.point(inside: $0.0.convert(point, from: self), with: nil) })?.1
-    }
-    /// `dynamic`: áp vùng chạm động (chỉ cho phím lúc chạm; các điểm trên đường vuốt dùng cách chọn phím thường, như Android).
-    func cell(at point: CGPoint, dynamic: Bool = true) -> Int? {
-        guard visiblePanel == nil || editLayer != nil else { return nil }
-        let hit = keys.first(where: { !$0.0.isHidden && $0.0.point(inside: $0.0.convert(point, from: self), with: nil) })
-        // Độ lệch chạm học được chỉ dời vùng giữa các phím chữ: phím chức năng, dấu câu, cách luôn theo hình vẽ, và chạm rõ
-        // giữa phím chữ (trong 1/4 bề rộng quanh tâm) gõ đúng nhãn. Như Android.
-        if preferences.configuration.touchAdaptation && !dialpad && editLayer == nil && hit.map({ KeyboardProfile.isLetter($0.2) }) != false {
-            let central = hit.map { hypot(point.x - $0.0.center.x, point.y - $0.0.center.y) <= $0.0.bounds.width * 0.25 } ?? false
-            if !central, let match = keys.first(where: { key in
-                guard !key.0.isHidden, KeyboardProfile.isLetter(key.2) else { return false }
-                let offset = preferences.configuration.offsets[preferences.profile.id + ":" + key.2] ?? [0,0]
-                let local = key.0.convert(point,from: self)
-                return key.0.point(inside: CGPoint(x: local.x - offset[0] * key.0.bounds.width,y: local.y - offset[1] * key.0.bounds.height),with: nil)
-            }) { return dynamic ? dynamicZone(match.1, at: point) : match.1 }
+    /// Ô để nhận chạm theo `TouchModel` (quy tắc chung với Android): mỗi ô một tâm, phím cách chia đều theo số ô nó chiếm.
+    /// Dựng lại khi bố cục đổi.
+    private var touchCellsCache: TouchCells?
+    private func touchCells() -> TouchCells {
+        if let touchCellsCache { return touchCellsCache }
+        let spec = preferences.profile.spec, letters = page < 0 && editLayer == nil && !dialpad
+        var cells: [TouchCell] = []
+        for (button, index, code) in keys where !button.isHidden {
+            let f = button.frame, n = code == " " && !dialpad ? spec.spaceCells : 1, w = f.width / CGFloat(n)
+            for i in 0..<n {
+                cells.append(TouchCell(id: Int32(index), letter: letters && KeyboardProfile.isLetter(code) ? code : nil,
+                                       cx: Float(f.minX + w * (CGFloat(i) + 0.5)), cy: Float(f.midY), w: Float(w), h: Float(f.height),
+                                       hex: spec.isHex && !dialpad))
+            }
         }
-        if let hit { return dynamic ? dynamicZone(hit.1, at: point) : hit.1 }
-        // Lưới chữ nhật: khoảng trống cạnh ⇧ / ⌫ nhận phím gần nhất (khoảng cách Chebyshev theo nửa ô), như Android.
-        guard !dialpad, !preferences.profile.spec.isHex else { return nil }
-        func distance(_ frame: CGRect) -> CGFloat { max(abs(point.x - frame.midX) / max(1, frame.width / 2), abs(point.y - frame.midY) / max(1, frame.height / 2)) }
-        let nearest = keys.filter { !$0.0.isHidden }.min { distance($0.0.frame) < distance($1.0.frame) }
-        return nearest.flatMap { distance($0.0.frame) <= 2 ? $0.1 : nil }
+        let grid = TouchBridge.shared.grid(cells: cells)
+        touchCellsCache = grid
+        return grid
+    }
+    func invalidateTouchCells() { touchCellsCache = nil }
+    /// Bề rộng ô thường (phím chữ), đơn vị của độ lệch chạm.
+    private var keyWidth: CGFloat { keys.first { KeyboardProfile.isLetter($0.2) && !$0.0.isHidden }?.0.bounds.width ?? 40 }
+    /// Độ lệch chạm đã học (điểm), theo profile và chữ. Bản trước 0.1.2 lưu theo tỷ lệ bề rộng phím (khoá không có "pt:") nên
+    /// bỏ đi, học lại.
+    private func offsetKey(_ letter: String) -> String { "pt:" + preferences.profile.id + ":" + letter }
+    private func learnedOffsets() -> [String: GridPoint] {
+        var out: [String: GridPoint] = [:]
+        let prefix = "pt:" + preferences.profile.id + ":"
+        for (name, value) in preferences.configuration.offsets where name.hasPrefix(prefix) && value.count == 2 {
+            out[String(name.dropFirst(prefix.count))] = GridPoint(x: Float(value[0]), y: Float(value[1]))
+        }
+        return out
+    }
+    /// Ô đang hiển thị dưới điểm chạm (ô gần nhất), không bù độ lệch học được (dùng khi kéo đổi chỗ và khi nhấc tay).
+    func displayedCell(at point: CGPoint) -> Int? {
+        guard visiblePanel == nil || editLayer != nil else { return nil }
+        return touchCells().nearest(x: Float(point.x), y: Float(point.y)).first.map { Int($0.id) }
+    }
+    /// Phím được chạm, theo `TouchModel.keyAt` như Android: phím chức năng, dấu câu, cách theo ô gần nhất; chạm rõ giữa
+    /// phím chữ gõ đúng phím đó; phần ngoài bù độ lệch đã học rồi áp vùng chạm động. `dynamic` false: chỉ ô gần nhất (các
+    /// điểm trên đường vuốt).
+    func cell(at point: CGPoint, dynamic: Bool = true) -> Int? {
+        guard dynamic else { return displayedCell(at: point) }
+        guard visiblePanel == nil || editLayer != nil else { return nil }
+        let typing = !dialpad && editLayer == nil && page < 0 && inlineDocuments.isEmpty
+        let offsets = typing && preferences.configuration.touchAdaptation ? learnedOffsets() : [:]
+        // Không áp vùng chạm động trong trình soạn (tìm emoji, ký tự vuốt xuống): âm tiết đang kiểm là của ô nhập chính.
+        let check = typing ? validNextLetter : nil
+        return TouchBridge.shared.keyAt(grid: touchCells(), x: Float(point.x), y: Float(point.y), keyWidth: Float(keyWidth),
+                                       offsets: offsets, validNext: check.map { f in { letter in KotlinBoolean(bool: f(letter)) } })
+            .map { Int(truncating: $0) }
     }
     /// Vùng chạm động (host đặt khi bật): phím chữ đó có giữ âm tiết đang gõ hợp lệ không.
     var validNextLetter: ((String) -> Bool)?
-    /// Như Android: chạm không rõ giữa phím, hai phím chữ gần nhất cách gần bằng nhau (chênh dưới 1,8 lần), mà phím gần nhất
-    /// làm âm tiết không hợp lệ còn phím kia thì không, thì chọn phím kia. Chạm giữa phím (trong 1/4 bề rộng) giữ nguyên.
-    func dynamicZone(_ index: Int, at point: CGPoint) -> Int {
-        // Không áp trong trình soạn (tìm emoji, ký tự vuốt xuống): âm tiết đang kiểm là của ô nhập chính.
-        guard let check = validNextLetter, !dialpad, editLayer == nil, page < 0, inlineDocuments.isEmpty,
-              let chosen = keys.first(where: { $0.1 == index }), KeyboardProfile.isLetter(chosen.2),
-              hypot(point.x - chosen.0.center.x, point.y - chosen.0.center.y) > chosen.0.bounds.width * 0.25 else { return index }
-        let near = keys.filter { !$0.0.isHidden && KeyboardProfile.isLetter($0.2) }
-            .map { ($0, hypot(point.x - $0.0.center.x, point.y - $0.0.center.y)) }.sorted { $0.1 < $1.1 }
-        guard near.count >= 2, near[1].1 < near[0].1 * 1.8, !check(near[0].0.2), check(near[1].0.2) else { return index }
-        return near[1].0.1
-    }
+    /// Học độ lệch chạm từ điểm chạm xuống (như Android), theo `TouchModel.learn`: đơn vị điểm, tối đa 0,4 bề rộng phím.
     func adaptTouch(_ point: CGPoint, index: Int) {
-        guard preferences.configuration.touchAdaptation, inlineDocuments.isEmpty, editLayer == nil, !dialpad,
+        guard preferences.configuration.touchAdaptation, inlineDocuments.isEmpty, editLayer == nil, !dialpad, page < 0,
               let key = keys.first(where: { $0.1 == index }), KeyboardProfile.isLetter(key.2) else { return }
-        let name = preferences.profile.id + ":" + key.2
-        let old = preferences.configuration.offsets[name] ?? [0,0]
-        let dx = Double((point.x - key.0.center.x) / max(1,key.0.bounds.width))
-        let dy = Double((point.y - key.0.center.y) / max(1,key.0.bounds.height))
-        if preferences.configuration.offsets.count >= 200 && preferences.configuration.offsets[name] == nil { preferences.configuration.offsets.removeValue(forKey: preferences.configuration.offsets.keys.sorted().first!) }
-        preferences.configuration.offsets[name] = [min(0.3,max(-0.3,old[0] * 0.95 + dx * 0.05)),min(0.3,max(-0.3,old[1] * 0.95 + dy * 0.05))]
+        let name = offsetKey(key.2)
+        var offsets = preferences.configuration.offsets.filter { $0.key.hasPrefix("pt:") }
+        let old = offsets[name].flatMap { $0.count == 2 ? GridPoint(x: Float($0[0]), y: Float($0[1])) : nil }
+        let o = TouchBridge.shared.learn(old: old, x: Float(point.x), y: Float(point.y),
+                                         center: GridPoint(x: Float(key.0.center.x), y: Float(key.0.center.y)), keyWidth: Float(key.0.bounds.width))
+        if offsets.count >= 200 && offsets[name] == nil { offsets.removeValue(forKey: offsets.keys.sorted().first!) }
+        offsets[name] = [Double(o.x), Double(o.y)]
+        preferences.configuration.offsets = offsets
     }
     func setPressed(_ index: Int?) {
         if let pressedIndex, pressedIndex != index { keys.first { $0.1 == pressedIndex }?.0.pressed = false }
@@ -813,7 +836,8 @@ final class HexKeyboardView: UIView {
                 let centers = keys.filter { KeyboardProfile.isLetter($0.2) }.map { "\($0.2):\($0.0.center.x / width),\($0.0.center.y / width)" }.joined(separator: "\n")
                 onGlide?(trace, centers); return
             }
-            guard max(abs(dx),abs(dy)) >= preferences.configuration.swipeThreshold else { adaptTouch(point,index: index); activate(code,index: index); return }
+            // Như Android: học độ lệch từ điểm chạm xuống
+            guard max(abs(dx),abs(dy)) >= preferences.configuration.swipeThreshold else { adaptTouch(start,index: index); activate(code,index: index); return }
             // Phím cách như Android: trái xoá (có vùng chọn thì cắt), phải dán, lên khoá hoa (có vùng chọn thì chép), xuống đổi VI/EN.
             if code == " " {
                 if abs(dx) > abs(dy) {
@@ -872,6 +896,7 @@ final class HexKeyboardView: UIView {
     }
     override func layoutSubviews() {
         super.layoutSubviews()
+        invalidateTouchCells()
         let bar = Self.barHeight, pad = Self.pad
         globe.frame = CGRect(x: 4, y: (bar - 34) / 2, width: 40, height: 34)
         mode.frame = CGRect(x: globe.isHidden ? 4 : 46, y: (bar - 34) / 2, width: 44, height: 34)
