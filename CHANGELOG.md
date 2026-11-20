@@ -2,6 +2,7 @@
 
 ## 0.8.6 — unreleased
 
+- Cài đặt › Bàn phím: chọn kiểu bàn phím bằng lưới thẻ có hình xem trước (bố cục, màu, ký tự vuốt xuống thật của từng profile, kể cả profile riêng) thay cho danh sách chữ, như app iOS.
 - Chọn gợi ý chỉ thêm khoảng trắng khi sau con trỏ chưa có khoảng trắng hay dấu câu đứng sát ("khong|," chọn "không" ra "không,"), như iOS; gợi ý từ tiếng Anh cũng vậy.
 - Chạm emoji gợi ý khi đang gõ một chữ thì emoji thay chữ đó ("tim" → 💕), như iOS.
 - Thanh gợi ý khi đang gõ một âm tiết đúng chính tả cũng có phương án sửa gõ sai ("ban" có thể là "bạn"), như iOS.

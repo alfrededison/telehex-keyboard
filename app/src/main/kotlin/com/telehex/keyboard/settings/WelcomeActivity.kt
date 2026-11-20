@@ -277,7 +277,3 @@ class WelcomeActivity : Activity() {
 }
 
 /** Bàn phím chỉ để xem trong thẻ chọn profile: không nhận chạm, chạm vào thẻ là chọn. */
-private class PreviewKeyboardView(context: Context) : KeyboardView(context) {
-    @Suppress("ClickableViewAccessibility")
-    override fun onTouchEvent(event: MotionEvent): Boolean = false
-}

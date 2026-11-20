@@ -36,6 +36,7 @@ import com.telehex.keyboard.R
 import com.telehex.keyboard.data.Prefs
 import com.telehex.keyboard.data.PredictionStore
 import com.telehex.keyboard.ime.Accent
+import com.telehex.keyboard.ime.Theme
 import com.telehex.layout.Profile
 
 /** Màn hình Cài đặt (View thuần, không thêm dependency). */
@@ -43,7 +44,7 @@ class SettingsActivity : Activity() {
     private lateinit var prefs: Prefs
     private lateinit var accentLabel: TextView
     private lateinit var swatchRow: LinearLayout
-    private lateinit var profileButton: Button
+    private lateinit var profileGrid: ProfileGrid
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prefs = Prefs(this)
@@ -76,13 +77,11 @@ class SettingsActivity : Activity() {
         if (savedInstanceState == null) WelcomeActivity.showIfNeeded(this, prefs)
 
         sec = section("keyboard", "Bàn phím", "Bố cục, giao diện và âm thanh", R.drawable.ic_settings_keyboard)
-        // Đổi nhanh profile (bố cục đủ ba lớp chữ / vuốt xuống / 123); nhãn cập nhật ở onResume
-        profileButton = sec.addButton("") {
-            showProfilePicker(context, Profile.BUILT_IN + prefs.userProfiles, prefs.activeProfile.name) { p ->
-                prefs.saveProfiles(prefs.userProfiles, p)
-                showActiveProfile()
-            }
-        }
+        // Chọn profile (bố cục đủ ba lớp chữ / vuốt xuống / 123) bằng lưới thẻ có hình xem trước, như app iOS; vẽ lại ở
+        // onResume
+        sec.add(label("Kiểu bàn phím: chạm một thẻ để dùng"))
+        profileGrid = ProfileGrid(this)
+        sec.add(profileGrid)
         sec.addButton("Chỉnh sửa phím") { startActivity(Intent(context, LayoutEditorActivity::class.java)) }
         sec.add(switch("Đổi chỗ phím ngay trên bàn phím: giữ một phím ký tự đến khi nó nổi lên (~0,8 giây), kéo thả lên phím khác (tự lưu vào profile đang dùng)", prefs.dragToRearrange) { prefs.dragToRearrange = it })
         sec.add(label("Chế độ một tay (lưới thu còn ~80%, lục giác vẫn đều)"))
@@ -578,7 +577,13 @@ class SettingsActivity : Activity() {
         showActiveProfile() // có thể vừa đổi ở màn Chỉnh sửa phím
     }
 
-    private fun showActiveProfile() { profileButton.text = "Profile: ${prefs.activeProfile.name}  ▾" }
+    private fun showActiveProfile() {
+        profileGrid.show(Profile.BUILT_IN + prefs.userProfiles, prefs.activeProfile.name,
+            Theme.resolve(this, prefs.themeMode, prefs.accent)) { p ->
+            prefs.saveProfiles(prefs.userProfiles, p)
+            showActiveProfile()
+        }
+    }
 
     @Suppress("DEPRECATION")
     private fun switch(label: String, checked: Boolean, onChange: (Boolean) -> Unit) = Switch(this).apply {
