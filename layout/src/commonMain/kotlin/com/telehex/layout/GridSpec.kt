@@ -56,6 +56,17 @@ enum class GridSpec(
 
     enum class Shape { HEX, RECT }
 
+    /** Tên kiểu lưới hiện dưới tên profile (cả hai app). */
+    val title: String
+        get() = when (this) {
+            HEX7 -> "Tổ ong 7 cột"
+            HEX7_NUM -> "Tổ ong 7 cột, có hàng số"
+            HEX8 -> "Tổ ong 8 cột, có ⇧ ⌫"
+            HEX8_NUM -> "Tổ ong 8 cột, có ⇧ ⌫ và hàng số"
+            QWERTY -> "QWERTY 10 cột"
+            QWERTY_NUM -> "QWERTY 10 cột, có hàng số"
+        }
+
     val rows: Int get() = lefts.size
     val rowSizes: List<Int> get() = lefts.map { it.size }
 

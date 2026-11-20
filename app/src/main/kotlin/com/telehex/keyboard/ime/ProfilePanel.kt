@@ -7,7 +7,6 @@ import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import com.telehex.layout.GridSpec
 import com.telehex.layout.Profile
 
 /**
@@ -82,14 +81,7 @@ class ProfilePanel(
         addView(ScrollView(context).apply { addView(list) }, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
     }
 
-    private fun kindName(p: Profile) = when (p.spec) {
-        GridSpec.HEX7 -> "Tổ ong 7 cột"
-        GridSpec.HEX7_NUM -> "Tổ ong 7 cột, có hàng số"
-        GridSpec.HEX8 -> "Tổ ong 8 cột, có ⇧ ⌫"
-        GridSpec.HEX8_NUM -> "Tổ ong 8 cột, có ⇧ ⌫ và hàng số"
-        GridSpec.QWERTY -> "QWERTY 10 cột"
-        GridSpec.QWERTY_NUM -> "QWERTY 10 cột, có hàng số"
-    }
+    private fun kindName(p: Profile) = p.spec.title
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 }
