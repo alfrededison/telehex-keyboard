@@ -27,7 +27,7 @@ THANH GỢI Ý KHÔNG TỰ SỬA
 
 TUỲ BIẾN
 • Giữ một phím rồi kéo thả để đổi chỗ phím ngay trên bàn phím (cần Truy cập đầy đủ), hoặc sửa trong app.
-• Bốn bố cục có sẵn: Tổ ong, Truyền thống, Có hàng số và Tổ ong có hàng số. Tạo thêm profile riêng, sửa từng lớp phím và tự chọn ký tự vuốt xuống cho từng phím.
+• Năm bố cục có sẵn: Tổ ong, Tổ ong 8 cột (có phím ⇧ ⌫), Truyền thống, Có hàng số và Tổ ong có hàng số. Tạo thêm profile riêng, sửa từng lớp phím và tự chọn ký tự vuốt xuống cho từng phím.
 • Kiểu đặt dấu cũ/mới (hòa/hoà), gõ tắt, lịch sử clipboard (cần Truy cập đầy đủ), chế độ ẩn danh, chế độ một tay, chiều cao bàn phím, giao diện sáng/tối, màu nhấn, rung và âm phím.
 • Nạp gói ngôn ngữ riêng cho gợi ý tiếng Việt và tiếng Anh.
 • Sao lưu và khôi phục cài đặt ra một file.

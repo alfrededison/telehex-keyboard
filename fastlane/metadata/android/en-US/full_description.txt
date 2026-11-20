@@ -27,7 +27,7 @@ SUGGESTIONS WITHOUT AUTOCORRECT
 
 MAKE IT YOURS
 • Hold a key and drag it onto another to swap them, right on the keyboard.
-• Four built-in layouts: Hexagonal, Traditional, and each with a number row ("Có hàng số", "Tổ ong có hàng số"). Create your own profiles and switch quickly with the Profile button on the keyboard; set your own swipe-down character for every key.
+• Five built-in layouts: Hexagonal, an 8-column Hexagonal with shift and backspace keys ("Tổ ong 8 cột"), Traditional, and each with a number row ("Có hàng số", "Tổ ong có hàng số"). Create your own profiles and switch quickly with the Profile button on the keyboard; set your own swipe-down character for every key.
 • Old or new tone placement (hòa/hoà), text shortcuts, clipboard history, one-handed mode, light/dark theme, accent colour, vibration and sound.
 • Start in English automatically in the apps you choose (terminals, code editors…).
 • Back up and restore all settings to a single file.

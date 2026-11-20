@@ -27,7 +27,7 @@ THANH GỢI Ý KHÔNG TỰ SỬA
 
 TUỲ BIẾN
 • Giữ một phím rồi kéo thả để đổi chỗ phím ngay trên bàn phím.
-• Bốn bố cục có sẵn: Tổ ong, Truyền thống, Có hàng số và Tổ ong có hàng số. Tạo thêm profile riêng, đổi nhanh bằng nút Profile ngay trên bàn phím; tự chọn ký tự vuốt xuống cho từng phím.
+• Năm bố cục có sẵn: Tổ ong, Tổ ong 8 cột (có phím ⇧ ⌫), Truyền thống, Có hàng số và Tổ ong có hàng số. Tạo thêm profile riêng, đổi nhanh bằng nút Profile ngay trên bàn phím; tự chọn ký tự vuốt xuống cho từng phím.
 • Kiểu đặt dấu cũ/mới (hòa/hoà), gõ tắt, clipboard history, chế độ một tay, giao diện sáng/tối, màu nhấn, rung và âm thanh.
 • Tự bật chế độ tiếng Anh cho ứng dụng bạn chọn (terminal, ứng dụng lập trình…).
 • Sao lưu và khôi phục mọi cài đặt ra một file.
