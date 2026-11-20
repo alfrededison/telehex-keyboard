@@ -742,8 +742,9 @@ final class HexKeyboardView: UIView {
                 }
                 return
             }
-            if dialpad { return }
-            let code = preferences.profile.letters[index], dx = point.x - start.x, dy = point.y - start.y
+            // Như Android: phím cách của dialpad cũng giữ để di con trỏ, kéo trái để xoá theo từ
+            if dialpad && key.2 != " " { return }
+            let code = key.2, dx = point.x - start.x, dy = point.y - start.y
             if held && code == " " {
                 // Như Android: ngang mỗi nửa bước một ký tự, dọc mỗi bước một dòng.
                 let size = CGFloat(preferences.configuration.stepSize)
@@ -779,12 +780,12 @@ final class HexKeyboardView: UIView {
                 if repeatTimer == nil { activate(key.2, index: index) } // giữ thì đã xoá trong lúc giữ
                 return
             }
-            if dialpad {
+            if dialpad && key.2 != " " {
                 let dx = point.x - start.x, dy = point.y - start.y
                 if let hint = Self.dialpadHints[key.2], !hint.isEmpty, dy >= preferences.configuration.swipeThreshold, abs(dy) > abs(dx) { type(hint); return }
                 activate(key.2,index: index); return
             }
-            let code = preferences.profile.letters[index], dx = point.x - start.x, dy = point.y - start.y
+            let code = key.2, dx = point.x - start.x, dy = point.y - start.y
             if held && code == " " { return }
             if editLayer != nil && !held { editCell(index,layer: editLayer!); return }
             // Ngón cái chạm mép ⚙/123/☺/⇧ rồi lăn sang chữ trước khi nhấc: lần chạm ngắn kết thúc trên chữ gõ chữ đó,

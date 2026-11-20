@@ -120,6 +120,19 @@ final class KeyboardUITests: XCTestCase {
         XCTAssertEqual(app.textViews["typing-field"].value as? String, "")
         Thread.sleep(forTimeInterval: 1.5)
     }
+    func testDialpadSpaceDragDeletesWordsLikeAndroid() {
+        let app = preview()
+        for key in ["x","i","n"," ","c","h","a","o","f"] { app.buttons["key-\(key)"].recordedTap(in: app) }
+        // 123 rồi 1234: dialpad
+        app.buttons["key-#symbols"].recordedTap(in: app); app.buttons["key-#emoji"].recordedTap(in: app)
+        let space = app.buttons["key- "]
+        XCTAssertTrue(space.waitForExistence(timeout: 5))
+        let f = space.frame, screen = app.frame
+        app.recordedSwipe(from: CGVector(dx: f.midX/screen.width, dy: f.midY/screen.height),
+                          to: CGVector(dx: (f.midX - 110)/screen.width, dy: f.midY/screen.height), hold: 0.05)
+        XCTAssertEqual(app.textViews["typing-field"].value as? String, "xin ")
+        Thread.sleep(forTimeInterval: 1.5)
+    }
     func testLayoutEditorLayerTransitions() {
         let app = preview()
         openSettings("settings-keyboard", in: app)
