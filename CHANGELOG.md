@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.8.6 — unreleased
+
 ## 0.8.5 — 2026-11-20
 
 - Thêm bố cục có sẵn "Tổ ong có hàng số": lưới tổ ong thêm hàng 1…0 gồm 10 lục giác nhỏ trên cùng. Hàng số không có ký tự vuốt xuống vì phím nhỏ; lớp 123 cùng bộ ký tự với "Có hàng số".
