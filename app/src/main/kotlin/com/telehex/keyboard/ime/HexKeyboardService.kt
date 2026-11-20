@@ -840,13 +840,19 @@ class HexKeyboardService : InputMethodService(), KeyboardView.Listener,
         val fixes = corrector?.suggest(keys, caps, 24,
             predictions.predictor.correctionScorer(PredictionContext.before(before.substring(0, i)))) ?: emptyList()
         if (fixes.isEmpty()) { candidateBar.clear(); return }
+        // Như iOS: thêm khoảng trắng sau từ sửa, trừ khi sau từ đã có khoảng trắng hay dấu câu đứng sát.
+        // Không thêm thì phím kế tiếp nạp lại từ vừa sửa và gõ dính vào nó.
+        val next = after.getOrNull(tail.length)
+        val spaced = next == null || (!next.isWhitespace() && next !in NO_SPACE_BEFORE)
         val pickFix: (String) -> Unit = pick@ { fix ->
             val c = currentInputConnection ?: return@pick
+            val inserted = if (spaced) "$fix " else fix
             c.beginBatchEdit()
             c.deleteSurroundingText(head.length, tail.length)
-            c.commitText(fix, 1)
+            c.commitText(inserted, 1)
             c.endBatchEdit()
-            history.record(EditHistory.Op.Delete(word)); history.record(EditHistory.Op.Insert(fix))
+            history.record(EditHistory.Op.Delete(word)); history.record(EditHistory.Op.Insert(inserted))
+            suggestionSpace = inserted.takeIf { spaced }
             updateBar()
         }
         candidateBar.showSuggestions(word, fixes.take(4), onPick = pickFix)
