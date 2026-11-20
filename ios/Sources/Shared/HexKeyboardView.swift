@@ -1,4 +1,5 @@
 import UIKit
+import TeleHexCore
 
 enum HexShape {
     static let sqrt3 = CGFloat(3).squareRoot()
@@ -645,6 +646,13 @@ final class HexKeyboardView: UIView {
     }
     /// Kéo phím cách sang trái quá 1,2 bước thì xoá theo từ, mỗi bước thêm một từ (như Android).
     var wordThreshold: CGFloat { CGFloat(preferences.configuration.stepSize) * 1.2 }
+    /// Đường vuốt đang theo dõi là gõ vuốt chưa, theo quy tắc chung với Android (`GlideRule`): ít nhất 3 phím chữ khác nhau
+    /// và dài ít nhất 1,5 bề rộng phím.
+    func isGlide(path: [CGPoint], visited: [Int], keyWidth: CGFloat) -> Bool {
+        let letters = Set(visited.compactMap { KeyboardProfile.isLetter(preferences.profile.letters[$0]) ? preferences.profile.letters[$0] : nil })
+        let length = zip(path, path.dropFirst()).reduce(CGFloat(0)) { $0 + hypot($1.1.x - $1.0.x, $1.1.y - $1.0.y) }
+        return GlideRule.shared.isGlide(distinctLetters: Int32(letters.count), lengthInKeyWidths: Float(length / max(1, keyWidth)))
+    }
     /// Ngón tay đã tới mép trái lưới phím (kéo xoá theo từ thì xoá tới đầu dòng).
     func pastLeftEdge(_ point: CGPoint) -> Bool {
         guard let left = keys.filter({ !$0.0.isHidden }).map({ $0.0.frame.minX }).min() else { return false }
@@ -755,7 +763,7 @@ final class HexKeyboardView: UIView {
                 // Như Android: kéo tới mép trái lưới phím thì xoá tới đầu dòng
                 deletingWords = true; let count = wordCount(dx), toLineStart = pastLeftEdge(point)
                 showBanner(toLineStart ? "Xoá tới đầu dòng" : "Xoá \(count) từ"); onWordDelete?(count, false, toLineStart)
-            } else if KeyboardProfile.isLetter(code) && visited.filter({ KeyboardProfile.isLetter(preferences.profile.letters[$0]) }).count >= 3 && glideAllowed && preferences.configuration.glide && page < 0 && editLayer == nil && inlineDocuments.isEmpty {
+            } else if KeyboardProfile.isLetter(code) && isGlide(path: path, visited: Array(visited), keyWidth: key.0.bounds.width) && glideAllowed && preferences.configuration.glide && page < 0 && editLayer == nil && inlineDocuments.isEmpty {
                 let line = UIBezierPath(); if let first = path.first { line.move(to: first) }; path.dropFirst().forEach { line.addLine(to: $0) }; traceLayer.path = line.cgPath
                 setPressed(nil)
             }
@@ -791,8 +799,7 @@ final class HexKeyboardView: UIView {
             if held && code == "#settings" { show("settings"); return }
             // Vuốt xuống phím ⚙ mở lịch sử clipboard (khi bật), như Android.
             if code == "#settings" && clipboardEnabled && dy >= preferences.configuration.swipeThreshold && abs(dy) > abs(dx) { show("clipboard"); return }
-            let distinct = visited.filter { KeyboardProfile.isLetter(preferences.profile.letters[$0]) }
-            if KeyboardProfile.isLetter(code) && distinct.count >= 3 && glideAllowed && preferences.configuration.glide && editLayer == nil && inlineDocuments.isEmpty && page < 0 {
+            if KeyboardProfile.isLetter(code) && isGlide(path: path, visited: Array(visited), keyWidth: key.0.bounds.width) && glideAllowed && preferences.configuration.glide && editLayer == nil && inlineDocuments.isEmpty && page < 0 {
                 let width = max(1,key.0.bounds.width)
                 let trace = path.map { "\($0.x / width),\($0.y / width)" }.joined(separator: ";")
                 let centers = keys.filter { KeyboardProfile.isLetter($0.2) }.map { "\($0.2):\($0.0.center.x / width),\($0.0.center.y / width)" }.joined(separator: "\n")

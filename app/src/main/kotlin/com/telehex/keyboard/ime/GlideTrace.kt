@@ -1,6 +1,7 @@
 package com.telehex.keyboard.ime
 
 import com.telehex.telex.predict.GlideDecoder.Point
+import com.telehex.typing.GlideRule
 
 /** Theo dõi một ngón; chỉ lướt qua ít nhất 3 phím chữ khác nhau mới là glide, không phân biệt hướng. */
 class GlideTrace(start: Point, firstLetter: Char) {
@@ -22,6 +23,6 @@ class GlideTrace(start: Point, firstLetter: Char) {
             samples.clear(); samples.addAll(reduced)
         }
         if (letter != null) letters.add(letter)
-        if (letters.size >= 3 && length >= 1.5f) active = true
+        if (GlideRule.isGlide(letters.size, length)) active = true
     }
 }
