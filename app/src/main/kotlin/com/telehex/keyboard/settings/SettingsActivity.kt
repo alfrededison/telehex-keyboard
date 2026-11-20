@@ -447,6 +447,7 @@ class SettingsActivity : Activity() {
             if (selected) return@setOnClickListener
             prefs.accent = a.id // chỉ đổi màu bàn phím; không recreate() nên bàn phím đang mở không bị đóng
             refreshSwatches()
+            showActiveProfile() // thẻ xem trước bố cục vẽ lại theo màu nhấn mới
         }
     }
 

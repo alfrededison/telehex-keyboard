@@ -35,6 +35,8 @@ final class KeyboardGesture: UIGestureRecognizer {
         if emitting { cancelledWhileEmitting = true }
         guard origin != nil, !emitting else { return }
         timer?.invalidate(); timer = nil; origin = nil
+        // Đã báo huỷ ở đây thì reset() không báo lần nữa
+        open = false
         emit?(.cancel)
         if state == .possible { state = .failed } else if state == .began || state == .changed { state = .cancelled }
     }
@@ -50,13 +52,24 @@ final class KeyboardGesture: UIGestureRecognizer {
             }
             // Gõ dồn ba phím: một ngón đã nhấc, ngón mới chạm xuống trước khi ngón kia nhấc. Gõ phím đã nhả, ngón còn chạm
             // thành ngón đầu, ngón mới thành ngón thứ hai.
-            if multi, !released.isEmpty, touches.count == 1, let touch = touches.first, let view, let key = keyAt?(touch.location(in: view)) {
+            if multi, !released.isEmpty, touches.count == 1, let touch = touches.first, let view {
+                // Phím đã nhả luôn được gõ, kể cả khi ngón mới chạm ngoài lưới phím (thanh gợi ý)
                 let done = released; released = []
                 cancelledWhileEmitting = false
                 for finger in done where !cancelledWhileEmitting { send(.end(finger.key, finger.start, finger.last, [finger.start, finger.last], [finger.key], false)) }
-                if let rest = second { origin = rest.key; start = rest.start; last = rest.last; primaryTouch = rest.touch }
+                // Phím vừa gõ đổi lớp (123, ABC…): ô dưới ngón còn chạm giờ là phím khác, lấy lại phím ở chỗ nó chạm
+                let layerChanged = cancelledWhileEmitting
+                if let rest = second, let key = layerChanged ? keyAt?(rest.start) : rest.key {
+                    origin = key; start = rest.start; last = rest.last; primaryTouch = rest.touch
+                } else { origin = nil; primaryTouch = nil }
+                second = nil
                 let point = touch.location(in: view)
-                second = Finger(touch: touch, key: cancelledWhileEmitting ? (keyAt?(point) ?? key) : key, start: point, last: point)
+                if let key = keyAt?(point) {
+                    let finger = Finger(touch: touch, key: key, start: point, last: point)
+                    if primaryTouch == nil { origin = key; start = point; last = point; primaryTouch = touch } else { second = finger }
+                }
+                // Không còn ngón nào trên lưới phím: kết thúc lần chạm
+                if primaryTouch == nil { multi = false; origin = nil; state = state == .possible ? .failed : .ended }
                 return
             }
             timer?.invalidate(); send(.cancel); state = state == .possible ? .failed : .cancelled; return
