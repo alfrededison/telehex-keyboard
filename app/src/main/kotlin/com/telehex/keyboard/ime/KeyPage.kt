@@ -3,6 +3,7 @@ package com.telehex.keyboard.ime
 import com.telehex.keyboard.R
 import com.telehex.layout.CellGrid
 import com.telehex.layout.KeyCode
+import com.telehex.layout.KeyKinds
 import com.telehex.layout.LayoutModel
 import com.telehex.layout.SymbolPages
 import com.telehex.telex.TelexConfig
@@ -43,6 +44,9 @@ object KeyPage {
             Mode.SYMBOLS -> SymbolPages.render(layout, symbols[if (symbolPage == 2) 1 else 0])
             else -> layout.rows
         }
+        // Nhóm phím (màu) theo quy tắc chung với iOS ([KeyKinds])
+        val tones = ("abcdefghijklmnopqrstuvwxyz").filter { telex.toneOf(it) != 0 }
+        fun kindOf(code: String) = KeyKinds.ofLetterLayer(code, tones)
         val keys = ArrayList<Key>(32)
         val spaceCells = ArrayList<Pair<Int, Int>>(4)
         for (r in rows.indices) for (c in rows[r].indices) {
@@ -51,38 +55,27 @@ object KeyPage {
             val cell = listOf(r to c)
             keys += when {
                 // Icon phẳng thay cho emoji màu, như các phím chức năng khác
-                code == KeyCode.EMOJI -> Key(code, cell, "☺", kind = KeyKind.FUNCTION, icon = R.drawable.ic_key_emoji)
-                code == KeyCode.NUMBERS -> Key(code, cell, if (mode == Mode.SYMBOLS) "ABC" else "123", kind = KeyKind.FUNCTION)
+                code == KeyCode.EMOJI -> Key(code, cell, "☺", kind = kindOf(code), icon = R.drawable.ic_key_emoji)
+                code == KeyCode.NUMBERS -> Key(code, cell, if (mode == Mode.SYMBOLS) "ABC" else "123", kind = kindOf(code))
                 code == KeyCode.SETTINGS ->
-                    Key(code, cell, "⚙", hint = "📋", kind = KeyKind.FUNCTION, hintIcon = R.drawable.ic_edit_paste)
-                code == KeyCode.PAGE -> Key(code, cell, "$symbolPage/2", kind = KeyKind.FUNCTION)
-                code == KeyCode.DIAL -> Key(code, cell, "1234", kind = KeyKind.FUNCTION)
-                code == KeyCode.ENTER -> Key(code, cell, enterLabel, kind = KeyKind.ENTER)
-                code == KeyCode.ABC -> Key(code, cell, "ABC", kind = KeyKind.FUNCTION)
-                code == KeyCode.BACKSPACE -> Key(code, cell, "⌫", kind = KeyKind.FUNCTION)
-                code == KeyCode.SHIFT -> Key(code, cell, "⇧", kind = KeyKind.FUNCTION)
+                    Key(code, cell, "⚙", hint = "📋", kind = kindOf(code), hintIcon = R.drawable.ic_edit_paste)
+                code == KeyCode.PAGE -> Key(code, cell, "$symbolPage/2", kind = kindOf(code))
+                code == KeyCode.DIAL -> Key(code, cell, "1234", kind = kindOf(code))
+                code == KeyCode.ENTER -> Key(code, cell, enterLabel, kind = kindOf(code))
+                code == KeyCode.ABC -> Key(code, cell, "ABC", kind = kindOf(code))
+                code == KeyCode.BACKSPACE -> Key(code, cell, "⌫", kind = kindOf(code))
+                code == KeyCode.SHIFT -> Key(code, cell, "⇧", kind = kindOf(code))
                 // Phím dấu câu của lớp chữ (ở lớp 123 chỉ khi ô trống, hiện lại dấu đó). Ký hiệu `' ! ?` của trang 123
                 // vẫn là phím ký hiệu: kéo đổi chỗ được, màu như ký hiệu khác.
                 KeyCode.isPunct(code) && (mode != Mode.SYMBOLS || layout[r, c] == code) ->
-                    Key(code, cell, code, hint = if (mode == Mode.ABC) swipe[r, c] else "", kind = KeyKind.FUNCTION)
-                mode == Mode.SYMBOLS -> Key(code, cell, code, kind = KeyKind.SYMBOL)
-                KeyCode.isDigit(code) -> Key(code, cell, code, hint = swipe[r, c], kind = KeyKind.CONSONANT)
-                else -> letterKey(code, cell, telex, swipe[r, c])
+                    Key(code, cell, code, hint = if (mode == Mode.ABC) swipe[r, c] else "", kind = kindOf(code))
+                mode == Mode.SYMBOLS -> Key(code, cell, code, kind = KeyKinds.ofSymbolValue(code))
+                KeyCode.isDigit(code) -> Key(code, cell, code, hint = swipe[r, c], kind = kindOf(code))
+                // Không ghi dấu (á, ả…) hay "ư" dưới chữ: màu phím đã cho biết phím dấu / nguyên âm.
+                else -> Key(code, cell, code.uppercase(), hint = swipe[r, c], kind = kindOf(code))
             }
         }
-        keys += Key(KeyCode.SPACE, spaceCells, "", sub = "cách", kind = KeyKind.SPACE)
+        keys += Key(KeyCode.SPACE, spaceCells, "", sub = "cách", kind = KeyKinds.ofLetterLayer(null, tones))
         return keys
-    }
-
-    private fun letterKey(code: String, cell: List<Pair<Int, Int>>, telex: TelexConfig, hint: String): Key {
-        val ch = code[0]
-        val tv = telex.toneOf(ch)
-        val kind = when {
-            tv != 0 -> KeyKind.TONE
-            ch in "aeiouyw" -> KeyKind.VOWEL
-            else -> KeyKind.CONSONANT
-        }
-        // Không ghi dấu (á, ả…) hay "ư" dưới chữ: màu phím đã cho biết phím dấu / nguyên âm.
-        return Key(code, cell, code.uppercase(), hint = hint, kind = kind)
     }
 }

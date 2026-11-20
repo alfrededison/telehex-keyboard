@@ -1,8 +1,23 @@
 import UIKit
 
 /// Loại phím quyết định màu. Theo bàn phím hệ thống của iOS: phụ âm, ký hiệu và phím cách nền sáng; phím chức năng nền xám;
-/// như Android, nguyên âm tô màu nhấn nhạt và phím dấu tô cam nhạt; ↵ mang màu nhấn.
-enum KeyKind { case consonant, vowel, tone, function, enter, space, symbol }
+/// như Android, nguyên âm tô màu nhấn nhạt, phím dấu tô cam nhạt, ⇧ và ⌫ (`shiftBack`) vàng nhạt; ↵ mang màu nhấn.
+enum KeyKind {
+    case consonant, vowel, tone, function, shiftBack, enter, space, symbol
+    /// Từ tên nhóm của module layout dùng chung với Android (`KeyKind.name`).
+    init(_ name: String) {
+        switch name {
+        case "VOWEL": self = .vowel
+        case "TONE": self = .tone
+        case "FUNCTION": self = .function
+        case "SHIFT_BACK": self = .shiftBack
+        case "ENTER": self = .enter
+        case "SPACE": self = .space
+        case "SYMBOL": self = .symbol
+        default: self = .consonant
+        }
+    }
+}
 
 /// Bảng màu của bàn phím và các bảng cài đặt, theo giao diện bàn phím hệ thống iOS và danh sách nhóm của app Cài đặt.
 struct KeyboardTheme: Equatable {
@@ -13,6 +28,8 @@ struct KeyboardTheme: Equatable {
     /// Phím dấu Telex (s f r x j z): cam nhạt như Android; màu nhấn "Không" thì trùng phím chữ.
     var toneBg: UIColor, toneFg: UIColor
     var functionBg: UIColor, functionFg: UIColor
+    /// ⇧ và ⌫: vàng nhạt như Android; màu nhấn "Không" thì trùng phím chức năng.
+    var shiftBackBg: UIColor, shiftBackFg: UIColor
     var enterBg: UIColor, enterFg: UIColor
     /// Bóng 1pt dưới mỗi phím, như phím iOS.
     var keyShadow: UIColor
@@ -29,6 +46,7 @@ struct KeyboardTheme: Equatable {
     func background(for kind: KeyKind) -> UIColor {
         switch kind {
         case .function: return functionBg
+        case .shiftBack: return shiftBackBg
         case .enter: return enterBg
         case .vowel: return vowelBg
         case .tone: return toneBg
@@ -38,6 +56,7 @@ struct KeyboardTheme: Equatable {
     func foreground(for kind: KeyKind) -> UIColor {
         switch kind {
         case .function: return functionFg
+        case .shiftBack: return shiftBackFg
         case .enter: return enterFg
         case .vowel: return vowelFg
         case .tone: return toneFg
@@ -46,18 +65,19 @@ struct KeyboardTheme: Equatable {
     }
     func pressedBackground(for kind: KeyKind) -> UIColor {
         switch kind {
-        case .function, .enter: return functionPressedBg
+        case .function, .shiftBack, .enter: return functionPressedBg
         default: return keyPressedBg
         }
     }
 
-    /// Màu nhấn tô phím nguyên âm (như Android), ↵ và các điều khiển; `none` bỏ màu cả nguyên âm lẫn phím dấu, ↵ xám.
+    /// Màu nhấn tô phím nguyên âm (như Android), ↵ và các điều khiển; `none` bỏ màu nguyên âm, phím dấu, ⇧ ⌫, ↵ xám.
     func withAccent(_ choice: KeyboardAccent) -> KeyboardTheme {
         var theme = self
         let vowel = choice.vowel(dark: isDark)
         theme.vowelBg = vowel.bg; theme.vowelFg = vowel.fg
         if choice == .none {
             theme.toneBg = keyBg; theme.toneFg = keyFg
+            theme.shiftBackBg = functionBg; theme.shiftBackFg = functionFg
             theme.enterBg = functionBg; theme.enterFg = functionFg
             theme.accent = isDark ? UIColor(hex: 0x8E8E93) : UIColor(hex: 0x6C6C70); theme.accentFg = .white
         } else {
@@ -73,6 +93,7 @@ struct KeyboardTheme: Equatable {
         vowelBg: UIColor(hex: 0xDCE8FB), vowelFg: UIColor(hex: 0x0A3A80),
         toneBg: UIColor(hex: 0xFFE2CC), toneFg: UIColor(hex: 0x7A3300),
         functionBg: UIColor(hex: 0xA9AFBA), functionFg: UIColor(hex: 0x000000),
+        shiftBackBg: UIColor(hex: 0xFFEFB0), shiftBackFg: UIColor(hex: 0x5C4500),
         enterBg: UIColor(hex: 0x1A73E8), enterFg: .white,
         keyShadow: UIColor(hex: 0x898A8D),
         hintFg: UIColor(hex: 0x6E7076),
@@ -87,6 +108,7 @@ struct KeyboardTheme: Equatable {
         vowelBg: UIColor(hex: 0x1E3A64), vowelFg: UIColor(hex: 0xCFE0FB),
         toneBg: UIColor(hex: 0x5A3313), toneFg: UIColor(hex: 0xFFD9BC),
         functionBg: UIColor(hex: 0x3A3A3D), functionFg: UIColor(hex: 0xFFFFFF),
+        shiftBackBg: UIColor(hex: 0x4D4211), shiftBackFg: UIColor(hex: 0xFFE79E),
         enterBg: UIColor(hex: 0x4C8DF6), enterFg: .white,
         keyShadow: UIColor(hex: 0x000000, alpha: 0.55),
         hintFg: UIColor(hex: 0xB4B4B9),

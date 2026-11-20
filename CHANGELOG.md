@@ -18,6 +18,7 @@
 - iOS: phím ↵ (trên lưới chữ và dialpad) ghi theo nút Return của ô nhập như Android: "Tìm", "Gửi", "Đi", "Tiếp", "Xong".
 - iOS: nhận phím chạm như Android: chạm vào khe giữa các phím ra phím có tâm gần nhất (trước đây chạm ngoài hình vẽ phím tổ ong không ra gì); "Học độ lệch chạm" bật sẵn và học theo cách của Android (từ điểm chạm xuống, bù độ lệch chung rồi độ lệch từng chữ, tối đa 0,4 bề rộng phím). Độ lệch đã học ở bản trước dùng công thức khác nên được học lại từ đầu.
 - iOS: gõ nhanh hai ngón cái như Android: ngón thứ hai chạm xuống khi ngón đầu chưa nhấc thì cả hai phím đều được gõ theo thứ tự nhả (trước đây phím đầu bị huỷ); hai ngón cùng vuốt ngang vẫn là hoàn tác/làm lại.
+- Phím ⇧ và ⌫ (Truyền thống, Có hàng số, các bố cục tổ ong 8 cột, bàn phím số) tô vàng nhạt, tách khỏi màu xám của phím chức năng để dễ thấy; ⇧ đang bật vẫn đổi màu như trước. "Không màu" để hai phím này xám như phím chức năng. Cả Android và iOS.
 
 ## 0.8.5 — 2026-11-20
 

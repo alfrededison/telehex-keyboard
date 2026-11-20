@@ -535,28 +535,16 @@ final class HexKeyboardView: UIView {
     }
     /// Phím dấu Telex: s f r x j z, thêm l khi "L cũng là dấu huyền".
     var toneKeys: String { "sfrxjz" + (preferences.configuration.lAsGrave ? "l" : "") }
+    /// Nhóm (màu) của một phím. Xếp phím vào nhóm theo quy tắc chung với Android (`KeyKinds` của module layout); riêng ⇧
+    /// đang bật thì sáng lên như phím chữ, kiểu iOS.
     func kind(for code: String, index: Int) -> KeyKind {
-        if dialpad {
-            switch code {
-            case " ": return .space
-            case "\n": return .enter
-            case "-", "⌫", "ABC": return .function
-            default: return .consonant
-            }
-        }
-        if let editLayer, editLayer >= 2, KeyboardProfile.symbolUsable(code) { return preferences.profile.symbols[editLayer - 2][index] == "#page" ? .function : .symbol }
-        if let value = symbolValue(code, index: index) { return value == "#page" ? .function : .symbol }
-        switch code {
-        case " ": return .space
-        case "\n": return .enter
+        let bridge = LayoutBridge.shared
+        if dialpad { return KeyKind(bridge.dialpadKind(code: code)) }
+        if let editLayer, editLayer >= 2, KeyboardProfile.symbolUsable(code) { return KeyKind(bridge.symbolKind(value: preferences.profile.symbols[editLayer - 2][index])) }
+        if let value = symbolValue(code, index: index) { return KeyKind(bridge.symbolKind(value: value)) }
         // ⇧ như iOS: đang bật (hoa một lần hoặc khoá hoa) thì phím sáng lên, icon đặc.
-        case "#shift": return capsLocked || (uppercase && inlineDocuments.isEmpty) ? .consonant : .function
-        default:
-            if KeyboardProfile.isDigit(code) { return .consonant }
-            guard KeyboardProfile.isLetter(code) else { return .function }
-            if toneKeys.contains(code) { return .tone }
-            return "aeiouyw".contains(code) ? .vowel : .consonant
-        }
+        if code == "#shift", capsLocked || (uppercase && inlineDocuments.isEmpty) { return .consonant }
+        return KeyKind(bridge.keyKind(code: code, toneLetters: toneKeys))
     }
     func addKey(_ code: String, index: Int) {
         let button = HexKeyButton(type: .custom)

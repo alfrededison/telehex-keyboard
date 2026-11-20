@@ -1,5 +1,6 @@
 package com.telehex.keyboard.ime
 
+import com.telehex.layout.KeyCode
 import com.telehex.layout.Profile
 import com.telehex.telex.TelexConfig
 import org.junit.Assert.assertEquals
@@ -31,5 +32,13 @@ class KeyPageTest {
         val q = Profile.HEX8.letters.find("?")!!
         assertEquals(KeyKind.FUNCTION, keys(Profile.HEX8, Mode.SYMBOLS, page = 2)[q]!!.kind)
         assertEquals(KeyKind.SYMBOL, keys(Profile.HEX8, Mode.SYMBOLS)[q]!!.kind) // trang 1: `…`
+    }
+
+    @Test
+    fun shiftAndBackspaceHaveTheirOwnColourGroupOnEveryLayout() {
+        for (p in Profile.BUILT_IN) for (mode in listOf(Mode.ABC, Mode.SYMBOLS)) {
+            for (k in keys(p, mode).values) if (k.code == KeyCode.SHIFT || k.code == KeyCode.BACKSPACE)
+                assertEquals("${p.name} $mode ${k.code}", KeyKind.SHIFT_BACK, k.kind)
+        }
     }
 }

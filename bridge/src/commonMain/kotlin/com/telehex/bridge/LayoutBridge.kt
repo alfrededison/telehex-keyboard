@@ -4,6 +4,7 @@ import com.telehex.layout.CellGrid
 import com.telehex.layout.GridSpec
 import com.telehex.layout.HexGeometry
 import com.telehex.layout.KeyCode
+import com.telehex.layout.KeyKinds
 import com.telehex.layout.KeyLayers
 import com.telehex.layout.LayoutModel
 import com.telehex.layout.Profile
@@ -101,6 +102,16 @@ object LayoutBridge {
     /** Chữ → các chữ kề trên lưới thật (sửa gõ sai), theo [LayoutModel.letterNeighbors]. */
     fun neighbors(letters: List<String>): Map<String, String> =
         model(letters)?.letterNeighbors()?.entries?.associate { (k, v) -> "$k" to v.joinToString("") } ?: emptyMap()
+
+    /** Nhóm của một phím lớp chữ theo mã iOS (tên của [KeyKind]); [toneLetters]: các chữ đang là phím dấu. */
+    fun keyKind(code: String, toneLetters: String): String = KeyKinds.ofLetterLayer(layoutCode(code), toneLetters).name
+
+    /** Nhóm của một ô lớp 123 đang hiện giá trị [value] của trang. */
+    fun symbolKind(value: String): String = KeyKinds.ofSymbolValue(value).name
+
+    /** Nhóm của một phím bàn phím số theo mã iOS (`" "`, `"\n"`, `"⌫"`, `"ABC"`, `"-"`, số, `.`). */
+    fun dialpadKind(code: String): String = KeyKinds.ofDialpad(
+        when (code) { " " -> KeyCode.SPACE; "\n" -> KeyCode.ENTER; "⌫" -> KeyCode.BACKSPACE; "ABC" -> KeyCode.ABC; else -> code }).name
 
     fun swipeUsable(code: String): Boolean = layoutCode(code)?.let(KeyLayers::swipeUsable) ?: false
     fun symbolUsable(code: String): Boolean = layoutCode(code)?.let(KeyLayers::symbolUsable) ?: false

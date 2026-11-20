@@ -14,6 +14,7 @@ import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import com.telehex.layout.KeyCode
+import com.telehex.layout.KeyKinds
 
 /**
  * Dialpad: phím chữ nhật bo góc như các bàn phím số khác (không dùng lục giác).
@@ -145,13 +146,13 @@ class DialpadView(context: Context, private val theme: Theme, val heightPx: Int)
                 val rect = RectF(x, y, x + colW[c], y + rowH)
                 x += colW[c] + gap
                 val key = when (code) {
-                    KeyCode.SPACE -> Key(code, listOf(r to c), "", sub = "cách", kind = KeyKind.SPACE)
-                    KeyCode.BACKSPACE -> Key(code, listOf(r to c), "⌫", kind = KeyKind.FUNCTION)
-                    KeyCode.ENTER -> Key(code, listOf(r to c), enterLabel, kind = KeyKind.ENTER)
-                    KeyCode.ABC -> Key(code, listOf(r to c), "ABC", kind = KeyKind.FUNCTION)
-                    "-" -> if (allowMinus) Key(code, listOf(r to c), "-", kind = KeyKind.FUNCTION) else null
-                    "." -> if (allowDot) Key(code, listOf(r to c), ".", hint = ",", kind = KeyKind.CONSONANT) else null
-                    else -> Key(code, listOf(r to c), code, hint = SUB[code] ?: "", kind = KeyKind.CONSONANT)
+                    KeyCode.SPACE -> Key(code, listOf(r to c), "", sub = "cách", kind = KeyKinds.ofDialpad(code))
+                    KeyCode.BACKSPACE -> Key(code, listOf(r to c), "⌫", kind = KeyKinds.ofDialpad(code))
+                    KeyCode.ENTER -> Key(code, listOf(r to c), enterLabel, kind = KeyKinds.ofDialpad(code))
+                    KeyCode.ABC -> Key(code, listOf(r to c), "ABC", kind = KeyKinds.ofDialpad(code))
+                    "-" -> if (allowMinus) Key(code, listOf(r to c), "-", kind = KeyKinds.ofDialpad(code)) else null
+                    "." -> if (allowDot) Key(code, listOf(r to c), ".", hint = ",", kind = KeyKinds.ofDialpad(code)) else null
+                    else -> Key(code, listOf(r to c), code, hint = SUB[code] ?: "", kind = KeyKinds.ofDialpad(code))
                 }
                 if (key != null) out.add(Cell(key, rect))
             }
