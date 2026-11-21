@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.6 — unreleased
+## 0.8.6 — 2026-11-22
 
 - Phím ⇧ đang bật (chữ kế tiếp viết hoa, hoặc khoá hoa) sáng lên như phím chữ, như iOS, thay cho màu xanh/màu phím ↵; hình xem trước bố cục vẽ ở trạng thái thường (chữ thường, ⇧ không bật).
 - Cài đặt › Bàn phím: chọn kiểu bàn phím bằng lưới thẻ có hình xem trước (bố cục, màu, ký tự vuốt xuống thật của từng profile, kể cả profile riêng) thay cho danh sách chữ, như app iOS.
