@@ -1,9 +1,4 @@
-- Three new hexagonal layouts, pick them on the app's home screen:
-  - Hexagonal with number row: the hexagonal grid with a small 1 to 0 row on top.
-  - 8-column Hexagonal: one more column, with shift and backspace keys like Traditional plus keys for ? ! '. The keyboard stays as tall as the 7-column one.
-  - 8-column Hexagonal with number row: adds a 1 to 0 row on top. Swipe down on the Q to P row for brackets and symbols.
-- Traditional and Number row: narrower side margins, so keys are about 3% wider and taller.
-- Types exactly like the Android app: same suggestion order and casing, shortcuts like "k2" and "@@g" expand, auto-capitalisation only after a full stop and a space ("google.com" stays lowercase), undo removes the whole word, switching Vietnamese/English mid-word finishes the word first.
-- More accurate taps: touching the gap between keys picks the nearest key, touch-offset learning is on by default, and fast two-thumb typing no longer drops keys.
+- Better typing: suggestions are ordered and cased more sensibly, shortcuts like "k2" and "@@g" expand, auto-capitalisation only after a full stop and a space ("google.com" stays lowercase), undo removes the whole word, and switching Vietnamese/English mid-word finishes the word first.
+- More accurate taps: touching the gap between keys picks the nearest key, touch-offset learning is on by default, and fast two-thumb or three-key rolls no longer drop keys.
 - Shift and backspace have their own colour; the return key reads Search, Send, Done… to match the field.
 - Drag the space bar to the left edge to delete to the start of the line; the number pad hides "-" and "." in whole-number fields.

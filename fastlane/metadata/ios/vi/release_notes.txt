@@ -1,9 +1,4 @@
-- Thêm ba bố cục tổ ong, chọn ngay trên màn hình chính của app:
-  - Tổ ong có hàng số: lưới tổ ong thêm hàng số 1 đến 0 nhỏ trên cùng.
-  - Tổ ong 8 cột: thêm một cột, có phím ⇧ và ⌫ như Truyền thống cùng phím riêng cho ? ! '. Bàn phím vẫn cao như Tổ ong 7 cột.
-  - Tổ ong 8 cột có hàng số: Tổ ong 8 cột thêm hàng số 1 đến 0 trên cùng. Vuốt xuống hàng Q đến P ra ngoặc và ký hiệu.
-- Truyền thống và Có hàng số: lề hai bên hẹp lại, phím rộng và cao thêm khoảng 3%.
-- Gõ giống hệt bản Android: thanh gợi ý cùng thứ tự và hoa/thường, gõ tắt khớp cả "k2", "@@g", tự viết hoa chỉ sau dấu chấm có khoảng trắng ("google.com" không bị viết hoa), hoàn tác xoá cả từ, đổi Việt/Anh giữa chừng thì chốt từ trước.
-- Chạm chính xác hơn: chạm vào khe giữa các phím ra phím gần nhất, học độ lệch chạm bật sẵn, gõ nhanh hai ngón cái không mất phím.
+- Gõ chuẩn hơn: thanh gợi ý sắp thứ tự và viết hoa/thường hợp lý hơn, gõ tắt khớp cả "k2", "@@g", tự viết hoa chỉ sau dấu chấm có khoảng trắng ("google.com" không bị viết hoa), hoàn tác xoá cả từ, đổi Việt/Anh giữa chừng thì chốt từ trước.
+- Chạm chính xác hơn: chạm vào khe giữa các phím ra phím gần nhất, học độ lệch chạm bật sẵn, gõ nhanh hai ngón cái hay gõ dồn ba phím không mất phím.
 - Phím ⇧ và ⌫ có màu riêng; phím ↵ ghi "Tìm", "Gửi", "Xong"… theo ô nhập.
 - Kéo phím cách sang trái tới mép bàn phím để xoá tới đầu dòng; dialpad ẩn phím "-" và "." ở ô chỉ nhận số nguyên.

@@ -2,7 +2,7 @@ Bật bàn phím: mở TeleHex, làm theo các bước trên màn chào (Cài đ
 
 Nhờ bạn thử:
 • Bản này đổi cách nhận chạm: thử gõ nhanh, chạm sát mép phím, gõ hai ngón cái chồng nhau; vuốt hai ngón trái/phải để hoàn tác/làm lại.
-• Ba bố cục tổ ong mới và màu phím ⇧ ⌫: chọn trên màn hình chính của app.
+• Màu riêng của phím ⇧ ⌫, và nhãn phím ↵ (Tìm, Gửi, Xong…) trong các ô nhập khác nhau.
 • Gõ Telex trong các app bạn hay dùng (tin nhắn, Safari, ghi chú, app chat): dấu có đặt đúng, chữ có bị lặp hay mất không.
 • Vuốt trên phím cách: trái để xoá, xuống để đổi Việt/Anh, giữ rồi kéo để di con trỏ. Lướt qua các chữ để gõ vuốt.
 • Đổi bố cục Tổ ong/Truyền thống và các cài đặt trong app, rồi mở lại bàn phím xem đã áp dụng chưa.
