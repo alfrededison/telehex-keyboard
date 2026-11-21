@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.8.7 — unreleased
+
 ## 0.8.6 — 2026-11-22
 
 - Phím ⇧ đang bật (chữ kế tiếp viết hoa, hoặc khoá hoa) sáng lên như phím chữ, như iOS, thay cho màu xanh/màu phím ↵; hình xem trước bố cục vẽ ở trạng thái thường (chữ thường, ⇧ không bật).
